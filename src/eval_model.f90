@@ -595,9 +595,13 @@ subroutine calc_kge( sim, obs, objfn, err, message)
   ! local variables
   integer(i4b)                        :: nTime           ! for monthly rmse calculation
   real(dp)                            :: cc,alpha,betha,mu_s,mu_o,sigma_s,sigma_o
+  real(dp)                            :: Sr,Sa,Sb
 
   ! initialize error control
   err=0; message='calc_kge/'
+  Sa=10.0_dp
+  Sb=1.0_dp
+  Sr=1.0_dp
   nTime=size(sim)
   if (nTime/=size(obs)) then; err=10;message=trim(message)//'size(obs)/=size(sim)'; return;endif
   !! mean
@@ -610,7 +614,7 @@ subroutine calc_kge( sim, obs, objfn, err, message)
   call pearsn(sim, obs, cc)
   betha = mu_s/mu_o
   alpha = sigma_s/sigma_o
-  objfn = sqrt((cc-1.0)**2.0_dp + (alpha-1.0)**2.0_dp + (betha-1.0)**2.0_dp) 
+  objfn = sqrt( (Sr*(cc-1.0))**2.0_dp + (Sa*(alpha-1.0))**2.0_dp + (Sb*(betha-1.0))**2.0_dp ) 
   return
 end subroutine
 
@@ -654,6 +658,48 @@ subroutine calc_month_kge(sim, obs, objfn, err, message)
   enddo
   call calc_kge(month_sim, month_obs, objfn, err, cmessage)
   if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
+  return
+end subroutine
+
+!*****************************************************
+! Compute annual Peakflow percent bias 
+!*****************************************************
+subroutine calc_yrMaxBias (sim, obs, objfn, err, message)
+  implicit none
+  !input variables
+  real(dp), dimension(:), intent(in)  :: sim 
+  real(dp), dimension(:), intent(in)  :: obs
+  !output variables
+  real(dp),               intent(out) :: objfn 
+  integer(i4b),           intent(out) :: err                  ! error code
+  character(len=strLen),  intent(out) :: message              ! error message
+  !local variables
+  integer(i4b)                        :: itime
+  integer(i4b)                        :: nTime,nYr           ! for monthly rmse calculation
+  integer(i4b)                        :: start_ind, end_ind
+  real(dp),dimension(:),allocatable   :: year_max_sim, year_max_obs
+  character(len=strLen)               :: cmessage             ! error message from subroutine
+
+  ! initialize error control
+  err=0; message='calc_yrMaxBias/'
+  nTime=size(sim)
+  if (nTime/=size(obs)) then; err=10;message=trim(message)//'size(obs)/=size(sim)'; return;endif
+
+  nYr = floor(nTime/365.0_dp)  !use 365 day per year to make it easier
+  allocate(year_max_obs(nYr))
+  allocate(year_max_sim(nYr))
+  ! Compute montly observed Q
+  ! Indices of start and end for first month
+  start_ind = 1 
+  end_ind   = start_ind + 364 
+  do itime = 1,nYr
+    year_max_obs(itime) = max(obs(start_ind:end_ind))
+    year_max_sim(itime) = max(sim(start_ind:end_ind))
+    !update starting and ending indice for next month step
+    start_ind = end_ind+1
+    end_ind   = end_ind+364
+  enddo
+  obj=sum(year_max_sim-year_max_obs)/sum(year_max_obs)  
   return
 end subroutine
 
@@ -760,6 +806,7 @@ subroutine calc_sigBias(sim, obs, objfn, err, message)
   real(dp)                           :: pBiasFLV
   real(dp)                           :: pBiasFMS
   real(dp)                           :: pBiasFMM
+  real(dp)                           :: pBiasPeakQ
   real(dp)                           :: cc              ! correlation
   real(dp),dimension(size(obs))      :: p               ! probability
   real(dp),dimension(size(sim))      :: simIn,simBasin
@@ -791,7 +838,9 @@ subroutine calc_sigBias(sim, obs, objfn, err, message)
   pBiasFLV=(sum(log(simBasin(1:i30))-log(simBasin(1)) )-sum(log(obsBasin(1:i30))-log(obsBasin(1))+verySmall))/sum( log(obsBasin(1:i30))-log(obsBasin(1))+verySmall )
   pBiasFMM= (log(simBasin(i50))-log(obsBasin(i50))) /( log(obsBasin(i50)) )
   call pearsn(simIn,obsIn, cc)
-  objfn = ( (1.0_dp-cc)+abs(pBias)+abs(pBiasFHV)+abs(pBiasFLV)+abs(pBiasFMS)+abs(pBiasFMM) )/6.0_dp
+  call calc_yrMaxBias (simIn, obsIn, pBiasPeakQ, err, message) 
+  !objfn = ( (1.0_dp-cc)+abs(pBias)+abs(pBiasFHV)+abs(pBiasFLV)+abs(pBiasFMS)+abs(pBiasFMM) )/6.0_dp
+  objfn = ( abs(pBias)+abs(pBiaspBiasPeakQ) )/2.0_dp
   return
 end subroutine
 
