@@ -529,9 +529,13 @@ subroutine calc_kge( sim, obs, objfn, err, message)
   ! local variables
   integer(i4b)                        :: nTime           ! for monthly rmse calculation
   real(dp)                            :: cc,alpha,betha,mu_s,mu_o,sigma_s,sigma_o
+  real(dp)                            :: Sr,Sa,Sb
 
   ! initialize error control
   err=0; message='calc_kge/'
+  Sa=2.0_dp
+  Sb=1.0_dp
+  Sr=1.0_dp
   nTime=size(sim)
   if (nTime/=size(obs)) then; err=10;message=trim(message)//'size(obs)/=size(sim)'; return;endif
   !! mean
@@ -544,7 +548,7 @@ subroutine calc_kge( sim, obs, objfn, err, message)
   call pearsn(sim, obs, cc)
   betha = mu_s/mu_o
   alpha = sigma_s/sigma_o
-  objfn = sqrt((cc-1.0)**2.0_dp + (alpha-1.0)**2.0_dp + (betha-1.0)**2.0_dp) 
+  objfn = sqrt( (Sr*(cc-1.0))**2.0_dp + (Sa*(alpha-1.0))**2.0_dp + (Sb*(betha-1.0))**2.0_dp ) 
   return
 end subroutine
 
