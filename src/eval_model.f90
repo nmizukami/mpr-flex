@@ -599,7 +599,7 @@ subroutine calc_kge( sim, obs, objfn, err, message)
 
   ! initialize error control
   err=0; message='calc_kge/'
-  Sa=10.0_dp
+  Sa=1.0_dp
   Sb=1.0_dp
   Sr=1.0_dp
   nTime=size(sim)
@@ -678,7 +678,6 @@ subroutine calc_yrMaxBias (sim, obs, objfn, err, message)
   integer(i4b)                        :: nTime,nYr           ! for monthly rmse calculation
   integer(i4b)                        :: start_ind, end_ind
   real(dp),dimension(:),allocatable   :: year_max_sim, year_max_obs
-  character(len=strLen)               :: cmessage             ! error message from subroutine
 
   ! initialize error control
   err=0; message='calc_yrMaxBias/'
@@ -693,13 +692,13 @@ subroutine calc_yrMaxBias (sim, obs, objfn, err, message)
   start_ind = 1 
   end_ind   = start_ind + 364 
   do itime = 1,nYr
-    year_max_obs(itime) = max(obs(start_ind:end_ind))
-    year_max_sim(itime) = max(sim(start_ind:end_ind))
+    year_max_obs(itime) = maxval(obs(start_ind:end_ind))
+    year_max_sim(itime) = maxval(sim(start_ind:end_ind))
     !update starting and ending indice for next month step
     start_ind = end_ind+1
     end_ind   = end_ind+364
   enddo
-  obj=sum(year_max_sim-year_max_obs)/sum(year_max_obs)  
+  objfn=sum(year_max_sim-year_max_obs)/sum(year_max_obs)  
   return
 end subroutine
 
@@ -837,10 +836,10 @@ subroutine calc_sigBias(sim, obs, objfn, err, message)
   pBiasFHV=sum(simBasin(i80:nTime)-obsBasin(i80:nTime))/sum(obsBasin(i80:nTime))
   pBiasFLV=(sum(log(simBasin(1:i30))-log(simBasin(1)) )-sum(log(obsBasin(1:i30))-log(obsBasin(1))+verySmall))/sum( log(obsBasin(1:i30))-log(obsBasin(1))+verySmall )
   pBiasFMM= (log(simBasin(i50))-log(obsBasin(i50))) /( log(obsBasin(i50)) )
-  call pearsn(simIn,obsIn, cc)
-  call calc_yrMaxBias (simIn, obsIn, pBiasPeakQ, err, message) 
+  call pearsn(sim, obs, cc)
+  call calc_yrMaxBias (sim, obs, pBiasPeakQ, err, message) 
   !objfn = ( (1.0_dp-cc)+abs(pBias)+abs(pBiasFHV)+abs(pBiasFLV)+abs(pBiasFMS)+abs(pBiasFMM) )/6.0_dp
-  objfn = ( abs(pBias)+abs(pBiaspBiasPeakQ) )/2.0_dp
+  objfn = ( abs(pBias)+abs(pBiasPeakQ) )/2.0_dp
   return
 end subroutine
 
