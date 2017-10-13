@@ -698,7 +698,8 @@ subroutine calc_yrMaxBias (sim, obs, objfn, err, message)
     start_ind = end_ind+1
     end_ind   = end_ind+364
   enddo
-  objfn=sum(year_max_sim-year_max_obs)/sum(year_max_obs)  
+  !objfn=sum(year_max_sim-year_max_obs)/sum(year_max_obs)
+  objfn=sqrt( (sum(year_max_sim)/sum(year_max_obs)-1.0_dp)**2.0_dp )
   return
 end subroutine
 
@@ -831,15 +832,15 @@ subroutine calc_sigBias(sim, obs, objfn, err, message)
   call sort(simBasin)
   call sort(obsBasin)
   ! compute signature
-  pBias=sum( simIn-obsIn )/sum(obsIn)
-  pBiasFMS=(( log(simBasin(i80))-log(simBasin(i30)) )-(log(obsBasin(i80))-log(obsBasin(i30))))/( log(obsBasin(i80))-log(obsBasin(i30)) )
-  pBiasFHV=sum(simBasin(i80:nTime)-obsBasin(i80:nTime))/sum(obsBasin(i80:nTime))
-  pBiasFLV=(sum(log(simBasin(1:i30))-log(simBasin(1)) )-sum(log(obsBasin(1:i30))-log(obsBasin(1))+verySmall))/sum( log(obsBasin(1:i30))-log(obsBasin(1))+verySmall )
-  pBiasFMM= (log(simBasin(i50))-log(obsBasin(i50))) /( log(obsBasin(i50)) )
-  call pearsn(sim, obs, cc)
+  !pBias=sum( simIn-obsIn )/sum(obsIn)
+  !pBiasFMS=(( log(simBasin(i80))-log(simBasin(i30)) )-(log(obsBasin(i80))-log(obsBasin(i30))))/( log(obsBasin(i80))-log(obsBasin(i30)) )
+  !pBiasFHV=sum(simBasin(i80:nTime)-obsBasin(i80:nTime))/sum(obsBasin(i80:nTime))
+  !pBiasFLV=(sum(log(simBasin(1:i30))-log(simBasin(1)) )-sum(log(obsBasin(1:i30))-log(obsBasin(1))+verySmall))/sum( log(obsBasin(1:i30))-log(obsBasin(1))+verySmall )
+  !pBiasFMM= (log(simBasin(i50))-log(obsBasin(i50))) /( log(obsBasin(i50)) )
+  !call pearsn(sim, obs, cc)
   call calc_yrMaxBias (sim, obs, pBiasPeakQ, err, message) 
   !objfn = ( (1.0_dp-cc)+abs(pBias)+abs(pBiasFHV)+abs(pBiasFLV)+abs(pBiasFMS)+abs(pBiasFMM) )/6.0_dp
-  objfn = ( abs(pBias)+abs(pBiasPeakQ) )/2.0_dp
+  objfn = pBiasPeakQ
   return
 end subroutine
 

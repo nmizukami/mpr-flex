@@ -253,8 +253,8 @@ subroutine adj_soil_param_vic(param, multiplier, adjParam,  err, message)
     do iPar = 34,36
       if(adjParam(iHru,iPar) .lt. 805.) then
         adjParam(iHru,iPar) = 805.
-      elseif(adjParam(iHru,iPar) .gt. 1880.) then
-        adjParam(iHru,iPar) = 1880.
+      elseif(adjParam(iHru,iPar) .gt. adjParam(iHru,iPar+3)) then
+        adjParam(iHru,iPar) = adjParam(iHru,iPar+3)*0.9 
       endif
     enddo
     if(adjParam(iHru,23) .gt. adjParam(iHru,24)) then
