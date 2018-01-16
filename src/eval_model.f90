@@ -1,6 +1,6 @@
-module eval_model 
+module eval_model
 use public_var
-  use data_type 
+  use data_type
   use var_lookup
   use hydroSignature, only:cal_rr,cal_eqp,cal_mean_yr,cal_fms,cal_qp,cal_bfi,cal_events
 
@@ -8,13 +8,13 @@ use public_var
 
   private
 
-  public :: objfn 
+  public :: objfn
   public :: out_sim
 
 contains
 
 !************************************
-! Public functin: perform model evaluation 
+! Public functin: perform model evaluation
 !************************************
 function objfn( calParam, hySig, isPrint)
   use model_wrapper, only: read_prec
@@ -23,16 +23,16 @@ function objfn( calParam, hySig, isPrint)
   real(dp),             intent(in)          :: calParam(:)        ! parameter in namelist, not necessarily all parameters are calibrated
   logical(lgc),         intent(in)          :: isPrint
   !output variable
-  real(dp)                                  :: objfn              ! object function value 
-  real(dp),             intent(out)         :: hySig(11)          ! Hydrologic signature 
+  real(dp)                                  :: objfn              ! object function value
+  real(dp),             intent(out)         :: hySig(11)          ! Hydrologic signature
   !local variables
   real(dp),dimension(nbasin,sim_len)        :: simBasinRouted     ! routed sim value : q [mm/day] (basin x number of time step)
   real(dp),dimension(nbasin,sim_len)        :: precp              ! observed precipitation [mm/day] (number of basins x number of time steps)
   real(dp),dimension(nbasin*sim_len)        :: obs                ! observation: q[mm/day]          (number of basin*number of time steps)
   real(dp),dimension(nbasin*sim_len)        :: q1d                ! routed sim value : q [mm/day]   (number of basins*number of time steps)
   real(dp),dimension(nbasin*sim_len)        :: p1d                ! observed precipitation [mm/day] (number of basins*number of time steps)
-  integer(i4b)                              :: iSig                 ! 
-  integer(i4b)                              :: err                 ! error id 
+  integer(i4b)                              :: iSig                 !
+  integer(i4b)                              :: err                 ! error id
   character(len=strLen)                     :: message             ! error message
   character(len=strLen)                     :: cmessage            ! error message from subroutine
 
@@ -43,13 +43,13 @@ function objfn( calParam, hySig, isPrint)
   if(err/=0)then;print*,trim(message)//trim(cmessage);stop;endif
   call agg_obj( simBasinRouted, obs, objfn, err, cmessage)
   if(err/=0)then;print*,trim(message)//trim(cmessage);stop;endif
-  
+
   !Read precipitation time series from model output
   call read_prec(idModel, precp, err, cmessage)
   if(err/=0)then;print*,trim(message)//trim(cmessage);stop;endif
   !Compute Hydrologic Signatures and print out them
-  q1d=reshape( simBasinRouted, [nbasin*sim_len] ) 
-  p1d=reshape( precp, [nbasin*sim_len] ) 
+  q1d=reshape( simBasinRouted, [nbasin*sim_len] )
+  p1d=reshape( precp, [nbasin*sim_len] )
   call cal_rr (q1d, p1d, hySig(1), err, cmessage)
   if(err/=0)then;print*,trim(message)//trim(cmessage);stop;endif
   call cal_eqp(q1d, p1d, hySig(2), err, cmessage)
@@ -70,16 +70,16 @@ function objfn( calParam, hySig, isPrint)
   if(err/=0)then;print*,trim(message)//trim(cmessage);stop;endif
   if ( isPrint ) then
     open(unit=100,file=trim(sim_dir)//'hydro_sig.txt', action='write', position='append')
-    write(100,10) (HySig(iSig),iSig=1,11) ! rr,eqp,Qyr,FMS,Q90,Q5,BFI,HFRE,HDUR,LFRE,LDUR 
+    write(100,10) (HySig(iSig),iSig=1,11) ! rr,eqp,Qyr,FMS,Q90,Q5,BFI,HFRE,HDUR,LFRE,LDUR
     10 format(1X,11(F8.3,1X))
     close(100)
   endif
 
-  return 
-end function 
+  return
+end function
 
 !************************************
-! Public subroutine: output sim and obs pair 
+! Public subroutine: output sim and obs pair
 !************************************
 subroutine out_sim(calParam, err, message)
   use strings
@@ -87,7 +87,7 @@ subroutine out_sim(calParam, err, message)
   !input variables
   real(dp),             intent(in)          :: calParam(:)     ! parameter in namelist, not necessarily all parameters are calibrated
   !output variables
-  integer(i4b)                              :: err             ! error id 
+  integer(i4b)                              :: err             ! error id
   character(len=strLen)                     :: message         ! error message
   !local variable
   real(dp),dimension(nbasin,sim_len)        :: simBasinRouted  ! routed sim value (basin x number of time step)
@@ -101,15 +101,15 @@ subroutine out_sim(calParam, err, message)
   if(err/=0)then;print*,trim(message)//trim(cmessage);stop;endif
   call out_opt_sim(simBasinRouted, obs) ! to output optimal run
   return
-  
+
   contains
 
-  ! Output sim and obs in separate file 
+  ! Output sim and obs in separate file
   subroutine out_opt_sim(sim, obs)
     implicit none
-    !input variables 
-    real(dp), dimension(:,:), intent(in)  :: sim 
-    real(dp), dimension(:), intent(in)    :: obs 
+    !input variables
+    real(dp), dimension(:,:), intent(in)  :: sim
+    real(dp), dimension(:), intent(in)    :: obs
     !local variables
     integer(i4b)                          :: itime,ibasin
     integer(i4b)                          :: offset
@@ -118,7 +118,7 @@ subroutine out_sim(calParam, err, message)
     integer(i4b)                          :: nargs
     character(len=2000)                   :: out_name
     character(len=1)                      :: delims
-  
+
     delims='/'
     call parse(obs_name,delims,tokens,nargs)
     last_token = tokens(nargs)
@@ -148,29 +148,29 @@ subroutine modelRun( calParam, simBasinRouted, err, message )
   real(dp),               intent(in)        :: calParam(:)     ! parameter in namelist, not necessarily all parameters are calibrated
   ! output variables
   real(dp),dimension(:,:),intent(out)       :: simBasinRouted  ! routed sim value (basin x number of time step)
-  integer(i4b)                              :: err             ! error id 
+  integer(i4b)                              :: err             ! error id
   character(len=strLen)                     :: message         ! error message
   !local variables
-  type(var_d),dimension(nCalPar)            :: calParStr       ! parameter storage converted from parameter array 
-  type(var_d),dimension(size(calScaleMeta)) :: pnormCoef       ! parameter storage converted from parameter array 
-  integer(i4b)                              :: iPar            ! loop index for parameter 
-  integer(i4b)                              :: idx             ! 
+  type(var_d),dimension(nCalPar)            :: calParStr       ! parameter storage converted from parameter array
+  type(var_d),dimension(size(calScaleMeta)) :: pnormCoef       ! parameter storage converted from parameter array
+  integer(i4b)                              :: iPar            ! loop index for parameter
+  integer(i4b)                              :: idx             !
   logical(lgc), allocatable                 :: mask(:)         ! 1D mask
   integer(i4b),dimension(nHru)              :: hruID           ! Hru ID
   real(dp),dimension(nHru,TotNPar)          :: param           ! original soil parameter (model hru x parameter)
-  real(dp),dimension(nHru,TotNPar)          :: adjParam        ! adjustet soil parameter (model hru x parameter) 
+  real(dp),dimension(nHru,TotNPar)          :: adjParam        ! adjustet soil parameter (model hru x parameter)
   type(var_d),    allocatable               :: paramGammaStr(:)! calibratin gamma parameter
   real(dp),dimension(nHru,sim_len)          :: sim             ! instantaneous sim value (hru x number of time step)
   real(dp),dimension(nbasin,sim_len)        :: simBasin        ! instantaneous basin aggregated sim value (basin x number of time step)
-  real(dp),dimension(nLyr,nHru)             :: hModel          ! storage of model layer thickness at model layer x model hru 
-  type(namedvar2),dimension(nSoilBetaModel) :: parMxyMz        ! storage of model soil parameter at model layer x model hru 
+  real(dp),dimension(nLyr,nHru)             :: hModel          ! storage of model layer thickness at model layer x model hru
+  type(namedvar2),dimension(nSoilBetaModel) :: parMxyMz        ! storage of model soil parameter at model layer x model hru
   type(namedvar2),dimension(nVegBetaModel)  :: vegParMxy       ! storage of model vege parameter at month (or annual) x model hru
   real(dp)                                  :: ushape,uscale   ! two routing parameter
   character(len=strLen)                     :: cmessage        ! error message from subroutine
 
   err=0; message='modelRun/' ! to initialize error control
   idx=1
-  do iPar=1,nCalPar ! put calpar vector from optimization routine output parameter data strucure 
+  do iPar=1,nCalPar ! put calpar vector from optimization routine output parameter data strucure
     if (calParMeta(iPar)%perLyr)then
       allocate(calParStr(iPar)%var(nLyr))
       calParStr(iPar)%var=calParam(idx:idx+nLyr-1)
@@ -188,14 +188,14 @@ subroutine modelRun( calParam, simBasinRouted, err, message )
   end do
   call read_hru_id(idModel, hruID, err, cmessage)    ! to get hruID
   if (err/=0)then; print*,trim(message)//trim(cmessage);stop;endif
-  call read_soil_param(idModel, param, err, cmessage)! to read soil param template (=param) 
+  call read_soil_param(idModel, param, err, cmessage)! to read soil param template (=param)
   if (err/=0)then; print*,trim(message)//trim(cmessage);stop;endif
   adjParam=param
-  if ( any(calParMeta(:)%beta == "beta") )then ! calpar include multipliers for original model parameter 
-    call adjust_param(idModel, param, calParStr, adjParam, err, cmessage) ! to adjust "param" with multiplier method and output in adjParam 
+  if ( any(calParMeta(:)%beta == "beta") )then ! calpar include multipliers for original model parameter
+    call adjust_param(idModel, param, calParStr, adjParam, err, cmessage) ! to adjust "param" with multiplier method and output in adjParam
     if (err/=0)then; print*,trim(message)//trim(cmessage);stop;endif
   endif
-  if ( any(calParMeta(:)%beta /= "beta") )then ! calPar includes gamma parameters to be used for MPR 
+  if ( any(calParMeta(:)%beta /= "beta") )then ! calPar includes gamma parameters to be used for MPR
     do iPar=1,nSoilBetaModel
       allocate(parMxyMz(iPar)%varData(nLyr,nHru),stat=err)
     enddo
@@ -216,11 +216,11 @@ subroutine modelRun( calParam, simBasinRouted, err, message )
   endif
   call write_soil_param(idModel, hruID, adjParam, err, cmessage)
   if(err/=0)then;print*,trim(message)//trim(cmessage);stop;endif
-  call system(executable) ! to run hydrologic model   
+  call system(executable) ! to run hydrologic model
   if (isRoute)then !if routed here
     call read_sim(idModel, sim, err, cmessage)
     if(err/=0)then;print*,trim(message)//trim(cmessage);stop;endif
-    call agg_hru_to_basin(sim, simBasin, err, cmessage) ! aggregate hru sim to basin total sim 
+    call agg_hru_to_basin(sim, simBasin, err, cmessage) ! aggregate hru sim to basin total sim
     if(err/=0)then;print*,trim(message)//trim(cmessage);stop;endif
     ! route sim for each basin
     ushape=betaMeta(ixBeta%uhshape)%val
@@ -238,10 +238,10 @@ subroutine modelRun( calParam, simBasinRouted, err, message )
     if (err/=0)then; print*,trim(message)//trim(cmessage);stop;endif
   endif
   return
-end subroutine 
+end subroutine
 
 !************************************
-! Subroutine: Aggregaate metrics  
+! Subroutine: Aggregaate metrics
 !************************************
 subroutine agg_obj( sim, obs, objfn, err, message)
   implicit none
@@ -249,18 +249,18 @@ subroutine agg_obj( sim, obs, objfn, err, message)
   real(dp), dimension(:,:),intent(in)      :: sim
   real(dp), dimension(:),  intent(in)      :: obs
   !output variables
-  real(dp),             intent(out)        :: objfn        ! basin objective function  
+  real(dp),             intent(out)        :: objfn        ! basin objective function
   integer(i4b),         intent(out)        :: err          ! error code
   character(len=strLen),intent(out)        :: message      ! error message
   ! local variables
-  real(dp)                                 :: Smax=0.6_dp        ! upper threshold for score function 
-  real(dp)                                 :: Smin=0.3_dp        ! lower threshold for score function 
+  real(dp)                                 :: Smax=0.6_dp        ! upper threshold for score function
+  real(dp)                                 :: Smin=0.3_dp        ! lower threshold for score function
   integer(i4b)                             :: ibasin, offset
   character(len=strLen),dimension(nbasin)  :: basin_id
   character(len=strLen),dimension(nbasin)  :: obj_fun_type
   real(dp),             dimension(nbasin)  :: obj_fun_weight
   real(dp),             dimension(nbasin)  :: basin_objfn
-  real(dp),             dimension(nbasin)  :: basin_score        ! score function  
+  real(dp),             dimension(nbasin)  :: basin_score        ! score function
   character(len=strLen)                    :: cmessage     ! error message from subroutine
 
   ! initialize error control
@@ -283,7 +283,7 @@ subroutine agg_obj( sim, obs, objfn, err, message)
   select case( agg )
     case(1); objfn = sum(basin_objfn*obj_fun_weight)
     case(2); objfn = (sum((basin_objfn*obj_fun_weight)**6.0_dp))**(1.0_dp/6.0_dp)
-    case(3) 
+    case(3)
       where(basin_objfn<=Smin) basin_score=1.0_dp
       where(basin_objfn>Smax)  basin_score=0.0_dp
       where(basin_objfn>Smin .and. basin_objfn<=Smax) basin_score=(Smax-basin_objfn)/(Smax-Smin)
@@ -293,14 +293,14 @@ subroutine agg_obj( sim, obs, objfn, err, message)
 end subroutine
 
 !************************************
-! compute objective function 
+! compute objective function
 !************************************
 subroutine calc_obj(sim, obs, objfntype, objfn, err, message)
   implicit none
-  !input variables 
-  real(dp),dimension(:),intent(in)    :: sim 
-  real(dp),dimension(:),intent(in)    :: obs 
-  character(len=strLen),intent(in)    :: objfntype 
+  !input variables
+  real(dp),dimension(:),intent(in)    :: sim
+  real(dp),dimension(:),intent(in)    :: obs
+  character(len=strLen),intent(in)    :: objfntype
   !output variables
   real(dp),             intent(out)   :: objfn
   integer(i4b),         intent(out)   :: err          ! error code
@@ -329,19 +329,19 @@ subroutine calc_obj(sim, obs, objfntype, objfn, err, message)
 end subroutine
 
 !************************************
-! compute daily RMSE 
+! compute daily RMSE
 !************************************
 subroutine calc_rmse(sim, obs, objfn, err, message)
   implicit none
-  !input variables 
-  real(dp),dimension(:),intent(in)   :: sim 
-  real(dp),dimension(:),intent(in)   :: obs 
+  !input variables
+  real(dp),dimension(:),intent(in)   :: sim
+  real(dp),dimension(:),intent(in)   :: obs
   !output variables
   real(dp),             intent(out)  :: objfn
   integer(i4b),         intent(out)  :: err           ! error code
   character(len=strLen),intent(out)  :: message       ! error message
   !local variables
-  integer(i4b)                       :: nTime        !number of time step 
+  integer(i4b)                       :: nTime        !number of time step
 
   ! initialize error control
   err=0; message='calc_rmse'
@@ -352,13 +352,13 @@ subroutine calc_rmse(sim, obs, objfn, err, message)
 end subroutine
 
 !************************************
-! compute daily log(RMSE)+RMSE 
+! compute daily log(RMSE)+RMSE
 !************************************
 subroutine calc_log_rmse(sim, obs, objfn, err, message )
   implicit none
-  !input variables 
-  real(dp), dimension(:), intent(in)   :: sim 
-  real(dp), dimension(:), intent(in)   :: obs 
+  !input variables
+  real(dp), dimension(:), intent(in)   :: sim
+  real(dp), dimension(:), intent(in)   :: obs
   !output variables
   real(dp),               intent(out)  :: objfn         ! final objective function value
   integer(i4b),           intent(out)  :: err           ! error code
@@ -366,13 +366,13 @@ subroutine calc_log_rmse(sim, obs, objfn, err, message )
   !local variables
   real(dp),dimension(size(sim))        :: logSimIn,simIn
   real(dp),dimension(size(obs))        :: logObsIn,obsIn
-  integer(i4b)                         :: nTime          !number of time step 
+  integer(i4b)                         :: nTime          !number of time step
 
   ! initialize error control
   err=0; message='calc_log_rmse_region/'
   nTime=size(sim)
   if (nTime/=size(obs)) then; err=10;message=trim(message)//'size(obs)/=size(sim)'; return;endif
-  obsIn = obs 
+  obsIn = obs
   simIn = sim
   where(obsIn<verySmall) obsIn=verySmall
   where(simIn<verySmall) simIn=verySmall
@@ -386,22 +386,22 @@ subroutine calc_log_rmse(sim, obs, objfn, err, message )
 end subroutine
 
 !************************************
-! compute monthly RMSE 
+! compute monthly RMSE
 !************************************
 subroutine calc_month_rmse(sim, obs, objfn, err, message)
   implicit none
-  !input variables 
-  real(dp), dimension(:), intent(in)   :: sim 
-  real(dp), dimension(:), intent(in)   :: obs 
+  !input variables
+  real(dp), dimension(:), intent(in)   :: sim
+  real(dp), dimension(:), intent(in)   :: obs
   !output variables
-  real(dp),               intent(out)  :: objfn        ! final objective function 
+  real(dp),               intent(out)  :: objfn        ! final objective function
   integer(i4b),           intent(out)  :: err           ! error code
   character(len=strLen),  intent(out)  :: message       ! error message
   !local variables
   integer(i4b)                         :: itime
   real(dp)                             :: sum_sqr
   real(dp)                             :: simAgg, obsAgg
-  integer(i4b)                         :: nTime,nMon        !number of time step 
+  integer(i4b)                         :: nTime,nMon        !number of time step
   integer(i4b)                         :: start_ind, end_ind
 
   ! initialize error control
@@ -430,14 +430,14 @@ end subroutine
 subroutine calc_nse(sim, obs, objfn, err, message)
   implicit none
   !input variables
-  real(dp), dimension(:), intent(in)   :: sim 
+  real(dp), dimension(:), intent(in)   :: sim
   real(dp), dimension(:), intent(in)   :: obs
   !output variables
-  real(dp),               intent(out)  :: objfn 
+  real(dp),               intent(out)  :: objfn
   integer(i4b),           intent(out)  :: err           ! error code
   character(len=strLen),  intent(out)  :: message       ! error message
   !local variables
-  integer(i4b)                         :: nTime        !number of time step 
+  integer(i4b)                         :: nTime        !number of time step
   integer(i4b)                         :: itime
   real(dp)                             :: sumSqrErr
   real(dp)                             :: sumSqrDev
@@ -451,12 +451,12 @@ subroutine calc_nse(sim, obs, objfn, err, message)
   sumSqrErr = 0.0
   ! Compute Qob mean
   meanQ = sum(obs)/real(nTime)
-  ! Compute sum of squre of error and deviation from menan (for obs) 
+  ! Compute sum of squre of error and deviation from menan (for obs)
   do itime = 1,nTime
     sumSqrDev = sumSqrDev + (obs(itime)-meanQ)**2
     sumSqrErr = sumSqrErr + (sim(itime)-obs(itime))**2
   enddo
-  ! Compute nse for current basin 
+  ! Compute nse for current basin
   objfn = sumSqrErr/sumSqrDev
   return
 end subroutine
@@ -467,10 +467,10 @@ end subroutine
 subroutine calc_log_nse(sim, obs, objfn, err, message)
   implicit none
   !input variables
-  real(dp), dimension(:), intent(in)   :: sim 
+  real(dp), dimension(:), intent(in)   :: sim
   real(dp), dimension(:), intent(in)   :: obs
   !output variables
-  real(dp),               intent(out)  :: objfn 
+  real(dp),               intent(out)  :: objfn
   integer(i4b),           intent(out)  :: err           ! error code
   character(len=strLen),  intent(out)  :: message       ! error message
   !local variables
@@ -486,7 +486,7 @@ subroutine calc_log_nse(sim, obs, objfn, err, message)
   err=0; message='calc_nse/'
   nTime=size(sim)
   if (nTime/=size(obs)) then; err=10;message=trim(message)//'size(obs)/=size(sim)'; return;endif
-  obsIn = obs 
+  obsIn = obs
   simIn = sim
   where(obsIn<verySmall) obsIn=verySmall
   where(simIn<verySmall) simIn=verySmall
@@ -499,7 +499,7 @@ subroutine calc_log_nse(sim, obs, objfn, err, message)
   ! Compute Qob mean
   meanQ     = sum(obsIn)/real(nTime)
   log_meanQ = sum(logObsIn)/real(nTime)
-  ! Compute sum of squre of error and deviation from menan (for obs) 
+  ! Compute sum of squre of error and deviation from menan (for obs)
   do itime = 1,nTime
     sumSqrDev = sumSqrDev + (obsIn(itime)-meanQ)**2
     sumSqrErr = sumSqrErr + (simIn(itime)-ObsIn(itime))**2
@@ -518,10 +518,10 @@ end subroutine
 subroutine calc_month_nse(sim, obs, objfn, err, message)
   implicit none
   !input variables
-  real(dp), dimension(:), intent(in)   :: sim 
+  real(dp), dimension(:), intent(in)   :: sim
   real(dp), dimension(:), intent(in)   :: obs
   !output variables
-  real(dp),               intent(out)  :: objfn 
+  real(dp),               intent(out)  :: objfn
   integer(i4b),           intent(out)  :: err           ! error code
   character(len=strLen),  intent(out)  :: message       ! error message
   !local variables
@@ -540,7 +540,7 @@ subroutine calc_month_nse(sim, obs, objfn, err, message)
   allocate(month_sim(nMon))
   ! Compute montly observed Q
   ! Indices of start and end for first month
-  start_ind = 1 
+  start_ind = 1
   end_ind   = start_ind + 29
   do itime = 1,nMon
     month_obs(itime) = sum(obs(start_ind:end_ind))
@@ -555,15 +555,15 @@ subroutine calc_month_nse(sim, obs, objfn, err, message)
 end subroutine
 
 !***********************************************************************
-! calculate daily correlation 
+! calculate daily correlation
 !***********************************************************************
 subroutine calc_corr( sim, obs, objfn, err, message)
   implicit none
-  ! input variables 
-  real(dp), dimension(:), intent(in)  :: sim 
-  real(dp), dimension(:), intent(in)  :: obs 
+  ! input variables
+  real(dp), dimension(:), intent(in)  :: sim
+  real(dp), dimension(:), intent(in)  :: obs
   ! output variables
-  real(dp),               intent(out) :: objfn 
+  real(dp),               intent(out) :: objfn
   integer(i4b),           intent(out) :: err           ! error code
   character(len=strLen),  intent(out) :: message       ! error message
   ! local variables
@@ -574,9 +574,9 @@ subroutine calc_corr( sim, obs, objfn, err, message)
   err=0; message='calc_corr/'
   nTime=size(sim)
   if (nTime/=size(obs)) then; err=10;message=trim(message)//'size(obs)/=size(sim)'; return;endif
-  !compute correlation 
+  !compute correlation
   call pearsn(sim, obs, cc)
-  objfn = sqrt((cc-1.0)**2.0_dp) 
+  objfn = sqrt((cc-1.0)**2.0_dp)
   return
 end subroutine
 
@@ -585,11 +585,11 @@ end subroutine
 !***********************************************************************
 subroutine calc_kge( sim, obs, objfn, err, message)
   implicit none
-  ! input variables 
-  real(dp), dimension(:), intent(in)  :: sim 
-  real(dp), dimension(:), intent(in)  :: obs 
+  ! input variables
+  real(dp), dimension(:), intent(in)  :: sim
+  real(dp), dimension(:), intent(in)  :: obs
   ! output variables
-  real(dp),               intent(out) :: objfn 
+  real(dp),               intent(out) :: objfn
   integer(i4b),           intent(out) :: err           ! error code
   character(len=strLen),  intent(out) :: message       ! error message
   ! local variables
@@ -610,24 +610,24 @@ subroutine calc_kge( sim, obs, objfn, err, message)
   !compute the standard deviation
   sigma_s = sqrt (sum( (sim-mu_s)**2 )/real(nTime) )
   sigma_o = sqrt (sum( (obs-mu_o)**2 )/real(nTime) )
-  !compute correlation 
+  !compute correlation
   call pearsn(sim, obs, cc)
   betha = mu_s/mu_o
   alpha = sigma_s/sigma_o
-  objfn = sqrt( (Sr*(cc-1.0))**2.0_dp + (Sa*(alpha-1.0))**2.0_dp + (Sb*(betha-1.0))**2.0_dp ) 
+  objfn = sqrt( (Sr*(cc-1.0))**2.0_dp + (Sa*(alpha-1.0))**2.0_dp + (Sb*(betha-1.0))**2.0_dp )
   return
 end subroutine
 
 !*****************************************************
-! Compute monthly KGE 
+! Compute monthly KGE
 !*****************************************************
 subroutine calc_month_kge(sim, obs, objfn, err, message)
   implicit none
   !input variables
-  real(dp), dimension(:), intent(in)  :: sim 
+  real(dp), dimension(:), intent(in)  :: sim
   real(dp), dimension(:), intent(in)  :: obs
   !output variables
-  real(dp),               intent(out) :: objfn 
+  real(dp),               intent(out) :: objfn
   integer(i4b),           intent(out) :: err                  ! error code
   character(len=strLen),  intent(out) :: message              ! error message
   !local variables
@@ -647,7 +647,7 @@ subroutine calc_month_kge(sim, obs, objfn, err, message)
   allocate(month_sim(nMon))
   ! Compute montly observed Q
   ! Indices of start and end for first month
-  start_ind = 1 
+  start_ind = 1
   end_ind   = start_ind + 29
   do itime = 1,nMon
     month_obs(itime) = sum(obs(start_ind:end_ind))
@@ -662,15 +662,15 @@ subroutine calc_month_kge(sim, obs, objfn, err, message)
 end subroutine
 
 !*****************************************************
-! Compute annual Peakflow percent bias 
+! Compute annual Peakflow percent bias
 !*****************************************************
 subroutine calc_yrMaxBias (sim, obs, objfn, err, message)
   implicit none
   !input variables
-  real(dp), dimension(:), intent(in)  :: sim 
+  real(dp), dimension(:), intent(in)  :: sim
   real(dp), dimension(:), intent(in)  :: obs
   !output variables
-  real(dp),               intent(out) :: objfn 
+  real(dp),               intent(out) :: objfn
   integer(i4b),           intent(out) :: err                  ! error code
   character(len=strLen),  intent(out) :: message              ! error message
   !local variables
@@ -689,8 +689,8 @@ subroutine calc_yrMaxBias (sim, obs, objfn, err, message)
   allocate(year_max_sim(nYr))
   ! Compute montly observed Q
   ! Indices of start and end for first month
-  start_ind = 1 
-  end_ind   = start_ind + 364 
+  start_ind = 1
+  end_ind   = start_ind + 364
   do itime = 1,nYr
     year_max_obs(itime) = maxval(obs(start_ind:end_ind))
     year_max_sim(itime) = maxval(sim(start_ind:end_ind))
@@ -708,11 +708,11 @@ end subroutine
 !***********************************************************************
 subroutine calc_log_kge( sim, obs, objfn, err, message)
   implicit none
-  !input variables 
-  real(dp), dimension(:), intent(in)  :: sim 
-  real(dp), dimension(:), intent(in)  :: obs 
+  !input variables
+  real(dp), dimension(:), intent(in)  :: sim
+  real(dp), dimension(:), intent(in)  :: obs
   !output variables
-  real(dp),               intent(out) :: objfn 
+  real(dp),               intent(out) :: objfn
   integer(i4b),           intent(out) :: err           ! error code
   character(len=strLen),  intent(out) :: message       ! error message
   !local variables
@@ -726,7 +726,7 @@ subroutine calc_log_kge( sim, obs, objfn, err, message)
   err=0; message='calc_kge/'
   nTime=size(sim)
   if (nTime/=size(obs)) then; err=10;message=trim(message)//'size(obs)/=size(sim)'; return;endif
-  obsIn = obs 
+  obsIn = obs
   simIn = sim
   where(obsIn<verySmall) obsIn=verySmall
   where(simIn<verySmall) simIn=verySmall
@@ -742,12 +742,12 @@ subroutine calc_log_kge( sim, obs, objfn, err, message)
   sigma_o     = sqrt (sum( (obsIn-mu_o)**2 )/real(nTime) )
   log_sigma_s = sqrt (sum( (logSimIn-log_mu_s)**2 )/real(nTime) )
   log_sigma_o = sqrt (sum( (logObsIn-log_mu_o)**2 )/real(nTime) )
-  !compute correlation 
+  !compute correlation
   call pearsn(simIn, obsIn, cc)
   call pearsn(logSimIn, logObsIn, log_cc)
   betha = mu_s/mu_o
   alpha = sigma_s/sigma_o
-  log_betha = log_mu_s/log_mu_o      
+  log_betha = log_mu_s/log_mu_o
   log_alpha = log_sigma_s/log_sigma_o
   objfn = ( sqrt((cc-1.0_dp)**2.0_dp + (alpha-1.0_dp)**2.0_dp + (betha-1.0)**2.0_dp) )
   objfn = objfn+( sqrt((log_cc-1.0_dp)**2.0_dp + (log_alpha-1.0_dp)**2.0_dp + (log_betha-1.0)**2.0_dp) )
@@ -782,25 +782,25 @@ end subroutine
 !******************************
 ! compute percent bias of hydrologic signatures
 !******************************
-subroutine calc_sigBias(sim, obs, objfn, err, message) 
+subroutine calc_sigBias(sim, obs, objfn, err, message)
   ! aggregated absolute percentage signature bias
   ! Refer to paper below
-  ! Yilmaz, K. K., H. V. Gupta, and T. Wagener (2008), 
-  ! A process-based diagnostic approach to model evaluation: Application to the NWS distributed hydrologic model, 
+  ! Yilmaz, K. K., H. V. Gupta, and T. Wagener (2008),
+  ! A process-based diagnostic approach to model evaluation: Application to the NWS distributed hydrologic model,
   ! Water Resour. Res., 44, W09417, doi:10.1029/2007WR006716.
   implicit none
-  !input variables 
+  !input variables
   real(dp),             intent(in)   :: sim(:)
-  real(dp),             intent(in)   :: obs(:) 
+  real(dp),             intent(in)   :: obs(:)
   !output variables
-  real(dp),             intent(out)  :: objfn 
+  real(dp),             intent(out)  :: objfn
   integer(i4b),         intent(out)  :: err           ! error code
   character(len=strLen),intent(out)  :: message       ! error message
   ! local variables
   integer(i4b)                       :: iTime ! loop index
   integer(i4b)                       :: i30,i50,i80
   integer(i4b)                       :: idx(1)
-  integer(i4b)                       :: nTime            
+  integer(i4b)                       :: nTime
   real(dp)                           :: pBias
   real(dp)                           :: pBiasFHV
   real(dp)                           :: pBiasFLV
@@ -838,14 +838,14 @@ subroutine calc_sigBias(sim, obs, objfn, err, message)
   !pBiasFLV=(sum(log(simBasin(1:i30))-log(simBasin(1)) )-sum(log(obsBasin(1:i30))-log(obsBasin(1))+verySmall))/sum( log(obsBasin(1:i30))-log(obsBasin(1))+verySmall )
   !pBiasFMM= (log(simBasin(i50))-log(obsBasin(i50))) /( log(obsBasin(i50)) )
   !call pearsn(sim, obs, cc)
-  call calc_yrMaxBias (sim, obs, pBiasPeakQ, err, message) 
+  !call calc_yrMaxBias (sim, obs, pBiasPeakQ, err, message)
   !objfn = ( (1.0_dp-cc)+abs(pBias)+abs(pBiasFHV)+abs(pBiasFLV)+abs(pBiasFMS)+abs(pBiasFMM) )/6.0_dp
-  objfn = pBiasPeakQ
+  objfn = sqrt( (sum(simBasin(i80:nTime))/sum(obsBasin(i80:nTime))-1.0_dp)**2.0_dp )
   return
 end subroutine
 
 function scoref(sigBias, Dstar, Dmax)
-  ! sigBias is percent bias, 
+  ! sigBias is percent bias,
   ! if sigBias is less than Dstar, get score one.
   ! if sigBias is greater than Dmax, get zero score,
   ! Dstar< sigBias < Dmax, get fractinal score between 0 and 1
@@ -855,12 +855,12 @@ function scoref(sigBias, Dstar, Dmax)
   real(dp) ,intent(in) :: Dstar
   real(dp) ,intent(in) :: Dmax
   real(dp)             :: scoref
-  
+
   if ( abs(sigBias) < abs(Dstar) ) then
     scoref=1.0_dp
   elseif ( abs(sigBias) > abs(Dmax) ) then
     scoref=0.0_dp
-  else 
+  else
     scoref=( abs(Dmax)-abs(sigBias) )/( abs(Dmax)-abs(Dstar) )
   endif
   return
@@ -945,14 +945,14 @@ subroutine agg_hru_to_basin(simHru,simBasin,err,message)
     do icell = 1,ncell
       simBasin(ibasin,:) = simBasin(ibasin,:) + simHru(c_cell,:)
       c_cell = c_cell + 1
-    enddo !end of cell  
+    enddo !end of cell
   enddo !end basin loop
   close(unt)
   return
 end subroutine
 
 !******************************
-! routing runoff 
+! routing runoff
 !******************************
 subroutine route_q(qin,qroute,ushape,uscale, err, message)
   implicit none
@@ -969,9 +969,9 @@ subroutine route_q(qin,qroute,ushape,uscale, err, message)
 
   ! initialize error control
   err=0; message='route_q/'
-  nEle=size(qin,1) 
+  nEle=size(qin,1)
   ! route flow for each basin in the region now
-  if (ushape .le. 0.0 .and. uscale .le. 0.0) then 
+  if (ushape .le. 0.0 .and. uscale .le. 0.0) then
     qroute=qin
   else
     do iEle=1,nEle
@@ -986,40 +986,40 @@ end subroutine route_q
 !************************************
   subroutine duamel(Q,un1,ut,dt,nq,QB,ntau,inUH)
     implicit none
-    ! input 
+    ! input
     real(dp),   dimension(:),          intent(in)  :: Q      ! instantaneous flow
     real(dp),                          intent(in)  :: un1    ! scale parameter
     real(dp),                          intent(in)  :: ut     ! time parameter
-    real(dp),                          intent(in)  :: dt     ! time step 
+    real(dp),                          intent(in)  :: dt     ! time step
     integer(i4b),                      intent(in)  :: nq     ! size of instantaneous flow series
-    integer(i4b),                      intent(in)  :: ntau 
-    real(dp),   dimension(:),optional, intent(in)  :: inUH   ! optional input unit hydrograph  
+    integer(i4b),                      intent(in)  :: ntau
+    real(dp),   dimension(:),optional, intent(in)  :: inUH   ! optional input unit hydrograph
     ! output
     real(dp),dimension(:),             intent(out) :: QB     ! Routed flow
-    ! local 
+    ! local
     real(dp),dimension(1000)                       :: uh     ! unit hydrograph (use 1000 time step)
     integer(i4b)                                   :: m      ! size of unit hydrograph
     integer(i4b)                                   :: A,B
-    integer(i4b)                                   :: i,j,ij ! loop index 
-    integer(i4b)                                   :: ioc    ! total number of time step  
+    integer(i4b)                                   :: i,j,ij ! loop index
+    integer(i4b)                                   :: ioc    ! total number of time step
     real(dp)                                       :: top
     real(dp)                                       :: toc
     real(dp)                                       :: tor
     real(dp)                                       :: spv    ! cumulative uh distribution to normalize it to get unit hydrograph
-    
-    !size of unit hydrograph 
+
+    !size of unit hydrograph
     m=size(uh)
-    !initialize unit hydrograph 
+    !initialize unit hydrograph
     uh=0._dp
     ! Generate unit hydrograph
-    if (un1 .lt. 0) then ! if un1 < 0, routed flow = instantaneous flow 
+    if (un1 .lt. 0) then ! if un1 < 0, routed flow = instantaneous flow
       uh(1)=1.0_dp
       m = 1
     else
       if (present(inUH)) then  !update uh and size of uh
         uh=inUH
-        m=size(uh)  
-      else 
+        m=size(uh)
+      else
         spv=0.0_dp
         toc=gf(un1)
         toc=log(toc*ut)
@@ -1027,17 +1027,17 @@ end subroutine route_q
           top=i*dt/ut
           tor=(UN1-1)*log(top)-top-toc
           uh(i)=0.0_dp
-          if(tor.GT.-8.0_dp) then 
+          if(tor.GT.-8.0_dp) then
             uh(i)=exp(tor)
-          else 
-            if (i .GT. 1) then 
+          else
+            if (i .GT. 1) then
               uh(i) = 0.0_dp
-            end if 
-          end if 
+            end if
+          end if
           spv=spv+uh(i) ! accumulate uh each uh time step
         end do
         if (spv .EQ. 0) spv=1.0E-5
-        spv=1.0_dp/spv  
+        spv=1.0_dp/spv
         do i=1,m
           uh(I)=uh(i)*spv  ! normalize uh so cumulative uh = 1
         end do
@@ -1063,29 +1063,29 @@ end subroutine route_q
         A=1
         if(i.GT.nq) A=i-nq+1
         B=i
-        if(i.GT.M) B=M 
+        if(i.GT.M) B=M
         do j=A,B
           ij=i-j+1
           QB(i)=QB(i)+uh(J)*Q(ij)
         end do
-      end do 
+      end do
     end if
-    return 
+    return
   end subroutine
-  
+
   !=================================================================
   function gf(Y)
     implicit none
-    !input 
+    !input
     real(dp),intent(in)  :: y
     !local
-    real(dp)             :: gf 
+    real(dp)             :: gf
     real(dp)             :: x
     real(dp)             :: h
-  
+
     H=1_dp
     x=y
-    do 
+    do
       if(x.le.0_dp) exit
       if(x.lt.2_dp .and. x.gt.2_dp) then
         gf=H
@@ -1096,7 +1096,7 @@ end subroutine route_q
           x=x-2_dp
           h=(((((((.0016063118_dp*x+0.0051589951_dp)*x+0.0044511400_dp)*x+.0721101567_dp)*x  &
             +.0821117404_dp)*x+.4117741955_dp)*x+.4227874605_dp)*x+.9999999758_dp)*h
-          gf=H 
+          gf=H
           exit
         else
           x=x-1_dp
@@ -1112,4 +1112,4 @@ end subroutine route_q
     return
   end function
 
-end module eval_model 
+end module eval_model
