@@ -35,11 +35,11 @@ module mo_xor4096
 
   ! Copyright 2011-13 Juliane Mai
 
-  use nrtype 
+  use nrtype
 
   Implicit NONE
 
-  PUBLIC :: n_save_state    ! dimension of vector keeping the state of a stream 
+  PUBLIC :: n_save_state    ! dimension of vector keeping the state of a stream
 
   PUBLIC :: get_timeseed    ! Returns a seed dependend on time
   PUBLIC :: xor4096         ! Generates uniform distributed random number
@@ -207,7 +207,7 @@ module mo_xor4096
   !         I4 seeds are generating I4 or SP random numbers
   !         I8 seeds are generating I8 or DP random numbers
   !
-  !         ! Initializing 
+  !         ! Initializing
   !         real(SP) :: RN(3)
   !         seed = (/ 1_I4, 100_I4, 2_I4 /)
   !         call xor4096(seed,RN)
@@ -318,7 +318,7 @@ module mo_xor4096
   !         I4 seeds are generating I4 or SP random numbers
   !         I8 seeds are generating I8 or DP random numbers
   !
-  !         ! Initializing 
+  !         ! Initializing
   !         real(SP) :: RN(3)
   !         seed = (/ 1_I4, 100_I4, 2_I4 /)
   !         call xor4096(seed,RN)
@@ -583,7 +583,7 @@ CONTAINS
         x(:,0:r-1)  = save_state(:,1:r)
         i(:)        = save_state(:,r+1)
         w(:)        = save_state(:,r+2)
-    end if 
+    end if
 
     if(all(seed .ne. 0_i4b)) then
        if ( allocated(x) ) then
@@ -825,7 +825,7 @@ CONTAINS
         x(:,0:r-1)  = save_state(:,1:r)
         i(:)        = save_state(:,r+1)
         w(:)        = save_state(:,r+2)
-    end if 
+    end if
 
     if(all(seed .ne. 0_i4b)) then
        if ( allocated(x) ) then
@@ -1055,7 +1055,7 @@ CONTAINS
         x(:,0:r-1)  = save_state(:,1:r)
         i(:)        = save_state(:,r+1)
         w(:)        = save_state(:,r+2)
-    end if 
+    end if
 
     if(all(seed .ne. 0_i4b)) then
        if ( allocated(x) ) then
@@ -1294,7 +1294,7 @@ CONTAINS
         x(:,0:r-1)  = save_state(:,1:r)
         i(:)        = save_state(:,r+1)
         w(:)        = save_state(:,r+2)
-    end if 
+    end if
 
     if(all(seed .ne. 0_i4b)) then
        if ( allocated(x) ) then
@@ -1378,7 +1378,7 @@ CONTAINS
 
   ! ------------------------------------------------------------------
 
-  subroutine xor4096gf_0d(seed,SingleRealRN,save_state) 
+  subroutine xor4096gf_0d(seed,SingleRealRN,save_state)
 
     implicit none
 
@@ -1534,7 +1534,7 @@ CONTAINS
 
   ! -----------------------------------------------------------------------------
 
-  subroutine xor4096gf_1d(seed,SingleRealRN,save_state) 
+  subroutine xor4096gf_1d(seed,SingleRealRN,save_state)
 
     implicit none
 
@@ -1605,7 +1605,7 @@ CONTAINS
         do j=1,m
            y2(j) = transfer(save_state(j,r+4),1.0_sp)
         end do
-    end if 
+    end if
 
 
     if(all(seed .ne. 0_i4b)) then
@@ -1746,7 +1746,7 @@ CONTAINS
 
   ! -----------------------------------------------------------------------------
 
-  subroutine xor4096gd_0d(seed,DoubleRealRN,save_state) 
+  subroutine xor4096gd_0d(seed,DoubleRealRN,save_state)
 
     implicit none
 
@@ -1902,7 +1902,7 @@ CONTAINS
 
   ! -----------------------------------------------------------------------------
 
-  subroutine xor4096gd_1d(seed,DoubleRealRN,save_state) 
+  subroutine xor4096gd_1d(seed,DoubleRealRN,save_state)
 
     implicit none
 
@@ -1973,7 +1973,7 @@ CONTAINS
         do j=1,m
            y2(j) = transfer(save_state(j,r+4),1.0_dp)
         end do
-    end if 
+    end if
 
     if(all(seed .ne. 0_i8b)) then
        if ( allocated(x) ) then

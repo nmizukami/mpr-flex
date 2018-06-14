@@ -21,11 +21,11 @@ private
 contains
 
 ! *********************************************************************
-! subroutine: get vector dimension from netCDF 
+! subroutine: get vector dimension from netCDF
 ! *********************************************************************
 subroutine get_vec_dim(fname,           &  ! input: filename
                        dname,           &  ! input: variable name
-                       nDim,            &  ! output: Size of dimension 
+                       nDim,            &  ! output: Size of dimension
                        ierr, message)      ! output: error control
  implicit none
  ! input variables
@@ -57,13 +57,13 @@ subroutine get_vec_dim(fname,           &  ! input: filename
 end subroutine get_vec_dim
 
 ! *********************************************************************
-! subroutine: get 2D array dimension from netCDF 
+! subroutine: get 2D array dimension from netCDF
 ! *********************************************************************
 subroutine get_array2_dim(fname,         &  ! input: filename
                        dname1,           &  ! input: 1st dimension name
                        dname2,           &  ! input: 2nd dimension name
-                       nDim1,            &  ! output: Size of 1st dimension 
-                       nDim2,            &  ! output: Size of 2nd dimension 
+                       nDim1,            &  ! output: Size of 1st dimension
+                       nDim2,            &  ! output: Size of 2nd dimension
                        ierr, message)       ! output: error control
  implicit none
  ! input variables
@@ -255,7 +255,7 @@ end subroutine get_vec_ivar
  ! open NetCDF file
  ierr = nf90_open(trim(fname),nf90_nowrite,ncid)
  if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr)); return; endif
- ! allocate space for the output 
+ ! allocate space for the output
 ! allocate(dVec(iCount),stat=ierr)
 ! if(ierr/=0)then; message=trim(message)//'problem allocating space for dVec'; return; endif
 
@@ -276,10 +276,10 @@ end subroutine get_vec_ivar
  ! *********************************************************************
  subroutine get_array2_dvar(fname,           &  ! input: filename
                             vname,           &  ! input: variable name
-                            iStart,          &  ! input: start row index (vertical direction) 
-                            iCount,          &  ! input: length of row 
+                            iStart,          &  ! input: start row index (vertical direction)
+                            iCount,          &  ! input: length of row
                             jStart,          &  ! input: start index of column (horizontal direction)
-                            jCount,          &  ! input: length of column 
+                            jCount,          &  ! input: length of column
                             dArray,          &  ! output: variable data
                             ierr, message)      ! output: error control
  implicit none
@@ -320,10 +320,10 @@ end subroutine get_vec_ivar
  ! *********************************************************************
  subroutine get_array2_ivar(fname,           &  ! input: filename
                             vname,           &  ! input: variable name
-                            iStart,          &  ! input: start row index (vertical direction) 
-                            iCount,          &  ! input: length of row 
+                            iStart,          &  ! input: start row index (vertical direction)
+                            iCount,          &  ! input: length of row
                             jStart,          &  ! input: start index of column (horizontal direction)
-                            jCount,          &  ! input: length of column 
+                            jCount,          &  ! input: length of column
                             iArray,          &  ! output: variable data
                             ierr, message)      ! output: error control
 

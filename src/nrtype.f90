@@ -4,27 +4,27 @@ module nrtype
 
     !> 8byte integer
     !integer, parameter :: i8b = SELECTED_INT_KIND(18)  ! 8byte integer
-    integer, parameter :: i8b = c_long 
+    integer, parameter :: i8b = c_long
     !> 4byte integer
-    !integer, parameter :: I4B = SELECTED_INT_KIND(9)   
-    integer, parameter :: I4B = c_int 
+    !integer, parameter :: I4B = SELECTED_INT_KIND(9)
+    integer, parameter :: I4B = c_int
     !> 2byte integer
     !integer, parameter :: I2B = SELECTED_INT_KIND(4)
-    integer, parameter :: I2B = c_short 
+    integer, parameter :: I2B = c_short
     !> 1byte integer
     integer, parameter :: I1B = SELECTED_INT_KIND(2)
     !> single precision  real
     !integer, parameter :: SP = KIND(1.0)
-    integer, parameter :: SP = c_float 
+    integer, parameter :: SP = c_float
     !> double precision real
     !integer, parameter :: DP = KIND(1.0D0)
-    integer, parameter :: DP = c_double 
-    !> single precision  complex 
+    integer, parameter :: DP = c_double
+    !> single precision  complex
     !integer, parameter :: SPC = KIND((1.0,1.0))
     integer, parameter :: SPC = c_float_complex
-    !> double precision  complex 
+    !> double precision  complex
     !integer, parameter :: DPC = KIND((1.0D0,1.0D0))
-    integer, parameter :: DPC = c_double_complex 
+    integer, parameter :: DPC = c_double_complex
     !> logical
     integer, parameter :: LGC = KIND(.true.)
     ! Real kinds

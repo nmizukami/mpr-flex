@@ -7,7 +7,7 @@ module mo_opt_run
 
   private
 
-  public :: opt_run    ! run model optimized parameter 
+  public :: opt_run    ! run model optimized parameter
 
 contains
 
@@ -16,17 +16,17 @@ subroutine opt_run( restartFile, err, message )
   use eval_model, only:out_sim ! meta for beta parameter listed in 'inParList' input
   implicit none
   ! input
-  character(len=strLen),      intent(in)  :: restartFile ! name of restart file including iteration, the most recent parameter values 
+  character(len=strLen),      intent(in)  :: restartFile ! name of restart file including iteration, the most recent parameter values
   !output variables
-  integer(i4b),               intent(out) :: err         ! error id 
+  integer(i4b),               intent(out) :: err         ! error id
   character(len=strLen),      intent(out) :: message     ! error message
   ! Local variables
   real(dp),dimension(nCalParSum)          :: pval        ! inital value of decision (parameter) variables
-  integer(i8b)                            :: i           ! loop index 
-  integer(i8b)                            :: iDummy      ! dummy interger: fist line of restart file starting index of objective function evaluation 
+  integer(i8b)                            :: i           ! loop index
+  integer(i8b)                            :: iDummy      ! dummy interger: fist line of restart file starting index of objective function evaluation
   logical(lgc)                            :: isExistFile ! logical to check if the file exist or not
   character(len=strLen)                   :: cmessage    ! error message
-  
+
   err=0; message='opt_run/' ! to initialize error control
   ! restart option
   print*, 'read restart file'
@@ -34,7 +34,7 @@ subroutine opt_run( restartFile, err, message )
   if ( isExistFile ) then !  if state file exists, update iStart and pval, otherwise iteration start with very beginning
     open(unit=70,file=trim(adjustl(restartFile)), action='read', status = 'unknown')
     read(70,*) iDummy
-    read(70,*) (pval(i),i=1,nCalParSum)    
+    read(70,*) (pval(i),i=1,nCalParSum)
     close(70)
   else
     stop 'no restart file:do optimization first'

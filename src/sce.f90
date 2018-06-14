@@ -1,6 +1,6 @@
 module sce
 
-  use nrtype 
+  use nrtype
 
   implicit none
 
@@ -11,7 +11,7 @@ module sce
 contains
 
   subroutine sceua(obj_func, pini, prange, restart, restartFile, seed, maxiter, kstop, pcento, ngs, tmp_file, mask)
-  
+
   use public_var
   use mo_xor4096, only: xor4096, xor4096g, n_save_state
 
@@ -25,7 +25,7 @@ contains
   !
   !  WRITTEN IN OCTOBER 1990.
   !  REVISED IN AUGUST 1991 C  REVISED IN APRIL 1992
-  !  RE-WRITTEN in F90 in JULY 2017 
+  !  RE-WRITTEN in F90 in JULY 2017
   !
   !  STATEMENT BY AUTHOR:
   !  --------------------
@@ -43,7 +43,7 @@ contains
   !  LIST OF INPUT ARGUEMENT VARIABLES
   !
   !     obj_func    = object function
-  !     pini(:)     = Initial parameter set 
+  !     pini(:)     = Initial parameter set
   !     prange(:,:) = Min/Max values for parameter set
   !
   !     -- LIST OF SCE ALGORITHMIC CONTROL PARAMETERS:
@@ -65,7 +65,7 @@ contains
   !     IPRINT = FLAG FOR CONTROLLING PRINT-OUT AFTER EACH SHUFFLING LOOP
   !         = 0, PRINT INFORMATION ON THE BEST POINT OF THE POPULATION
   !         = 1, PRINT INFORMATION ON EVERY POINT OF THE POPULATION
-  !         = 2, PRINT INFORMATION ON ALL THE SAMPLED POINTS 
+  !         = 2, PRINT INFORMATION ON ALL THE SAMPLED POINTS
   !     pnum = NUMBER OF PARAMETERS TO BE OPTIMIZED
   !     npg = NUMBER OF POINTS IN EACH COMPLEX
   !     npt = TOTAL NUMBER OF POINTS IN INITIAL POPULATION (npt=ngs*npg)
@@ -98,10 +98,10 @@ contains
   !     ngs1 = NUMBER OF COMPLEXES IN CURRENT POPULATION
   !     ngs2 = NUMBER OF COMPLEXES IN LAST POPULATION
   !     CRITER(.) = VECTOR CONTAINING THE BEST CRITERION VALUES OF THE LAST
-  
+
     implicit none
     ! input
-    interface 
+    interface
       function obj_func(pp)
         use nrtype
         implicit none
@@ -109,44 +109,44 @@ contains
         real(dp)             :: obj_func
       end function obj_func
     end interface
-    real(dp),              intent(in)    :: pini(:) 
-    real(dp),              intent(in)    :: prange(:,:) 
+    real(dp),              intent(in)    :: pini(:)
+    real(dp),              intent(in)    :: prange(:,:)
     logical(lgc),          intent(in)    :: restart         ! .true.  read state file and initialize, .false. -> start from begining
-    character(*),          intent(in)    :: restartFile     ! name of restart file including iteration, the most recent parameter values 
-    integer(i8b),          intent(in)    :: seed 
-    integer(i8b),          intent(in)    :: maxiter 
-    integer(i4b),          intent(in)    :: kstop 
-    real(dp),              intent(in)    :: pcento 
+    character(*),          intent(in)    :: restartFile     ! name of restart file including iteration, the most recent parameter values
+    integer(i8b),          intent(in)    :: seed
+    integer(i8b),          intent(in)    :: maxiter
+    integer(i4b),          intent(in)    :: kstop
+    real(dp),              intent(in)    :: pcento
     integer(i4b),          intent(in)    :: ngs
-    character(*),          intent(in)    :: tmp_file 
+    character(*),          intent(in)    :: tmp_file
     logical,     optional, intent(in)    :: mask(:)        ! parameter to be optimized (true or false)
     ! local
     integer(i4b), parameter              :: INIFLG=1
-    integer(i4b), parameter              :: IPRINT=2     
+    integer(i4b), parameter              :: IPRINT=2
     integer(i4b), parameter              :: ISCE=999
     integer(i4b), parameter              :: ISRE=998
-    integer(i4b)                         :: istat 
+    integer(i4b)                         :: istat
     integer(i4b)                         :: iSize
     integer(i4b)                         :: pnum
-    integer(i4b)                         :: npg 
-    integer(i4b)                         :: nps 
-    integer(i4b)                         :: nspl 
-    integer(i4b)                         :: mings 
+    integer(i4b)                         :: npg
+    integer(i4b)                         :: nps
+    integer(i4b)                         :: nspl
+    integer(i4b)                         :: mings
     integer(i4b)                         :: LCS(50)
-    integer(i4b)                         :: LPOS 
-    integer(i4b)                         :: IPCNVG 
+    integer(i4b)                         :: LPOS
+    integer(i4b)                         :: IPCNVG
     integer(i4b)                         :: ICALL
     integer(i4b)                         :: NLOOP, LOOP, IGS ! loop index
     integer(i4b)                         :: I, J, K, LDX     ! loop index
     integer(i4b)                         :: K1, K2           ! loop index
     integer(i4b)                         :: II, iStart, igs_start
-    integer(i4b)                         :: npt 
+    integer(i4b)                         :: npt
     integer(i4b)                         :: npt1
-    integer(i4b)                         :: ngs1 
-    integer(i4b)                         :: ngs2 
+    integer(i4b)                         :: ngs1
+    integer(i4b)                         :: ngs2
     integer(i4b)                         :: niter
-    integer(i8b)                         :: urndState(n_save_state) 
-    integer(i8b)                         :: grndState(n_save_state) 
+    integer(i8b)                         :: urndState(n_save_state)
+    integer(i8b)                         :: grndState(n_save_state)
     real(dp), dimension(size(pini))      :: pval             ! initial value of parameter - either input or restart
     real(dp), dimension(2000,size(pini)) :: X
     real(dp), dimension(2000,size(pini)) :: CX
@@ -168,13 +168,13 @@ contains
     real(dp)                             :: DENOMI
     real(dp)                             :: TIMEOU
     real(dp)                             :: BESTF
-    real(dp)                             :: WORSTF 
-    real(dp)                             :: ranval       ! random number 
+    real(dp)                             :: WORSTF
+    real(dp)                             :: ranval       ! random number
     real(dp)                             :: FA           ! intinal function value
     character(len=4)                     :: XNAME(100)   ! parameter names - maximum 100 parameters are allowed
     logical, dimension(size(pini))       :: maske        ! parameter to be optimized (true or false)
     logical                              :: isExistFile  ! logical to check if the file exist or not
-  
+
     XNAME=['  X1','  X2','  X3','  X4','  X5','  X6','  X7','  X8','  X9',' X10',&
            ' X11',' X12',' X13',' X14',' X15',' X16',' X17',' X18',' X19',' X20',&
            ' X21',' X22',' X23',' X24',' X25',' X26',' X27',' X28',' X29',' X30',&
@@ -184,8 +184,8 @@ contains
            ' X61',' X62',' X63',' X64',' X65',' X66',' X67',' X68',' X69',' X70',&
            ' X71',' X72',' X73',' X74',' X75',' X76',' X77',' X78',' X79',' X80',&
            ' X81',' X82',' X83',' X84',' X85',' X86',' X87',' X88',' X89',' X90',&
-           ' X91',' X92',' X93',' X94',' X95',' X96',' X97',' X98',' X99','X100']                                          
-     
+           ' X91',' X92',' X93',' X94',' X95',' X96',' X97',' X98',' X99','X100']
+
     if (present(mask)) then
        if (count(mask) .eq. 0_i4b) then
           stop 'Input argument mask: At least one element has to be true'
@@ -196,13 +196,13 @@ contains
        maske = .true.
     endif
 
-    ! setup SCE variables 
+    ! setup SCE variables
     ! set pval to value from input argument (pini)
     pval  = pini
-    pnum  = size(pini)               ! number of parameter values 
+    pnum  = size(pini)               ! number of parameter values
     npg   = 2_i4b*count(maske)+1_i4b ! number of point per complex
     nps   = count(maske)+1_i4b       ! number of point per subcomplex (points used complex evolution)
-    nspl  = 2_i4b*count(maske)+1_i4b ! number of evovlution steps per complex before shuffling 
+    nspl  = 2_i4b*count(maske)+1_i4b ! number of evovlution steps per complex before shuffling
     mings = ngs
     npt = ngs * npg                  ! number of total sample points (# of complexes time # of point per complex)
 
@@ -216,44 +216,44 @@ contains
     LOOP = 0
     IGS = 0
     igs_start=1
-    XNSTD=0.0_dp 
+    XNSTD=0.0_dp
 
     ! If restart option is true ----
-    ! Read restart file to update initinal SCE states, 
-    ! 1. Main Loop index NLOOP 
+    ! Read restart file to update initinal SCE states,
+    ! 1. Main Loop index NLOOP
     ! 2. Number of Evaluation performed ICALL
-    ! 3. parameter sample X(:,:) 
-    ! 4. evaluation metrics XF(:).  
-    ! 5. XNSTD 
+    ! 3. parameter sample X(:,:)
+    ! 4. evaluation metrics XF(:).
+    ! 5. XNSTD
     ! 6. starting index of complex through IGS, igs_start
     ! if restart file does not exist, start from beginning
     if (restart) then
       inquire(file=trim(adjustl(restartFile)), exist=isExistFile, size=iSize)
-      if ( isExistFile .and. (iSize > 0) ) then 
+      if ( isExistFile .and. (iSize > 0) ) then
         open(unit=70,file=trim(adjustl(restartFile)), action='read', status = 'unknown')
-        read(70,*,iostat=istat) (urndState(I),I=1,n_save_state)    
-        read(70,*,iostat=istat) (grndState(I),I=1,n_save_state)    
+        read(70,*,iostat=istat) (urndState(I),I=1,n_save_state)
+        read(70,*,iostat=istat) (grndState(I),I=1,n_save_state)
         read(70,*,iostat=istat) NLOOP, IGS, ICALL, (XNSTD(I),I=1,pnum)
         J=0
-        do 
+        do
           J=J+1
-          read(70,*,iostat=istat) XF(J), (X(J,I),I=1,pnum)    
+          read(70,*,iostat=istat) XF(J), (X(J,I),I=1,pnum)
           if (istat==-1) exit
         end do
-        if ( NLOOP >= 0 ) NLOOP=NLOOP-1 
+        if ( NLOOP >= 0 ) NLOOP=NLOOP-1
         igs_start=IGS+1
         close(70)
       endif
-    endif 
+    endif
 
     ! Initialize uniform and gaussian andom numbers with seed - see mo_xor4096.f90 for more
     call xor4096(seed,ranval)
     call xor4096g(seed,ranval)
-  
+
     ! COMPUTE THE TOTAL NUMBER OF POINTS IN INITIAL POPUALTION
     ngs1 = ngs
     npt1 = npt
-  
+
     ! COMPUTE THE BOUND FOR PARAMETERS BEING OPTIMIZED
     do J = 1, pnum
       BOUND(J) = prange(J,2)-prange(J,1)
@@ -261,19 +261,19 @@ contains
     end do
 
     ! COMPUTE THE FUNCTION VALUE OF THE INITIAL POINT
-    FA = obj_func(pval) 
-  
+    FA = obj_func(pval)
+
     ! PRINT THE INITIAL POINT AND ITS CRITERION VALUE
-    if ( not (restart) .or. ( restart .and. (ICALL == 0) ) ) then 
+    if ( not (restart) .or. ( restart .and. (ICALL == 0) ) ) then
       open(ISCE,file=trim(adjustl(tmp_file)), action='write', status='unknown')
       write(ISCE,400)
       write(ISCE,500)
       write(ISCE,510) (XNAME(J),J=1,pnum)
       write(ISCE,520) FA,(pval(J),J=1,pnum)
       close(ISCE)
-      if (maxiter .eq. ICALL) return 
+      if (maxiter .eq. ICALL) return
 
-      ! STEP 1.1  Generate 1st point 
+      ! STEP 1.1  Generate 1st point
       ! GENERATE AN INITIAL SET OF npt1 POINTS IN THE PARAMETER SPACE
       ! If restart is true AND if a number of INITIAL point saved is one
       ! IF INIFLG IS EQUAL TO 1, SET X(1,:) TO INITIAL POINT pval(:)==pini(:)
@@ -286,30 +286,30 @@ contains
       else
         do J = 1, pnum
           if ( maske(J) ) then
-            call xor4096(0_i8b,ranval,save_state=urndState) 
-            X(1,J) = prange(J,1) + bound(J) * ranval 
+            call xor4096(0_i8b,ranval,save_state=urndState)
+            X(1,J) = prange(J,1) + bound(J) * ranval
           else
             X(1,J) = pval(J)
           end if
           XX(J) = X(1,J)
         end do
-        XF(1) = obj_func(XX) 
+        XF(1) = obj_func(XX)
       end if
       ICALL = ICALL + 1
       ! PRINT THE RESULTS FOR 1ST POINT
       if ( IPRINT==2 .or. IPRINT==1 ) then
         open(unit=ISCE,file=trim(adjustl(tmp_file)), action='write', position='append')
-        write(ISCE,505) 
+        write(ISCE,505)
         write(ISCE,520) XF(1),(X(1,J),J=1,pnum)
       end if
-      ! PRINT restart file 
+      ! PRINT restart file
       open(unit=ISRE,file=trim(adjustl(restartFile)), action='write', status='unknown')
       write(ISRE,*) (urndState(I), I=1,n_save_state)
       write(ISRE,*) (grndState(I), I=1,n_save_state)
       write(ISRE,641) NLOOP, IGS, ICALL, (XNSTD(J),J=1,pnum)
       write(ISRE,642) XF(1),(X(1,J),J=1,pnum)
       close(ISRE)
-      if (ICALL .ge. maxiter) then  !if maxiter is 1 
+      if (ICALL .ge. maxiter) then  !if maxiter is 1
         if (XF(1) .lt. FA) then
           BESTF=XF(1)
           do J = 1, pnum
@@ -319,7 +319,7 @@ contains
           BESTF=FA
           do J = 1, pnum
             BESTX(J) = XI(J)
-          end do 
+          end do
         end if
         !  PRINT THE FINAL PARAMETER ESTIMATE AND ITS FUNCTION VALUE
         open(unit=ISCE,file=trim(adjustl(tmp_file)), action='write', position='append')
@@ -338,10 +338,10 @@ contains
 
     ! STEP1.2 GENERATE npt1-1 RANDOM POINTS DISTRIBUTED UNIFORMLY IN THE PARAMETER
     ! SPACE, AND COMPUTE THE CORRESPONDING FUNCTION VALUES
-    if ( not (restart) .or. ( restart .and. ( ICALL >= 1 .and. ICALL <= npt1-1 )) ) then ! if restart is used and if INITIAL points is less than npt1 
+    if ( not (restart) .or. ( restart .and. ( ICALL >= 1 .and. ICALL <= npt1-1 )) ) then ! if restart is used and if INITIAL points is less than npt1
       if ( restart .and. (IPRINT==2 .or. IPRINT==1) ) then
         open(unit=ISCE,file=trim(adjustl(tmp_file)), action='write', position='append')
-        do I = 1, ICALL 
+        do I = 1, ICALL
           write(ISCE,645) NLOOP,I,XF(I),(X(I,J),J=1,pnum)
         end do
         close(ISCE)
@@ -350,8 +350,8 @@ contains
       do I = iStart, npt1
         do J = 1, pnum
           if (maske(J)) then
-            call xor4096(0_i8b,ranval, save_state=urndState) 
-            X(I,J) = prange(J,1)  + BOUND(J) * ranval 
+            call xor4096(0_i8b,ranval, save_state=urndState)
+            X(I,J) = prange(J,1)  + BOUND(J) * ranval
           else
             X(I,J) = pval(J)
           endif
@@ -365,7 +365,7 @@ contains
           write(ISCE,520) XF(I),(X(I,J),J=1,pnum)
           close(ISCE)
         endif
-        ! PRINT restart file 
+        ! PRINT restart file
         open(unit=ISRE,file=trim(adjustl(restartFile)), action='write', status='replace')
         write(ISRE,*) (urndState(J), J=1,n_save_state)
         write(ISRE,*) (grndState(J), J=1,n_save_state)
@@ -386,23 +386,23 @@ contains
       do J = 1, pnum
         BESTX(J) = X(1,J)
         WORSTX(J) = X(npt1,J)
-      end do 
+      end do
       BESTF = XF(1)
       WORSTF = XF(npt1)
-  
+
       ! COMPUTE THE PARAMETER RANGE FOR THE INITIAL POPULATION
       call PARSTT(npt1, pnum, X, maske, BOUND, XNSTD, GNRNG, IPCNVG)
-  
+
       ! COMPUTE THE PARAMETER DISTANCE FROM THE INITIAL POPULATION
       call NORMDIST(npt,pnum,X,XI,DIST,BOUND)
-  
+
       ! PRINT THE RESULTS FOR THE INITIAL POPULATION
-      if (IPRINT == 1 .or. IPRINT == 0) then 
+      if (IPRINT == 1 .or. IPRINT == 0) then
         open(unit=ISCE,file=trim(adjustl(tmp_file)), action='write', position='append')
         write(ISCE,600) NLOOP
         write(ISCE,610) (XNAME(J),J=1,pnum)
         write(ISCE,630) NLOOP,ICALL,ngs1,BESTF,WORSTF,DIST(1),(BESTX(J),J=1,pnum)
-        if (IPRINT == 1) then 
+        if (IPRINT == 1) then
           write(ISCE,650) NLOOP
           write(ISCE,615) (XNAME(J),J=1,pnum)
           do I = 1, npt1
@@ -412,7 +412,7 @@ contains
         close(ISCE)
       end if
 
-      if (ICALL .ge. maxiter) then 
+      if (ICALL .ge. maxiter) then
         open(unit=ISCE,file=trim(adjustl(tmp_file)), action='write', position='append')
         write(ISCE,800) maxiter,LOOP,IGS,NLOOP
         write(ISCE,830)
@@ -424,8 +424,8 @@ contains
         end do
         return  ! end of SCE process
       end if
-  
-      if (IPCNVG .eq. 1) then 
+
+      if (IPCNVG .eq. 1) then
         open(unit=ISCE,file=trim(adjustl(tmp_file)), action='write', position='append')
         write(ISCE,820) GNRNG*100.
         write(ISCE,830)
@@ -435,11 +435,11 @@ contains
         do J = 1, pnum
           pval(J) = BESTX(J)
         end do
-        return 
+        return
       end if
 
     end if
-    
+
     ! BEGIN THE MAIN LOOP ----------------
     main:do
       NLOOP = NLOOP + 1
@@ -453,7 +453,7 @@ contains
           end do
           CF(K1) = XF(K2)
         end do
-        niter=0     ! Count number of points sampled during complex evolution (C.E.) step 
+        niter=0     ! Count number of points sampled during complex evolution (C.E.) step
         SX=0.0_dp   ! keep track of points sampled during C.E. step
         STF=0.0_dp  ! keep track of function values for points sampled during C.E. step
         ! BEGIN INNER LOOP - RANDOM SELECTION OF SUB-COMPLEXES ---------------
@@ -473,14 +473,14 @@ contains
               SF(K) = CF(LCS(K))
             end do
           else
-            call xor4096(0_i8b,ranval,save_state=urndState) 
+            call xor4096(0_i8b,ranval,save_state=urndState)
             LCS(1) = 1 + int(npg + 0.5 - SQRT( (npg+.5)**2 - npg * (npg+1) * ranval ))
             do K = 2, nps
-              do 
-                call xor4096(0_i8b,ranval,save_state=urndState) 
+              do
+                call xor4096(0_i8b,ranval,save_state=urndState)
                 LPOS = 1 + int(npg + 0.5 - SQRT((npg+.5)**2 - npg * (npg+1) * ranval ))
                 do K1 = 1, K-1
-                  if (LPOS .EQ. LCS(K1)) cycle 
+                  if (LPOS .EQ. LCS(K1)) cycle
                 end do
                 exit
               end do
@@ -499,7 +499,7 @@ contains
 
           ! USE THE SUB-COMPLEX TO GENERATE NEW POINT(S)
           call CCE(obj_func,pnum,nps,S,SF,SX,STF,niter,prange,XNSTD,ICALL,maxiter,grndState,maske)
-  
+
           ! IF THE SUB-COMPLEX IS ACCEPTED, REPLACE THE NEW SUB-COMPLEX
           ! INTO THE COMPLEX
           do K = 1, nps
@@ -508,14 +508,14 @@ contains
             end do
             CF(LCS(K)) = SF(K)
           end do
-  
+
           ! SORT THE POINTS
           call SORT(npg,pnum,CX,CF)
 
           ! IF MAXIMUM NUMBER OF RUNS EXCEEDED, BREAK OUT OF THE LOOP
           if (ICALL .GE. maxiter) exit
-  
-        end do subcomplex 
+
+        end do subcomplex
 
         ! REPLACE THE NEW COMPLEX INTO ORIGINAL ARRAY X(:,:), XF(:,:)
         do K1 = 1, npg
@@ -524,34 +524,34 @@ contains
             X(K2,J) = CX(K1,J)
           end do
           XF(K2) = CF(K1)
-        end do 
+        end do
 
-        ! PRINT RECORDS OF SAMPLE POINTS and FUNCTION VALUES GENERATED IN CCE  
+        ! PRINT RECORDS OF SAMPLE POINTS and FUNCTION VALUES GENERATED IN CCE
         if (IPRINT==2) then
           open(unit=ISCE,file=trim(adjustl(tmp_file)), action='write', position='append')
           do I = 1,niter
             write(ISCE,520) STF(I),(SX(I,J),J=1,pnum)
           end do
         end if
-  
-       ! PRINT restart file 
+
+       ! PRINT restart file
         open(unit=ISRE,file=trim(adjustl(restartFile)), action='write', status='replace')
         write(ISRE,*) (urndState(I), I=1,n_save_state)
         write(ISRE,*) (grndState(I), I=1,n_save_state)
         write(ISRE,641) NLOOP, IGS, ICALL, (XNSTD(J),J=1,pnum)
-        do I = 1,npt1 
+        do I = 1,npt1
           write(ISRE,642) XF(I), (X(I,J),J=1,pnum)
         end do
         close(ISRE)
 
         if (ICALL .GE. maxiter) exit
-  
+
       end do complexes ! end loop on complexes
 
       ! STEP 5. Suffle complexes
       ! RE-SORT THE POINTS
       call SORT(npt1,pnum,X,XF)
-  
+
       ! RECORD THE BEST AND WORST POINTS
       do J = 1, pnum
         BESTX(J) = X(1,J)
@@ -559,15 +559,15 @@ contains
       end do
       BESTF = XF(1)
       WORSTF = XF(npt1)
-  
+
       ! TEST THE POPULATION FOR PARAMETER CONVERGENCE
       call PARSTT(npt1, pnum, X, maske, BOUND, XNSTD, GNRNG, IPCNVG)
-  
+
       ! COMPUTE THE PARAMETER DISTANCE FROM THE INITIAL POPULATION
       call NORMDIST(npt,pnum,X,XI,DIST,BOUND)
-  
+
       ! PRINT THE RESULTS FOR CURRENT POPULATION
-      if (IPRINT == 1 .or. IPRINT == 0) then 
+      if (IPRINT == 1 .or. IPRINT == 0) then
         open(unit=ISCE,file=trim(adjustl(tmp_file)), action='write', position='append')
         write(ISCE,600) NLOOP
         write(ISCE,610) (XNAME(J),J=1,pnum)
@@ -581,7 +581,7 @@ contains
         end if
         close(ISCE)
       end if
-  
+
       ! TEST IF MAXIMUM NUMBER OF FUNCTION EVALUATIONS EXCEEDED
       if (ICALL .GE. maxiter) then
         ! PRINT THE FINAL PARAMETER ESTIMATE AND ITS FUNCTION VALUE
@@ -590,30 +590,30 @@ contains
         write(ISCE,830)
         write(ISCE,510) (XNAME(J),J=1,pnum)
         write(ISCE,520) BESTF,(BESTX(J),J=1,pnum)
-        close(ISCE) 
+        close(ISCE)
         do J = 1, pnum
           pval(J) = BESTX(J)
         end do
         return
       end if
-  
+
       ! COMPUTE THE COUNT ON SUCCESSIVE LOOPS W/O FUNCTION IMPROVEMENT
       CRITER(10) = BESTF
-      if (NLOOP .lt. (kstop+1)) then 
+      if (NLOOP .lt. (kstop+1)) then
         do LDX = 1, 9
           CRITER(LDX) = CRITER(LDX+1)
         end do
       else
         DENOMI = abs(CRITER(10-kstop) + CRITER(10)) / 2.
         TIMEOU = abs(CRITER(10-kstop) - CRITER(10)) / DENOMI
-        if (TIMEOU .lt. pcento) then 
+        if (TIMEOU .lt. pcento) then
           !  PRINT THE FINAL PARAMETER ESTIMATE AND ITS FUNCTION VALUE
           open(unit=ISCE,file=trim(adjustl(tmp_file)), action='write', position='append')
           write(ISCE,810) pcento*100.,kstop
           write(ISCE,830)
           write(ISCE,510) (XNAME(J),J=1,pnum)
           write(ISCE,520) BESTF,(BESTX(J),J=1,pnum)
-          close(ISCE) 
+          close(ISCE)
           do J = 1, pnum
             pval(J) = BESTX(J)
           end do
@@ -623,22 +623,22 @@ contains
           CRITER(LDX) = CRITER(LDX+1)
         end do
       end if
-  
+
       ! IF POPULATION IS CONVERGED INTO A SUFFICIENTLY SMALL SPACE
-      if (IPCNVG .eq. 1) then 
+      if (IPCNVG .eq. 1) then
         ! PRINT THE FINAL PARAMETER ESTIMATE AND ITS FUNCTION VALUE
         open(unit=ISCE,file=trim(adjustl(tmp_file)), action='write', position='append')
         write(ISCE,820) GNRNG*100.
         write(ISCE,830)
         write(ISCE,510) (XNAME(J),J=1,pnum)
         write(ISCE,520) BESTF,(BESTX(J),J=1,pnum)
-        close(ISCE) 
+        close(ISCE)
         do J = 1, pnum
           pval(J) = BESTX(J)
         end do
         return
       end if
-  
+
       ! NONE OF THE STOPPING CRITERIA IS SATISFIED, CONTINUE SEARCH
       ! CHECK FOR COMPLEX NUMBER REDUCTION
       if (ngs1 .gt. mings) then
@@ -651,7 +651,7 @@ contains
     end do main  ! end of main loop
 
     return
-  
+
     400 format(//,2X,50(1H=),/,2X,'ENTER THE SHUFFLED COMPLEX EVOLUTION GLOBAL SEARCH',/,2X,50(1H=))
     500 format(//,'*** PRINT THE INITIAL POINT AND ITS FUNCTION VALUE ***')
     505 format(/,' PRINT SAMPLED POINT and ITS FUNCTION VALUES')
@@ -675,7 +675,7 @@ contains
     820 format(//,1X,'*** OPTIMIZATION TERMINATED BECAUSE THE POPULATION',&
                ' HAS CONVERGED INTO ',/,4X,F5.3,' PERCENT OF THE FEASIBLE SPACE ***')
     830 format(//,'*** PRINT THE FINAL PARAMETER ESTIMATE AND ITS CRITERION VALUE ***')
-  
+
   end subroutine
 
 !====================================================================
@@ -684,7 +684,7 @@ contains
   ! DOWNHILL SIMPLEX ALGORITHM TO GENERATE A NEW POINT(S) FROM A SUB-COMPLEX
   ! SUB-COMPLEX VARIABLES
     implicit none
-    interface 
+    interface
       function obj_func(pp)
         use nrtype
         implicit none
@@ -693,23 +693,23 @@ contains
       end function obj_func
     end interface
     integer(i4b),          intent(in)    :: pnum
-    integer(i4b),          intent(in)    :: nps 
-    real(dp),              intent(in)    :: prange(:,:) 
+    integer(i4b),          intent(in)    :: nps
+    real(dp),              intent(in)    :: prange(:,:)
     real(dp),              intent(in)    :: XNSTD(:)
-    integer(i8b),          intent(in)    :: maxiter 
+    integer(i8b),          intent(in)    :: maxiter
     real(dp),              intent(inout) :: S(:,:)
     real(dp),              intent(inout) :: SF(:)
     real(dp),              intent(out)   :: SX(:,:)
     real(dp),              intent(out)   :: STF(:)
     integer(i4b),          intent(inout) :: niter
     integer(i4b),          intent(inout) :: ICALL
-    integer(i8b),          intent(inout) :: grndState(:) 
+    integer(i8b),          intent(inout) :: grndState(:)
     logical,               intent(in)    :: maske(:)
     ! local
     integer(i4b)                         :: N
     integer(i4b)                         :: I,J
-    integer(i4b)                         :: ibound 
-    real(dp)                             :: zvalue 
+    integer(i4b)                         :: ibound
+    real(dp)                             :: zvalue
     real(dp)                             :: FW
     real(dp)                             :: FNEW      ! FUNCTION VALUE OF THE WORST POINT
     real(dp)                             :: WO(pnum)  ! THE WORST POINT OF THE SIMPLEX
@@ -722,7 +722,7 @@ contains
     ! COMPUTE THE CENTROID CE OF THE REMAINING POINTS
     ! COMPUTE STEP, THE VECTOR BETWEEN WO AND CE
     ! IDENTIFY THE WORST FUNCTION VALUE FW
-    do J = 1, pnum 
+    do J = 1, pnum
       WO(J) = S(N,J)
       CE(J) = 0.0
       do I = 1, N-1
@@ -736,15 +736,15 @@ contains
    ! COMPUTE THE NEW POINT SNEW
 
    ! FIRST TRY A REFLECTION STEP
-    do J = 1, pnum 
+    do J = 1, pnum
       SNEW(J) = WO(J) + 2. * STEP(J)
     end do
     ! CHECK IF SNEW IS WITHIN BOUND OR NOT
     ibound = 0
-    do J = 1, pnum 
+    do J = 1, pnum
       if (SNEW(J) .GT. prange(J,2) .or. SNEW(J) .LT. prange(J,1)) then
         ibound = 1
-        exit 
+        exit
       end if
     end do
     ! if SNEW is outside the bound,
@@ -752,7 +752,7 @@ contains
     ! A NORMAL DISTRIBUTION WITH BEST POINT OF THE SUB-COMPLEX
     ! AS MEAN AND STANDARD DEVIATION OF THE POPULATION AS STD
     if (ibound .eq. 1) then
-      do J = 1, pnum 
+      do J = 1, pnum
         if (maske(J)) then
           do
             call xor4096g(0_i8b,zvalue,save_state=grndState)
@@ -760,8 +760,8 @@ contains
             if (SNEW(J) .le. prange(J,2) .and. SNEW(J) .ge. prange(J,1)) exit
           end do
         end if
-      end do 
-    end if 
+      end do
+    end if
 
     ! COMPUTE THE FUNCTION VALUE AT SNEW
     FNEW = obj_func(SNEW)
@@ -776,8 +776,8 @@ contains
 
     !COMPARE FNEW WITH THE WORST FUNCTION VALUE FW
     ! FNEW IS LESS THAN FW, ACCEPT THE NEW POINT SNEW AND RETURN
-    if (FNEW .le. FW) then 
-      do J = 1, pnum 
+    if (FNEW .le. FW) then
+      do J = 1, pnum
         S(N,J) = SNEW(J)
       end do
       SF(N) = FNEW
@@ -786,7 +786,7 @@ contains
     if (ICALL .ge. maxiter) return
 
    ! FNEW IS GREATER THAN FW, SO TRY A CONTRACTION STEP
-    do J = 1, pnum 
+    do J = 1, pnum
       SNEW(J) = WO(J) + 0.5 * STEP(J)
     end do
 
@@ -804,7 +804,7 @@ contains
     ! COMPARE FNEW TO THE WORST VALUE FW
     ! IF FNEW IS LESS THAN OR EQUAL TO FW, THEN ACCEPT THE POINT AND RETURN
     if (FNEW .le. FW) then
-      do J = 1, pnum 
+      do J = 1, pnum
         S(N,J) = SNEW(J)
       end do
       SF(N) = FNEW
@@ -816,7 +816,7 @@ contains
     ! IF BOTH REFLECTION AND CONTRACTION FAIL, CHOOSE ANOTHER POINT
     ! ACCORDING TO A NORMAL DISTRIBUTION WITH BEST POINT OF THE SUB-COMPLEX
     ! AS MEAN AND STANDARD DEVIATION OF THE POPULATION AS STD
-    do J = 1, pnum 
+    do J = 1, pnum
       if (maske(J)) then
         do
           call xor4096g(0_i8b,zvalue,save_state=grndState)
@@ -838,7 +838,7 @@ contains
     enddo
 
     ! REPLACE THE WORST POINT BY THE NEW POINT
-    DO J = 1, pnum 
+    DO J = 1, pnum
       S(N,J) = SNEW(J)
     END DO
     SF(N) = FNEW
@@ -869,7 +869,7 @@ contains
     real(dp)                   :: gsum
     real(dp),parameter         :: delta=1.e-20_dp
     real(dp),parameter         :: peps=1.e-5_dp
-    integer(i4b)               :: IDX,KDX ! loop indices 
+    integer(i4b)               :: IDX,KDX ! loop indices
 
     ! Initinalize XNSTD
     XNSTD=0.0_dp
@@ -922,7 +922,7 @@ contains
     real(dp),      intent(in)  :: BOUND(:)
     real(dp),      intent(out) :: DIST(:)
     ! local variables
-    integer(i4b)               :: IDX, KDX ! loop indices 
+    integer(i4b)               :: IDX, KDX ! loop indices
 
 !  COMPUTE MAXIMUM, MINIMUM AND STANDARD DEVIATION OF PARAMETER VALUES
     do KDX = 1, npt
@@ -931,7 +931,7 @@ contains
           DIST(KDX) = DIST(KDX) + ABS(X(KDX,IDX) - XI(IDX))/BOUND(IDX)
        end do
        DIST(KDX) = DIST(KDX) / pnum
-    end do 
+    end do
     return
   end subroutine
 
@@ -983,17 +983,17 @@ contains
 !     WK(.,.), IWK(.) = LOCAL VARIBLES
     implicit none
     !input
-    integer(i4b),intent(in)    :: N,M 
-    real(dp),    intent(inout) :: RA(:) 
+    integer(i4b),intent(in)    :: N,M
+    real(dp),    intent(inout) :: RA(:)
     !output
-    real(dp),    intent(out)   :: RB(:,:) 
+    real(dp),    intent(out)   :: RB(:,:)
     !local variable
-    real(dp)    ,allocatable   :: WK(:,:) 
-    integer(i4b),allocatable   :: INDX(:) 
-    integer(i4b),allocatable   :: IWK(:) 
-    integer(i4b)               :: I,J 
-    
-    allocate( WK(size(RB,1),size(RB,2)) ) 
+    real(dp)    ,allocatable   :: WK(:,:)
+    integer(i4b),allocatable   :: INDX(:)
+    integer(i4b),allocatable   :: IWK(:)
+    integer(i4b)               :: I,J
+
+    allocate( WK(size(RB,1),size(RB,2)) )
     allocate( INDX(size(RA)) )
     allocate( IWK(size(RA)) )
 
@@ -1025,11 +1025,11 @@ contains
     implicit none
     !input
     integer(i4b), intent(in)     :: N
-    integer(i4b), intent(inout)  :: RA(N) 
+    integer(i4b), intent(inout)  :: RA(N)
     !local
     integer(i4b)                 :: I, J     ! loop index
     integer(i4b)                 :: L,IR
-    integer(i4b)                 :: RRA 
+    integer(i4b)                 :: RRA
 
     L = (N / 2) + 1
     IR = N
@@ -1065,7 +1065,7 @@ contains
         end if
       end do
       RA(I) = RRA
-    end do 
+    end do
 
   end subroutine
 
@@ -1075,15 +1075,15 @@ contains
     implicit none
     !input
     integer(i4b), intent(in)  :: N
-    real(dp),     intent(in)  :: ARRIN(N) 
+    real(dp),     intent(in)  :: ARRIN(N)
     !output
-    integer(i4b), intent(out) :: INDX(N) 
-    !local 
+    integer(i4b), intent(out) :: INDX(N)
+    !local
     integer(i4b)              :: I, J     ! loop index
     integer(i4b)              :: L,IR
     real(i4b)                 :: Q
-    integer(i4b)              :: INDXT 
-     
+    integer(i4b)              :: INDXT
+
     do J = 1, N
       INDX(J) = J
     end do
@@ -1118,12 +1118,12 @@ contains
           else
             J = IR + 1
           end if
-        else 
+        else
           exit
         end if
       end do
       INDX(I) = INDXT
-    end do 
+    end do
 
   end subroutine
 

@@ -1,5 +1,5 @@
 module modelLayer
-! Compute model soil parameter transfer function 
+! Compute model soil parameter transfer function
 USE nrtype                                        ! variable types, etc.
 USE data_type                                     ! Including custum data structure definition
 USE public_var                                    ! Including common constant (physical constant, other e.g., missingVal, etc.)
@@ -18,42 +18,42 @@ contains
   subroutine comp_model_depth(hModel,   &          ! output: model layer thickness [mm]
                               zModel,   &          ! output: model layer bottom depth [mm]
                               hfrac,    &          ! input : fraction of total soil layer for each model layer
-                              soildata, &          ! input : soil data 
-                              err, message)        ! output: error id and message 
+                              soildata, &          ! input : soil data
+                              err, message)        ! output: error id and message
 
-  use var_lookup,  only:ixVarSoilData,nVarSoilData ! index of soil data variables and number of variables 
+  use var_lookup,  only:ixVarSoilData,nVarSoilData ! index of soil data variables and number of variables
   implicit none
   ! input
   real(dp),     intent(in)    :: hfrac(:)          ! fraction of total soil layer for each model layer
-  type(namevar),intent(in)    :: soilData(:)       ! soil data container for local soil polygon 
-  ! output 
+  type(namevar),intent(in)    :: soilData(:)       ! soil data container for local soil polygon
+  ! output
   real(dp),     intent(out)   :: hModel(:,:)       ! model layer thickness [mm]
   real(dp),     intent(out)   :: zModel(:,:)       ! depth of model layer bottom [mm]
   integer(i4b), intent(out)   :: err               ! error code
   character(*), intent(out)   :: message           ! error message
-  ! local 
-  integer(i4b)                :: iPoly             ! loop index of polygon 
-  integer(i4b)                :: iLyr              ! loop index of model layer 
-  integer(i4b)                :: nSLyr             ! number of Soil layer 
-  integer(i4b)                :: nPoly             ! number of soil polygon 
-  integer(i4b)                :: nFrac             ! number of fraction coefficients 
+  ! local
+  integer(i4b)                :: iPoly             ! loop index of polygon
+  integer(i4b)                :: iLyr              ! loop index of model layer
+  integer(i4b)                :: nSLyr             ! number of Soil layer
+  integer(i4b)                :: nPoly             ! number of soil polygon
+  integer(i4b)                :: nFrac             ! number of fraction coefficients
   real(dp)                    :: topZ              ! depth of top of model layers
   real(dp)                    :: Ztot_in           ! total depth of soil layers
   logical(lgc),allocatable    :: mask(:,:)
   real(dp),allocatable        :: lyr_packed(:)
   integer(i4b)                :: nElm
- 
+
   ! Initialize error control
   err=0; message=trim(message)//'comp_model_depth/'
-  ! Get number of soil layer 
+  ! Get number of soil layer
   associate( hslyrs => soilData(ixVarSoilData%hslyrs)%dvar2 )
-  nSLyr=size(hslyrs,1) 
-  nPoly=size(hslyrs,2) 
-  ! Make mask to exclude layers with missing soil texture data assuming  
+  nSLyr=size(hslyrs,1)
+  nPoly=size(hslyrs,2)
+  ! Make mask to exclude layers with missing soil texture data assuming
   allocate(mask(nSLyr,nPoly),stat=err); if(err/=0)then;message=trim(message)//'error allocating mask';return;endif
   mask = ( soilData(ixVarSoilData%sand_pct)%dvar2 > 0 .and. &
            soilData(ixVarSoilData%clay_pct)%dvar2 > 0 .and. &
-           soilData(ixVarSoilData%silt_pct)%dvar2 > 0) 
+           soilData(ixVarSoilData%silt_pct)%dvar2 > 0)
   do iPoly=1,nPoly
     allocate(lyr_packed(count(mask(:,iPoly))),stat=err); if(err/=0)then;message=trim(message)//'error allocating lyr_packed';return;endif
     lyr_packed = pack( hslyrs(:,iPoly), mask(:,iPoly) )
@@ -67,7 +67,7 @@ contains
         endif
         hModel(1,iPoly)=Ztot_in
         zModel(1,iPoly)=hModel(1,iPoly)
-      else  
+      else
         if (nFrac+1 /= nLyr)then
           err=15;message=trim(message)//'number of nFrac does not match with number of model layer';return
         endif
@@ -83,15 +83,15 @@ contains
     else ! if there are no real soil layers
       hModel(:,iPoly) = dmiss
       zModel(:,iPoly) = dmiss
-    endif 
+    endif
     deallocate(lyr_packed)
   enddo
   end associate
-  return 
-end subroutine 
+  return
+end subroutine
 
 ! *****************************************************************************
-! Public subroutine: weight of soil layers within each mode layer 
+! Public subroutine: weight of soil layers within each mode layer
 ! ******************************************************************************
  subroutine map_slyr2mlyr( hSoil, zModel, lyrmap, err, message)
   ! Define variables
@@ -99,18 +99,18 @@ end subroutine
   ! input
   real(dp), intent(in)        :: hSoil(:,:)      ! thickness of soil layer [m]
   real(dp), intent(in)        :: zModel(:,:)     ! depth of model layer bottom [m]
-  ! output 
+  ! output
   type(poly),intent(inout)    :: lyrmap(:)       ! data type storing weight and intersecting soil layer index for each model layer
   integer(i4b),intent(out)    :: err             ! error code
   character(*),intent(out)    :: message         ! error message
-  ! local 
+  ! local
   real(dp),    allocatable    :: zSoil(:,:)      ! thickness of soil layer [m]
   integer(i4b),parameter      :: nSub=11         ! max. number of Soil layer within Model layer
-  integer(i4b)                :: ctr             ! counter 
-  integer(i4b)                :: iPoly           ! loop index of polygon 
-  integer(i4b)                :: iSlyr           ! loop index of soil layer 
-  integer(i4b)                :: iMlyr           ! loop index of model layer 
-  integer(i4b)                :: nPoly           ! number of polygon 
+  integer(i4b)                :: ctr             ! counter
+  integer(i4b)                :: iPoly           ! loop index of polygon
+  integer(i4b)                :: iSlyr           ! loop index of soil layer
+  integer(i4b)                :: iMlyr           ! loop index of model layer
+  integer(i4b)                :: nPoly           ! number of polygon
   integer(i4b)                :: nSLyr           ! number of Soil layer (to be computed based on input soil data)
   real(dp),allocatable        :: Zs_top(:)       ! depth to top of ith soil layer (i=1..nSlyr)
   real(dp),allocatable        :: Zs_bot(:)       ! depth to bottom of ith soil layer (i=1..nSlyr)
@@ -118,12 +118,12 @@ end subroutine
   real(dp),allocatable        :: Zm_bot(:)       ! depth to bottom of ith model layer (i=1..nLyr)
   integer(i4b),allocatable    :: idxTop(:)       ! index of soil layer of which top is within ith model layer (i=1..nLyr)
   integer(i4b),allocatable    :: idxBot(:)       ! index of the lowest soil layer of which bottom is within ith model layer (i=1..nLyr)
-  
+
   ! initialize error control
   err=0; message='map_slyr2mlyr/'
   ! dimensions
   nSLyr=size(hSoil,1)  !get soil layer number
-  nPoly=size(hSoil,2)  !get polygon 
+  nPoly=size(hSoil,2)  !get polygon
   if (nPoly /= size(zModel,2))then;err=30;message=trim(message)//'number of polygon mismatch'; return; endif
   allocate(zSoil,source=hSoil)
   do iSLyr=2,nSlyr
@@ -146,7 +146,7 @@ end subroutine
       allocate(Zm_bot(nLyr),stat=err);  if(err/=0)then; message=trim(message)//'error allocating Zm_bot'; return; endif
       allocate(idxTop(nLyr),stat=err);  if(err/=0)then; message=trim(message)//'error allocating idxTop'; return; endif
       allocate(idxBot(nLyr),stat=err);  if(err/=0)then; message=trim(message)//'error allocating idxBot'; return; endif
-      !-- Compute for depths to 1)top and 2) bottom of soil and model layer 
+      !-- Compute for depths to 1)top and 2) bottom of soil and model layer
       Zm_top(1)=0.0_dp
       Zs_top(1)=0.0_dp
       do iMLyr=2,nLyr
@@ -158,51 +158,51 @@ end subroutine
       Zm_bot = zModel(:,iPoly)
       Zs_bot = zSoil(:,iPoly)
       !-- Find index of upper-most soil layer which gets within model layer (for each model layer)
-      ! condition: from top to bottom of soil layer, 1st soil layer whose bottom gets below top of i-th model layer 
-      do iMLyr=1,nLyr   
-        do iSLyr = 1,nSlyr  
-          if ( Zm_top(iMlyr)-Zs_bot(iSLyr)<0.0_dp ) then 
-            idxTop(iMlyr) = iSLyr; exit
-          endif
-        enddo 
-      enddo 
-      !-- Find index of lowest soil layer which get within model layer (for each layer)
-      ! condition: from top to bottom of soil layer 1st soil layer whose top get deeper than bottom of i-th model layer 
+      ! condition: from top to bottom of soil layer, 1st soil layer whose bottom gets below top of i-th model layer
       do iMLyr=1,nLyr
         do iSLyr = 1,nSlyr
-          if ( Zm_bot(iMlyr)-Zs_bot(iSLyr)<=valMin ) then 
+          if ( Zm_top(iMlyr)-Zs_bot(iSLyr)<0.0_dp ) then
+            idxTop(iMlyr) = iSLyr; exit
+          endif
+        enddo
+      enddo
+      !-- Find index of lowest soil layer which get within model layer (for each layer)
+      ! condition: from top to bottom of soil layer 1st soil layer whose top get deeper than bottom of i-th model layer
+      do iMLyr=1,nLyr
+        do iSLyr = 1,nSlyr
+          if ( Zm_bot(iMlyr)-Zs_bot(iSLyr)<=valMin ) then
               idxBot(iMlyr) = iSLyr; exit
           endif
-        enddo 
-      enddo 
+        enddo
+      enddo
       ! Error check
       do iMLyr=1,nLyr
-        if (idxTop(iMlyr)>11)then;             err=30;message=trim(message)//'index of idxTop not assinged'; return;endif 
+        if (idxTop(iMlyr)>11)then;             err=30;message=trim(message)//'index of idxTop not assinged'; return;endif
         if (idxBot(iMlyr)>11)then;             err=30;message=trim(message)//'index of idxBot not assinged'; return;endif
         if (idxTop(iMlyr)-idxBot(iMlyr)>0)then;err=30;message=trim(message)//'index of idxTop lower than idxBot';return;endif
       enddo
       !-- Compute weight of soil layer contributing to each model layer and populate lyrmap variable
       do iMLyr=1,nLyr
         ctr = 1
-        ! loop frm the upper most soil layer to the lowest soil layer, but only soil layers that intersect current model layer 
-        do iSLyr=idxTop(iMlyr),idxBot(iMLyr)         
+        ! loop frm the upper most soil layer to the lowest soil layer, but only soil layers that intersect current model layer
+        do iSLyr=idxTop(iMlyr),idxBot(iMLyr)
           if ( idxTop(iMlyr) == idxBot(iMlyr) )then ! if model layer is completely within soil layer
-              lyrmap(iPoly)%layer(iMLyr)%weight(ctr)   = 1.0 
+              lyrmap(iPoly)%layer(iMLyr)%weight(ctr)   = 1.0
               lyrmap(iPoly)%layer(iMLyr)%ixSubLyr(ctr) = iSLyr
-          else                                      ! if model layer contains multiple soil layers  
-            if ( iSLyr == idxTop(iMLyr) )then      ! for the upper most soil layer that intersect model layer 
+          else                                      ! if model layer contains multiple soil layers
+            if ( iSLyr == idxTop(iMLyr) )then      ! for the upper most soil layer that intersect model layer
               lyrmap(iPoly)%layer(iMLyr)%weight(ctr)   = (Zs_bot(iSLyr)-Zm_top(iMlyr))/zModel(iMlyr,iPoly)
-              lyrmap(iPoly)%layer(iMLyr)%ixSubLyr(ctr) = iSLyr 
-            elseif ( iSLyr == idxBot(iMLyr) ) then  ! for the lowest soil layer that intersect model layer 
+              lyrmap(iPoly)%layer(iMLyr)%ixSubLyr(ctr) = iSLyr
+            elseif ( iSLyr == idxBot(iMLyr) ) then  ! for the lowest soil layer that intersect model layer
               lyrmap(iPoly)%layer(iMLyr)%weight(ctr)   = (Zm_bot(iMlyr)-Zs_top(iSLyr))/zModel(iMLyr,iPoly)
-              lyrmap(iPoly)%layer(iMLyr)%ixSubLyr(ctr) = iSLyr 
-            else                                    ! for soil layers that completely in model layer 
+              lyrmap(iPoly)%layer(iMLyr)%ixSubLyr(ctr) = iSLyr
+            else                                    ! for soil layers that completely in model layer
               lyrmap(iPoly)%layer(iMLyr)%weight(ctr)   = hSoil(iSLyr,iPoly)/zModel(iMlyr,iPoly)
-              lyrmap(iPoly)%layer(iMLyr)%ixSubLyr(ctr) = iSLyr 
+              lyrmap(iPoly)%layer(iMLyr)%ixSubLyr(ctr) = iSLyr
             endif
           endif
           ctr = ctr+1
-        enddo 
+        enddo
       enddo
       deallocate(Zs_bot,stat=err); if(err/=0)then; message=trim(message)//'error deallocating Zs_bot'; return; endif
       deallocate(Zs_top,stat=err); if(err/=0)then; message=trim(message)//'error deallocating Zs_top'; return; endif
@@ -210,9 +210,9 @@ end subroutine
       deallocate(Zm_bot,stat=err); if(err/=0)then; message=trim(message)//'error deallocating Zm_bot'; return; endif
       deallocate(idxTop,stat=err); if(err/=0)then; message=trim(message)//'error deallocating idxTop'; return; endif
       deallocate(idxBot,stat=err); if(err/=0)then; message=trim(message)//'error deallocating idxBot'; return; endif
-    endif 
-  enddo 
+    endif
+  enddo
   return
  end subroutine
 
-end module modelLayer 
+end module modelLayer

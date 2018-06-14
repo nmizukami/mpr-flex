@@ -18,11 +18,11 @@ subroutine paramMaster(err,message)
   !output variable
   integer(i4b),intent(out)      :: err     ! error code
   character(*),intent(out)      :: message ! error message
-  
+
   ! initialize error control
   err=0; message='popMeta/'
   ! -----
-  !  Public subroutine: Master list of gamma parameters  
+  !  Public subroutine: Master list of gamma parameters
   ! -----------------------
   !                                                        name,    default, lwr bound, upr bound,parent beta,   TF,    type,    mask, h-scale,     p-norm,     v scale,    p-norm,  perLyr
   !ks transfer function
@@ -69,8 +69,8 @@ subroutine paramMaster(err,message)
   gammaMeta(ixGamma%D21gamma1)       = par_meta('D21gamma1'      ,     2.0_dp,   1.75_dp,    3.5_dp,"D2"       ,     1, "soil", .False.,      "na", -999.0_dp,       "na", -999.0_dp,.False.)
   gammaMeta(ixGamma%D31gamma1)       = par_meta('D31gamma1'      ,     1.0_dp,  0.001_dp,    2.0_dp,"D3"       ,     1, "soil", .False.,      "na", -999.0_dp,       "na", -999.0_dp,.False.)
   gammaMeta(ixGamma%D41gamma1)       = par_meta('D41gamma1'      ,     2.0_dp,    1.2_dp,    2.5_dp,"D4"       ,     1, "soil", .False.,      "na", -999.0_dp,       "na", -999.0_dp,.False.)
-  gammaMeta(ixGamma%exp1gamma1)      = par_meta('exp1gamma1'     ,     3.0_dp,    0.8_dp,    1.2_dp,"exp"      ,     1, "soil", .False.,      "na", -999.0_dp,       "na", -999.0_dp,.False.)
-  gammaMeta(ixGamma%exp1gamma2)      = par_meta('exp1gamma2'     ,     2.0_dp,    0.8_dp,    1.2_dp,"exp"      ,     1, "soil", .False.,      "na", -999.0_dp,       "na", -999.0_dp,.False.)
+  gammaMeta(ixGamma%expt1gamma1)     = par_meta('expt1gamma1'    ,     3.0_dp,    0.8_dp,    1.2_dp,"expt"     ,     1, "soil", .False.,      "na", -999.0_dp,       "na", -999.0_dp,.False.)
+  gammaMeta(ixGamma%expt1gamma2)     = par_meta('expt1gamma2'    ,     2.0_dp,    0.8_dp,    1.2_dp,"expt"     ,     1, "soil", .False.,      "na", -999.0_dp,       "na", -999.0_dp,.False.)
   gammaMeta(ixGamma%bbl1gamma1)      = par_meta('bbl1gamma1'     ,    0.32_dp,    0.8_dp,    1.2_dp,"bbl"      ,     1, "soil", .False.,      "na", -999.0_dp,       "na", -999.0_dp,.False.)
   gammaMeta(ixGamma%bbl1gamma2)      = par_meta('bbl1gamma2'     ,     4.2_dp,    0.8_dp,    1.2_dp,"bbl"      ,     1, "soil", .False.,      "na", -999.0_dp,       "na", -999.0_dp,.False.)
   gammaMeta(ixGamma%bd1gamma1)       = par_meta('bd1gamma1'      ,     1.0_dp,    0.9_dp,    1.1_dp,"bd"       ,     1, "soil", .False.,      "na", -999.0_dp,       "na", -999.0_dp,.False.)
@@ -86,7 +86,7 @@ subroutine paramMaster(err,message)
   gammaMeta(ixGamma%rexp1gamma1)     = par_meta('rexp1gamma1',        0.03_dp,   0.02_dp,   0.04_dp,"rexp"     ,     1, "soil", .False.,      "na", -999.0_dp,       "na", -999.0_dp,.False.)
   gammaMeta(ixGamma%lai1gamma1)      = par_meta('lai1gamma1',          1.0_dp,    0.8_dp,    1.2_dp,"lai"      ,     1,  "veg", .False.,      "na", -999.0_dp,       "na", -999.0_dp,.False.)
   ! -----
-  !  Master list of beta parameters  
+  !  Master list of beta parameters
   ! -----------------------
   !                                                        name,    default, lwr bound, upr bound,parent beta,    TF,    type,    mask, h-scale,    p-norm,   v scale,    p-norm,  perLyr
   betaMeta(ixBeta%uhshape)         = par_meta('uhshape'        ,     1.0_dp,    0.1_dp,    3.0_dp,     "beta",  -999, "route", .False.,     "na", -999.0_dp,      "na", -999.0_dp, .False.)
@@ -142,10 +142,10 @@ subroutine paramMaster(err,message)
   betaMeta(ixBeta%plwhc)           = par_meta('plwhc'          ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "snow", .False.,  "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
   betaMeta(ixBeta%daygm)           = par_meta('daygm'          ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "snow", .False.,  "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
 
-end subroutine 
+end subroutine
 
 ! -----
-!  Public subroutine: Populate metadata for MPR infor 
+!  Public subroutine: Populate metadata for MPR infor
 ! -----------------------
 subroutine popMprMeta(err,message)
   use nrtype
@@ -160,12 +160,12 @@ subroutine popMprMeta(err,message)
   use globalData, only:tdata_meta
   use globalData, only:vdata_meta
   use globalData, only:vprp_meta
-  
+
   implicit none
   !output variable
   integer(i4b),intent(out)      :: err     ! error code
   character(*),intent(out)      :: message ! error message
-  
+
   ! initialize error control
   err=0; message='popMprMeta/'
   ! Mapping data meta
@@ -180,16 +180,16 @@ subroutine popMprMeta(err,message)
   sdata_meta(ixVarSoilData%silt_pct)     = var_meta('silt_pct'     ,"silt percentage"                                    ,"%"           ,"2D", "double" )
   sdata_meta(ixVarSoilData%clay_pct)     = var_meta('clay_pct'     ,"clay percentage"                                    ,"%"           ,"2D", "double" )
   sdata_meta(ixVarSoilData%bulk_density) = var_meta('bulk_density' ,"bulk density"                                       ,"kg m-3"      ,"2D", "double" )
-  ! Vege data variables 
+  ! Vege data variables
   vdata_meta(ixVarVegData%polyid)        = var_meta('polyid'       ,"vege polygon id"                                    ,"-"           ,"1D", "integer")
   vdata_meta(ixVarVegData%vegclass)      = var_meta('vegclass'     ,"vegetation class"                                   ,"-"           ,"1D", "integer")
   vdata_meta(ixVarVegData%lai)           = var_meta('lai'          ,"monthly lai"                                        ,"m2 m-2"      ,"2D", "double" )
-  ! topo data variables 
+  ! topo data variables
   tdata_meta(ixVarTopoData%polyid)       = var_meta('polyid'       ,"vege polygon id"                                    ,"-"           ,"1D", "integer")
   tdata_meta(ixVarTopoData%ele_mean)     = var_meta('ele_mean'     ,"mean elevation"                                     ,"m"           ,"1D", "double" )
   tdata_meta(ixVarTopoData%ele_std)      = var_meta('ele_std'      ,"std elevation"                                      ,"m"           ,"1D", "double" )
   tdata_meta(ixVarTopoData%slp_mean)     = var_meta('slp_mean'     ,"mean slope"                                         ,"-"           ,"1D", "double" )
-  ! Vege property variables 
+  ! Vege property variables
   vprp_meta(ixPrpVeg%lai)                = var_meta('lai'          ,"Monthly lai"                                        ,"m2 m-2"      ,"2D", "double")
   vprp_meta(ixPrpVeg%vegtype)            = var_meta('vegtype'      ,'vegetation type'                                    ,"-"           ,"1D", "integer")
   vprp_meta(ixPrpVeg%nroot)              = var_meta('nroot'        ,'rooting depth'                                      ,"m"           ,"1D", "double" )
@@ -204,4 +204,4 @@ subroutine popMprMeta(err,message)
 
 end subroutine
 
-end module popMeta 
+end module popMeta

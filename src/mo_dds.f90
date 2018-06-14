@@ -63,7 +63,7 @@ CONTAINS
   !>        The function to be minimized is the first argument of DDS and must be defined as \n
   !>        \code
   !>            function func(p)
-  !>              use nrtype 
+  !>              use nrtype
   !>              implicit none
   !>              real(dp), dimension(:), intent(in) :: p
   !>              real(dp) :: func
@@ -92,7 +92,7 @@ CONTAINS
   !>                                                                       (default: None)
   !>        \param[in] "integer(i8b), optional        :: maxiter"           Maximum number of iteration or function evaluation
   !>                                                                       (default: 1000)
-  !>        \param[in] "logical, optional            :: maxit"             Maximization (.True.) or 
+  !>        \param[in] "logical, optional            :: maxit"             Maximization (.True.) or
   !>                                                                       minimization (.False.) of function
   !>                                                                       (default: .False.)
   !>        \param[in] "logical, optional            :: mask(size(pini))"  parameter to be optimized (true or false)
@@ -147,7 +147,7 @@ CONTAINS
 
     INTERFACE
        function obj_func(pp)
-         use nrtype 
+         use nrtype
          implicit none
          real(dp), dimension(:), intent(in) :: pp
          real(dp) :: obj_func
@@ -156,7 +156,7 @@ CONTAINS
     real(dp),    dimension(:),             intent(in)  :: pini        ! inital value of decision (parameter) variables
     real(dp),    dimension(:,:),           intent(in)  :: prange      ! Min/max values of decision variables
     logical(lgc),                          intent(in)  :: restart     ! .true.  read state file and initialize, .false. -> start from begining
-    character(len=strLen),                 intent(in)  :: restartFile ! name of restart file including iteration, the most recent parameter values 
+    character(len=strLen),                 intent(in)  :: restartFile ! name of restart file including iteration, the most recent parameter values
     real(dp),                    optional, intent(in)  :: r           ! DDS perturbation parameter (-> 0.2 by default)
     integer(i8b),                optional, intent(in)  :: seed        ! User seed to initialise the random number generator
     integer(i8b),                optional, intent(in)  :: maxiter     ! Maximum number of iteration or function evaluation
@@ -171,13 +171,13 @@ CONTAINS
     real(dp), dimension(size(pini))         :: pval                   ! initial value of decision variables - either input or restart
     integer(i8b)                            :: iseed                  ! User given seed
     integer(i8b)                            :: imaxiter               ! Maximum number of iteration or function evaluation
-    integer(i8b)                            :: iStart                 ! starting index of objective function evaluation 
+    integer(i8b)                            :: iStart                 ! starting index of objective function evaluation
     real(dp)                                :: ir                     ! DDS perturbation parameter
     real(dp)                                :: imaxit                 ! Maximization or minimization of function
     real(dp)                                :: of_new, of_best        ! intermediate results for objective function values
-    real(dp)                                :: Pn, new_value          ! intermediate results for parameter value  
+    real(dp)                                :: Pn, new_value          ! intermediate results for parameter value
     real(dp), dimension(size(pini))         :: pnew                   ! Test value of decision (parameter) variables
-    real(dp), dimension(size(pini))         :: pbest                  ! Best value of decision (parameter) variables 
+    real(dp), dimension(size(pini))         :: pbest                  ! Best value of decision (parameter) variables
     real(dp)                                :: ranval                 ! random value
     integer(i8b)                            :: i                      ! maxiter=i8b
     integer(i4b)                            :: j, dvn_count, dv       ! pnum=i4b
@@ -188,7 +188,7 @@ CONTAINS
     logical                                 :: isExistFile            ! logical to check if the file exist or not
     character(50)                           :: rowfmt1                ! string specifying write format for real value
     character(50)                           :: rowfmt2                ! string specifying write format for real value
-    
+
     ! set starting iteration to 1 and pval to value from input argument (pini)
     iStart=1
     pval=pini
@@ -203,13 +203,13 @@ CONTAINS
       inquire(file=trim(adjustl(restartFile)), exist=isExistFile)
       if ( isExistFile ) then !  if state file exists, update iStart and pval, otherwise iteration start with very beginning
         open(unit=70,file=trim(adjustl(restartFile)), action='read', status = 'unknown')
-        read(70,*) iStart 
-        read(70,*) (pval(i),i=1,pnum)    
+        read(70,*) iStart
+        read(70,*) (pval(i),i=1,pnum)
         close(70)
         iStart=iStart+1
         print*, iStart
        endif
-    endif 
+    endif
     ! r Perturbation parameter
     ir = 0.2_dp
     if (present(r)) ir = r
@@ -332,20 +332,20 @@ CONTAINS
           pbest     = pnew
        end if
        if (present(history)) history(i+1) = of_best
-       
+
        ! Write out in temp file if exist
        file_write2: if (present(tmp_file)) then
           open(unit=999,file=trim(adjustl(tmp_file)), action='write', position='append')
           write(rowfmt1,'(A,I5,A)') '(I6,1X',(pnum+1),'(1X,ES17.10))'
           if (imaxit .lt. 0.0_dp) then       ! Maximize
-             write(999,rowfmt1) i, -of_best, pbest 
+             write(999,rowfmt1) i, -of_best, pbest
           else                               ! Minimize
-             write(999,rowfmt1) i, of_best, pbest 
+             write(999,rowfmt1) i, of_best, pbest
           end if
           close(999)
        end if file_write2
 
-       ! update out in restart file 
+       ! update out in restart file
        open(unit=80,file=trim(adjustl(restartFile)), action='write', status='replace')
        write(rowfmt2,'(A,I5,A)') '(',pnum,'(1X,ES17.10))'
        write(80,*) i

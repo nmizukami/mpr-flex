@@ -1,26 +1,26 @@
 module strings
 
-use nrtype 
+use nrtype
 
 private :: value_dr,value_sr,value_di,value_si
 private :: write_dr,write_sr,write_di,write_si
 private :: writeq_dr,writeq_sr,writeq_di,writeq_si
 
-interface value  ! Generic operator for converting a number string to a 
-                 ! number. Calling syntax is 'call value(numstring,number,ios)' 
-                 ! where 'numstring' is a number string and 'number' is a 
-                 ! real number or an integer (single or double precision).         
+interface value  ! Generic operator for converting a number string to a
+                 ! number. Calling syntax is 'call value(numstring,number,ios)'
+                 ! where 'numstring' is a number string and 'number' is a
+                 ! real number or an integer (single or double precision).
    module procedure value_dr
    module procedure value_sr
    module procedure value_di
    module procedure value_si
 end interface
 
-interface writenum  ! Generic  interface for writing a number to a string. The 
+interface writenum  ! Generic  interface for writing a number to a string. The
                     ! number is left justified in the string. The calling syntax
                     ! is 'call writenum(number,string,format)' where 'number' is
                     ! a real number or an integer, 'string' is a character string
-                    ! containing the result, and 'format' is the format desired, 
+                    ! containing the result, and 'format' is the format desired,
                     ! e.g., 'e15.6' or 'i5'.
    module procedure write_dr
    module procedure write_sr
@@ -31,7 +31,7 @@ end interface
 interface writeq  ! Generic interface equating a name to a numerical value. The
                   ! calling syntax is 'call writeq(unit,name,value,format)' where
                   ! unit is the integer output unit number, 'name' is the variable
-                  ! name, 'value' is the real or integer value of the variable, 
+                  ! name, 'value' is the real or integer value of the variable,
                   ! and 'format' is the format of the value. The result written to
                   ! the output unit has the form <name> = <value>.
    module procedure writeq_dr
@@ -56,19 +56,19 @@ implicit none
 character(len=*)              :: str,delims
 character(len=len_trim(str))  :: strsav
 character(len=*),dimension(:) :: args
-integer                       :: nargs 
+integer                       :: nargs
 !locat variables
 integer                       :: na
-integer                       :: i 
+integer                       :: i
 integer                       :: lenstr
-integer                       :: k 
+integer                       :: k
 
 strsav=str
 call compact(str)
 na=size(args)
 do i=1,na
   args(i)=' '
-end do  
+end do
 nargs=0
 lenstr=len_trim(str)
 if(lenstr==0) return
@@ -79,7 +79,7 @@ do
    nargs=nargs+1
    call split(str,delims,args(nargs))
    call removebksl(args(nargs))
-end do   
+end do
 str=strsav
 
 end subroutine parse
@@ -95,9 +95,9 @@ character(len=*)             :: str
 character(len=1)             :: ch
 character(len=len_trim(str)) :: outstr
 integer                      :: lenstr
-integer                      :: isp 
+integer                      :: isp
 integer                      :: k
-integer                      :: i 
+integer                      :: i
 integer                      :: ich
 
 str=adjustl(str)
@@ -109,23 +109,23 @@ k=0
 do i=1,lenstr
   ch=str(i:i)
   ich=iachar(ch)
-  
+
   select case(ich)
-  
+
     case(9,32)     ! space or tab character
       if(isp==0) then
         k=k+1
         outstr(k:k)=' '
       end if
       isp=1
-      
+
     case(33:)      ! not a space, quote, or control character
       k=k+1
       outstr(k:k)=ch
       isp=0
-      
+
   end select
-  
+
 end do
 
 str=adjustl(outstr)
@@ -139,8 +139,8 @@ subroutine removesp(str)
 implicit none
 character(len=*)             :: str
 !local variables
-integer                      :: lenstr 
-integer                      :: k 
+integer                      :: lenstr
+integer                      :: k
 integer                      :: i
 integer                      :: ich
 character(len=1)             :: ch
@@ -154,10 +154,10 @@ k=0
 do i=1,lenstr
   ch=str(i:i)
   ich=iachar(ch)
-  select case(ich)    
+  select case(ich)
     case(0:32)  ! space, tab, or control character
-         cycle       
-    case(33:)  
+         cycle
+    case(33:)
       k=k+1
       outstr(k:k)=ch
   end select
@@ -175,8 +175,8 @@ implicit none
 character(len=*) :: str
 real(kr8)        :: rnum
 integer          :: ios
-integer          :: tlen 
-integer          :: ipos 
+integer          :: tlen
+integer          :: ipos
 
 tlen=len_trim(str)
 ipos=scan(str,'Ee')
@@ -196,7 +196,7 @@ implicit none
 character(len=*) :: str
 real(kr4)        :: rnum
 integer          :: ios
-real(kr8)        :: rnumd 
+real(kr8)        :: rnumd
 
 call value_dr(str,rnumd,ios)
 if( abs(rnumd) > huge(rnum) ) then
@@ -251,13 +251,13 @@ end subroutine value_si
 subroutine shiftstr(str,n)
 ! Shifts characters in in the string 'str' n positions (positive values
 ! denote a right shift and negative values denote a left shift). Characters
-! that are shifted off the end are lost. Positions opened up by the shift 
+! that are shifted off the end are lost. Positions opened up by the shift
 ! are replaced by spaces.
 implicit none
 character(len=*)  :: str
-integer           :: n 
+integer           :: n
 integer           :: nabs
-integer           :: lenstr 
+integer           :: lenstr
 
 lenstr=len(str)
 nabs=iabs(n)
@@ -266,7 +266,7 @@ if(nabs>=lenstr) then
   return
 end if
 if(n<0) str=str(nabs+1:)//repeat(' ',nabs)  ! shift left
-if(n>0) str=repeat(' ',nabs)//str(:lenstr-nabs)  ! shift right 
+if(n>0) str=repeat(' ',nabs)//str(:lenstr-nabs)  ! shift right
 return
 
 end subroutine shiftstr
@@ -274,13 +274,13 @@ end subroutine shiftstr
 !**********************************************************************
 
 subroutine insertstr(str,strins,idx)
-! Inserts the string 'strins' into the string 'str' at position 'idx'. 
+! Inserts the string 'strins' into the string 'str' at position 'idx'.
 ! Characters in 'str' starting at position 'idx' are shifted right to
-! make room for the inserted string. Trailing spaces of 'strins' are 
+! make room for the inserted string. Trailing spaces of 'strins' are
 ! removed prior to insertion
 implicit none
 character(len=*)        :: str,strins
-integer                 :: idx 
+integer                 :: idx
 integer                 :: lenstrins
 character(len=len(str)) :: tempstr
 
@@ -302,7 +302,7 @@ subroutine delsubstr(str,substr)
 implicit none
 character(len=*):: str,substr
 integer          :: lensubstr
-integer          :: ipos 
+integer          :: ipos
 
 lensubstr=len_trim(substr)
 ipos=index(str,substr)
@@ -311,7 +311,7 @@ if(ipos == 1) then
    str=str(lensubstr+1:)
 else
    str=str(:ipos-1)//str(ipos+lensubstr:)
-end if   
+end if
 return
 
 end subroutine delsubstr
@@ -324,7 +324,7 @@ subroutine delall(str,substr)
 implicit none
 character(len=*) :: str,substr
 integer          :: lensubstr
-integer          :: ipos 
+integer          :: ipos
 
 lensubstr=len_trim(substr)
 do
@@ -335,7 +335,7 @@ do
    else
       str=str(:ipos-1)//str(ipos+lensubstr:)
    end if
-end do   
+end do
 return
 
 end subroutine delall
@@ -349,14 +349,14 @@ character (len=*)             :: str
 character (len=len_trim(str)) :: ucstr
 !local variables
 integer                       :: tlen
-integer                       :: ioffset 
+integer                       :: ioffset
 integer                       :: iquote
 integer                       :: i
 integer                       :: iav
-integer                       :: iqc 
+integer                       :: iqc
 
 tlen=len_trim(str)
-ioffset=iachar('A')-iachar('a')     
+ioffset=iachar('A')-iachar('a')
 iquote=0
 ucstr=str
 do i=1,tlen
@@ -390,10 +390,10 @@ character (len=*)             :: str
 character (len=len_trim(str)) :: lcstr
 !local variables
 integer                       :: tlen
-integer                       :: ioffset 
-integer                       :: iquote 
-integer                       :: i 
-integer                       :: iav,iqc 
+integer                       :: ioffset
+integer                       :: iquote
+integer                       :: i
+integer                       :: iav,iqc
 
 tlen=len_trim(str)
 ioffset=iachar('A')-iachar('a')
@@ -432,7 +432,7 @@ integer             :: ios
 character (len=*)   :: line
 integer             :: ipos
 
-do  
+do
   read(nunitr,'(a)', iostat=ios) line      ! read input line
   if(ios /= 0) return
   line=adjustl(line)
@@ -458,7 +458,7 @@ character        :: delim1,delim2,ch
 integer          :: idelim2
 integer          :: i,istart,iend,inc
 integer          :: lenstr
-integer          :: isum 
+integer          :: isum
 
 lenstr=len_trim(str)
 delim1=str(ipos:ipos)
@@ -504,7 +504,7 @@ end do
 if(isum /= 0) then
    write(*,*) delim1,' has no matching delimiter'
    return
-end if   
+end if
 imatch=i
 
 return
@@ -583,7 +583,7 @@ character         :: ch
 character(len=10) :: exprs
 integer           :: ipos
 integer           :: lstr
-integer           :: i 
+integer           :: i
 
 ipos=scan(str,'eE')
 if(ipos>0) then
@@ -593,7 +593,7 @@ endif
 lstr=len_trim(str)
 do i=lstr,1,-1
    ch=str(i:i)
-   if(ch=='0') cycle          
+   if(ch=='0') cycle
    if(ch=='.') then
       str=str(1:i)//'0'
       if(ipos>0) str=trim(str)//trim(exprs)
@@ -715,9 +715,9 @@ subroutine split(str,delims,before,sep)
 ! Routine finds the first instance of a character from 'delims' in the
 ! the string 'str'. The characters before the found delimiter are
 ! output in 'before'. The characters after the found delimiter are
-! output in 'str'. The optional output character 'sep' contains the 
-! found delimiter. A delimiter in 'str' is treated like an ordinary 
-! character if it is preceded by a backslash (\). If the backslash 
+! output in 'str'. The optional output character 'sep' contains the
+! found delimiter. A delimiter in 'str' is treated like an ordinary
+! character if it is preceded by a backslash (\). If the backslash
 ! character is desired in 'str', then precede it with another backslash.
 implicit none
 character(len=*)   :: str,delims,before
@@ -726,8 +726,8 @@ character,optional :: sep
 logical            :: pres
 character          :: ch,cha
 integer            :: lenstr
-integer            :: k,ibsl 
-integer            :: i 
+integer            :: k,ibsl
+integer            :: i
 integer            :: ipos,iposa
 
 pres=present(sep)
@@ -752,7 +752,7 @@ do i=1,lenstr
       ibsl=1
       cycle
    end if
-   ipos=index(delims,ch)         
+   ipos=index(delims,ch)
    if(ipos == 0) then          ! character is not a delimiter
       k=k+1
       before(k:k)=ch
@@ -790,8 +790,8 @@ implicit none
 character(len=*)             :: str
 !local variables
 integer                      :: lenstr
-integer                      :: k,ibsl 
-integer                      :: i 
+integer                      :: k,ibsl
+integer                      :: i
 character(len=1)             :: ch
 character(len=len_trim(str)) :: outstr
 
@@ -823,4 +823,4 @@ end subroutine removebksl
 
 !**********************************************************************
 
-end module strings  
+end module strings

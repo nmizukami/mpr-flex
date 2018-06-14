@@ -1,15 +1,15 @@
 module upscaling
 ! This module contain (up)scale operators from native geophysical data (geo-poly) resolution to model resolution (model-poly)
-! For each model-poly, scaling operator takes areal weights (weight vector) and data values (data vector) of each geo-poly 
-! and compute a single value 
+! For each model-poly, scaling operator takes areal weights (weight vector) and data values (data vector) of each geo-poly
+! and compute a single value
 !
-! Scale operators and subroutines included here are 
+! Scale operators and subroutines included here are
 ! 1. powermean: weighted power mean
 ! 2. wamean: weighted arithmatic mean
 ! 3. wgmean: weighted geometric mean
 ! 4. whmean: weighted harmonic mean
-! 5. wmedi:  weighted median 
-! Also subroutine that allows to switch scaling method by specifying the method in input 
+! 5. wmedi:  weighted median
+! Also subroutine that allows to switch scaling method by specifying the method in input
 
 use nrtype                            ! variable types, etc.
 use data_type                         ! Including custum data structure definition
@@ -24,7 +24,7 @@ public::aggreg
 contains
 
 ! *********************************************************************
-! subroutine: Spatical aggregation with selected method 
+! subroutine: Spatical aggregation with selected method
 ! *********************************************************************
 subroutine aggreg(wgtval, wgtvec, datvec, method, pnorm, err, message )
   implicit none
@@ -32,12 +32,12 @@ subroutine aggreg(wgtval, wgtvec, datvec, method, pnorm, err, message )
   real(dp),              intent(in)      :: wgtvec(:)        ! weight vector
   real(dp),              intent(in)      :: datvec(:)        ! data value vector
   character(*),          intent(in)      :: method
-  real(dp),              intent(in)      :: pnorm            ! p value for pnorm 
-  ! output 
+  real(dp),              intent(in)      :: pnorm            ! p value for pnorm
+  ! output
   real(dp),              intent(out)     :: wgtval           ! weighted value
   integer(i4b),          intent(out)     :: err              ! error code
   character(len=strLen), intent(out)     :: message          ! error message for current routine
-  ! local 
+  ! local
   character(len=strLen)                  :: cmessage         ! error message from subroutine
 
   err=0; message="aggreg/"
@@ -53,7 +53,7 @@ subroutine aggreg(wgtval, wgtvec, datvec, method, pnorm, err, message )
 end subroutine
 
 ! *********************************************************************
-! Subroutine: Weighted p-norm aggregation 
+! Subroutine: Weighted p-norm aggregation
 !
 ! purpose: aggregating values according to a p-norm
 !
@@ -74,22 +74,22 @@ subroutine wpnorm(wgtval, wgtvec, datvec, err, message, p_exp_in )
   real(dp),               intent(in)  :: wgtvec(:)          ! weight vector
   real(dp),               intent(in)  :: datvec(:)          ! data value vector
   real(dp),    optional,  intent(in)  :: p_exp_in           ! p used in p-norm
-  ! output 
+  ! output
   real(dp),               intent(out) :: wgtval             ! weighted (scaled) value
   integer(i4b),           intent(out) :: err                ! error code
   character(len=strLen),  intent(out) :: message            ! error message for current routine
-  ! local 
+  ! local
   real(dp)                            :: wgtval_sum         ! Sum of weight (should be one)
-  real(dp),parameter                  :: wgtMin=1.e-50_dp   ! minimum value for weight 
-  real(dp),parameter                  :: paramMin=1.e-50_dp ! minimum value for parameters (for now exclued missing value, -999) 
+  real(dp),parameter                  :: wgtMin=1.e-50_dp   ! minimum value for weight
+  real(dp),parameter                  :: paramMin=1.e-50_dp ! minimum value for parameters (for now exclued missing value, -999)
   logical(lgc),allocatable            :: mask(:)            ! maks
   real(dp),allocatable                :: wgtvec_packed(:)   ! packed weight vector
-  real(dp),allocatable                :: datvec_packed(:)   ! packed data value vector 
+  real(dp),allocatable                :: datvec_packed(:)   ! packed data value vector
   real(dp)                            :: wgtvec_sum         ! packed weight vector
   real(dp)                            :: p_exp              ! local p used in p-norm
   integer(i4b)                        :: nElm_org           ! number of vector elements -original vector
-  integer(i4b)                        :: nElm               ! number of vector elements -packed vector 
-  integer(i4b)                        :: iElm               ! index of vector 
+  integer(i4b)                        :: nElm               ! number of vector elements -packed vector
+  integer(i4b)                        :: iElm               ! index of vector
 
   err=0; message="wpnorm/"
   ! initialize p
@@ -98,7 +98,7 @@ subroutine wpnorm(wgtval, wgtvec, datvec, err, message, p_exp_in )
   ! Compute size of dimension
   nElm_org=size(wgtvec)
   if (nElm_org /= size(datvec))then; err=20;message=trim(message)//'data and wgtvec vector:different size';return;endif
-  ! Create mask 
+  ! Create mask
   allocate(mask(nElm_org),stat=err); if(err/=0)then;message=trim(message)//'problem allocating mask';return;endif
   mask=(wgtvec > wgtMin .and. datvec > paramMin)
   ! Pack vector
@@ -112,7 +112,7 @@ subroutine wpnorm(wgtval, wgtvec, datvec, err, message, p_exp_in )
   if (nElm > 0) then
     ! Recompute weight
     wgtvec_sum = sum(wgtvec_packed)
-    if (wgtvec_sum /= 1.0) wgtvec_packed = wgtvec_packed / wgtvec_sum 
+    if (wgtvec_sum /= 1.0) wgtvec_packed = wgtvec_packed / wgtvec_sum
     wgtval_sum = 0._dp
     if (p_exp .gt. 100._dp) then
 !      print*, '    using maximum norm'
@@ -121,7 +121,7 @@ subroutine wpnorm(wgtval, wgtvec, datvec, err, message, p_exp_in )
 !      print*, '    using geometric mean'
       do iElm = 1, nElm
         wgtval_sum = wgtval_sum + log(datvec_packed(iElm)) * wgtvec_packed(iElm)
-      end do 
+      end do
       wgtval = exp(wgtval_sum)
     else if (p_exp .lt. -100._dp) then
 !      print*, '    using minimum '
@@ -142,31 +142,31 @@ subroutine wpnorm(wgtval, wgtvec, datvec, err, message, p_exp_in )
 end subroutine
 
 ! *********************************************************************
-! subroutine: computing unweighted sum 
+! subroutine: computing unweighted sum
 ! *********************************************************************
 subroutine asum(wgtval, wgtvec, datvec, err, message )
   implicit none
   ! input
   real(dp),               intent(in)      :: wgtvec(:)           ! weight vector
   real(dp),               intent(in)      :: datvec(:)           ! data value vector
-  ! output 
+  ! output
   real(dp),               intent(out)     :: wgtval              ! weighted (scaled) value
   integer(i4b),           intent(out)     :: err                 ! error code
   character(len=strLen),  intent(out)     :: message             ! error message for current routine
-  ! local 
-  real(dp),parameter                      :: wgtMin=1.e-50_dp    ! minimum value for weight 
-  real(dp),parameter                      :: paramMin=1.e-50_dp  ! minimum value for parameters (for now exclued missing value, -999) 
+  ! local
+  real(dp),parameter                      :: wgtMin=1.e-50_dp    ! minimum value for weight
+  real(dp),parameter                      :: paramMin=1.e-50_dp  ! minimum value for parameters (for now exclued missing value, -999)
   logical(lgc),allocatable                :: mask(:)             ! maks
   real(dp),allocatable                    :: wgtvec_packed(:)    ! packed weight vector
-  real(dp),allocatable                    :: datvec_packed(:)    ! packed data value vector 
+  real(dp),allocatable                    :: datvec_packed(:)    ! packed data value vector
   integer(i4b)                            :: nElm_org            ! number of vector elements -original vector
-  integer(i4b)                            :: nElm                ! number of vector elements -packed vector 
+  integer(i4b)                            :: nElm                ! number of vector elements -packed vector
 
   err=0; message="asum/"
   ! check : sum of weight should be one
   nElm_org=size(wgtvec)
   if (nElm_org /= size(datvec))then; err=20;message=trim(message)//'data and wgtvec vector:different size';return;endif
-  ! Create mask 
+  ! Create mask
   allocate(mask(nElm_org),stat=err); if(err/=0)then;message=trim(message)//'problem allocating mask';return;endif
   mask=(wgtvec > wgtMin .and. datvec > paramMin)
   ! Pack vector
@@ -182,40 +182,40 @@ subroutine asum(wgtval, wgtvec, datvec, err, message )
   else
     wgtval=dmiss
   endif
-  return 
+  return
 end subroutine
 
 ! *********************************************************************
-! subroutine: computing weighted median  
+! subroutine: computing weighted median
 ! *********************************************************************
 subroutine wmedi(wgtval, wgtvec, datvec, err, message )
   implicit none
   ! input
   real(dp),dimension(:), intent(in)    :: wgtvec             ! original weight vector
-  real(dp),dimension(:), intent(in)    :: datvec             ! original data vector 
-  ! output 
+  real(dp),dimension(:), intent(in)    :: datvec             ! original data vector
+  ! output
   real(dp),              intent(out)   :: wgtval             ! weighted (scaled) value
   integer(i4b),          intent(out)   :: err             ! error code
   character(len=strLen), intent(out)   :: message          ! error message for current routine
-  ! local 
-  real(dp),parameter                   :: wgtMin=1.e-50_dp   ! minimum value for weight 
-  real(dp)                             :: swapDat 
-  real(dp)                             :: swapWgt 
-  real(dp)                             :: wsum               ! sum of weight at ith sorted weight vector 
-  integer(i4b)                         :: k                  ! counter 
+  ! local
+  real(dp),parameter                   :: wgtMin=1.e-50_dp   ! minimum value for weight
+  real(dp)                             :: swapDat
+  real(dp)                             :: swapWgt
+  real(dp)                             :: wsum               ! sum of weight at ith sorted weight vector
+  integer(i4b)                         :: k                  ! counter
   real(dp)                             :: wgtvec_sum         ! Sum of weight (should be one)
   logical(lgc),allocatable             :: mask(:)            ! maks
   real(dp),allocatable                 :: wgtvec_packed(:)   ! packed weight vector
-  real(dp),allocatable                 :: datvec_packed(:)   ! packed data value vector 
+  real(dp),allocatable                 :: datvec_packed(:)   ! packed data value vector
   integer(i4b)                         :: nElm_org           ! number of vector elements -original vector
-  integer(i4b)                         :: nElm 
-  integer(i4b)                         :: iElm 
-  integer(i4b)                         :: jElm 
+  integer(i4b)                         :: nElm
+  integer(i4b)                         :: iElm
+  integer(i4b)                         :: jElm
 
   err=0; message="whmean/"
   nElm_org =size(wgtvec)
   if (nElm_org /= size(datvec))then; err=20;message=trim(message)//'data and wgtvec vector:different size';return;endif
-  ! Create mask 
+  ! Create mask
   allocate(mask(nElm_org),stat=err); if(err/=0)then;message=trim(message)//'error allocating mask';return;endif
   mask = (wgtvec > wgtMin .and. (datvec > dmiss .or. datvec < dmiss) )
   ! Pack vector
@@ -226,12 +226,12 @@ subroutine wmedi(wgtval, wgtvec, datvec, err, message )
   ! Re-check size of packed vector
   nElm=size(wgtvec_packed)
   if (nElm /= size(datvec_packed))then;err=20;message=trim(message)//'data and wgtvec: different size';return;endif
-  
+
   if (nElm > 0) then
     ! Recompute weight
     wgtvec_sum = sum(wgtvec_packed)
     if ( wgtvec_sum > 1.0_dp .and. wgtvec_sum < 1.0_dp ) &
-      wgtvec_packed = wgtvec_packed/wgtvec_sum    
+      wgtvec_packed = wgtvec_packed/wgtvec_sum
     !sorting data and wgtvec based on data values
     do iElm=1,nElm
       do jElm=iElm,nElm
@@ -239,51 +239,51 @@ subroutine wmedi(wgtval, wgtvec, datvec, err, message )
           swapDat = datvec_packed(iElm)
           datvec_packed(iElm) = datvec_packed(jElm)
           datvec_packed(jElm) = swapDat
-          
+
           swapWgt = wgtvec_packed(iElm)
           wgtvec_packed(iElm) = wgtvec_packed(jElm)
           wgtvec_packed(jElm) = swapWgt
-         end if 
+         end if
       end do
     end do
     ! Initialize
     k = 1
     wsum = wgtvec_packed(1)
     ! Find weighted Median
-    do 
-      if (wsum > wgtvec_sum/2) exit 
+    do
+      if (wsum > wgtvec_sum/2) exit
       k = k+1
       wsum = wsum + wgtvec_packed(k)
     enddo
     wgtval = datvec_packed(k)
   else
-    wgtval = dmiss 
+    wgtval = dmiss
   endif
   return
 end subroutine
 
 ! *********************************************************************
-! subroutine: computing weighted mode 
+! subroutine: computing weighted mode
 ! *********************************************************************
 subroutine wmode(wgtval, wgtvec, datvec, err, message )
   ! Define variables
   implicit none
   ! input
   real(dp),              intent(in)    :: wgtvec(:)             ! original weight vector
-  real(dp),              intent(in)    :: datvec(:)             ! original data vector 
-  ! output 
+  real(dp),              intent(in)    :: datvec(:)             ! original data vector
+  ! output
   real(dp),              intent(out)   :: wgtval             ! weighted (scaled) value
   integer(i4b),          intent(out)   :: err             ! error code
   character(len=strLen), intent(out)   :: message          ! error message for current routine
-  ! local 
-  real(dp),parameter                   :: wgtMin=1.e-50_dp   ! minimum value for weight 
+  ! local
+  real(dp),parameter                   :: wgtMin=1.e-50_dp   ! minimum value for weight
   real(dp)                             :: wgtvec_sum         ! Sum of weight (should be one)
-  real(dp),allocatable                 :: wsum(:)            ! sum of weight where data values are identical 
+  real(dp),allocatable                 :: wsum(:)            ! sum of weight where data values are identical
   logical(lgc),allocatable             :: mask(:)            ! masks
   logical(lgc),allocatable             :: maskunq(:)         ! mask to identify unique element
   real(dp),allocatable                 :: wgtvec_packed(:)   ! packed weight vector
-  real(dp),allocatable                 :: datvec_packed(:)   ! packed data value vector 
-  real(dp),allocatable                 :: datvec_unq(:)      ! unique data value vector 
+  real(dp),allocatable                 :: datvec_packed(:)   ! packed data value vector
+  real(dp),allocatable                 :: datvec_unq(:)      ! unique data value vector
   integer(i4b),allocatable             :: idxdat(:)          ! index vector indicating location of unique element
   integer(i4b)                         :: nElm_org           ! number of vector elements -original vector
   integer(i4b)                         :: nElm               ! number of vector elements masked
@@ -306,7 +306,7 @@ subroutine wmode(wgtval, wgtvec, datvec, err, message )
   ! Re-check size of packed vector
   nElm=size(wgtvec_packed)
   if (nElm /= size(datvec_packed))then;err=20;message=trim(message)//'data and wgtvec: different size';return;endif
-    
+
   if (nElm > 0) then
     ! Recompute weight
     wgtvec_sum = sum(wgtvec_packed)
@@ -327,7 +327,7 @@ subroutine wmode(wgtval, wgtvec, datvec, err, message )
     wsum = 0._dp
     do iElm=1,size(datvec_unq)
       do jElm=1,nElm
-        if (datvec_packed(jElm) == datvec_unq(iElm)) & 
+        if (datvec_packed(jElm) == datvec_unq(iElm)) &
           wsum(iElm) =  wsum(iElm) + wgtvec_packed(jElm)
       end do
     end do
@@ -340,34 +340,34 @@ subroutine wmode(wgtval, wgtvec, datvec, err, message )
 end subroutine
 
 ! *********************************************************************
-! subroutine: computing weighted harmonic mean 
+! subroutine: computing weighted harmonic mean
 ! *********************************************************************
 subroutine whmean(wgtval, wgtvec, datvec, err, message )
   implicit none
   ! input
   real(dp),               intent(in)     :: wgtvec(:)           ! Original weight vector
   real(dp),               intent(in)     :: datvec(:)           ! Original data value vector
-  ! output 
+  ! output
   real(dp),               intent(out)    :: wgtval              ! weighted (scaled) value
   integer(i4b),           intent(out)    :: err             ! error code
   character(len=strLen),  intent(out)    :: message          ! error message for current routine
-  ! local 
-  real(dp),parameter                     :: wgtMin=1.e-50_dp    ! minimum value for weight 
+  ! local
+  real(dp),parameter                     :: wgtMin=1.e-50_dp    ! minimum value for weight
   real(dp)                               :: wgtval_sum          ! Sum of weight (should be one)
   logical(lgc),allocatable               :: mask(:)             ! maks
   real(dp),allocatable                   :: wgtvec_packed(:)    ! packed weight vector
-  real(dp),allocatable                   :: datvec_packed(:)    ! packed data value vector 
+  real(dp),allocatable                   :: datvec_packed(:)    ! packed data value vector
   real(dp)                               :: wgtvec_sum          ! Sum of weight (should be one)
   integer(i4b)                           :: nElm_org            ! number of vector elements -original vector
-  integer(i4b)                           :: nElm                ! Number of vector elements 
-  integer(i4b)                           :: iElm                ! Index of vector 
+  integer(i4b)                           :: nElm                ! Number of vector elements
+  integer(i4b)                           :: iElm                ! Index of vector
 
   err=0; message="whmean/"
   ! check : sum of weight should be one
-  ! check : sum of datvec is positive real 
+  ! check : sum of datvec is positive real
   nElm_org =size(wgtvec)
   if (nElm_org /= size(datvec))then; err=20;message=trim(message)//'data and wgtvec vector:different size';return;endif
-  ! Create mask 
+  ! Create mask
   allocate(mask(nElm_org),stat=err); if(err/=0)then;message=trim(message)//'error allocating mask';return;endif
   mask = (wgtvec > wgtMin .and. (datvec > dmiss .or. datvec < dmiss))
   ! Pack vector
@@ -383,7 +383,7 @@ subroutine whmean(wgtval, wgtvec, datvec, err, message )
     ! Recompute weight
     wgtvec_sum = sum(wgtvec_packed)
     if (wgtvec_sum /= 1.0) &
-      wgtvec_packed = wgtvec_packed/wgtvec_sum    
+      wgtvec_packed = wgtvec_packed/wgtvec_sum
     if ( any(datvec_packed == 0._dp) ) then
       wgtval = 0._dp
     else
@@ -394,7 +394,7 @@ subroutine whmean(wgtval, wgtvec, datvec, err, message )
       wgtval = 1._dp/wgtval_sum
     endif
   else
-    wgtval = dmiss 
+    wgtval = dmiss
   endif
   return
 end subroutine

@@ -1,16 +1,16 @@
 module vic_routines
 ! Routines specific to VIC model
-  use nrtype 
+  use nrtype
   use public_var
-  use data_type 
+  use data_type
 
   implicit none
 
   private
 
-  public :: adj_soil_param_vic 
-  public :: adj_vege_param_vic 
-  public :: replace_soil_param_vic 
+  public :: adj_soil_param_vic
+  public :: adj_vege_param_vic
+  public :: replace_soil_param_vic
   public :: vic_hru_id
   public :: vic_soil_layer
   public :: read_vic_sim
@@ -20,13 +20,13 @@ module vic_routines
 contains
 
 !***************************
-! write VIC soil parameters 
+! write VIC soil parameters
 !***************************
 subroutine write_soil_param_vic(hruid, param, err, message)
   implicit none
   !input variables
   integer(i4b),intent(in)            :: hruid(:)     ! hru ID
-  real(dp),    intent(in)            :: param(:,:)   ! 
+  real(dp),    intent(in)            :: param(:,:)   !
   ! output
   integer(i4b),intent(out)           :: err          ! error code
   character(*),intent(out)           :: message      ! error message
@@ -52,19 +52,19 @@ subroutine write_soil_param_vic(hruid, param, err, message)
     write(51,'(34(f10.4,X))',advance='no')(param(iHru,i),i=19,52)
     write(51,'(I2,X)',advance='no')       int(param(iHru,53))
     write(51,'(f9.4)')                     param(iHru,54)
-  enddo hru 
+  enddo hru
   close(UNIT=51)
   return
 end subroutine
 
 !***************************
-! Read VIC hru IDs 
+! Read VIC hru IDs
 !***************************
 subroutine vic_hru_id(hruid, err, message)
   implicit none
-  ! input 
+  ! input
   ! output
-  integer(i4b),intent(out)                   :: hruid(:)     ! list of hru where calibration is performed 
+  integer(i4b),intent(out)                   :: hruid(:)     ! list of hru where calibration is performed
   integer(i4b),intent(out)                   :: err          ! error code
   character(*),intent(out)                   :: message      ! error message
   ! local variables
@@ -85,11 +85,11 @@ subroutine vic_hru_id(hruid, err, message)
 end subroutine
 
 !***************************
-! Read VIC soil layer parameters 
+! Read VIC soil layer parameters
 !***************************
 subroutine vic_soil_layer(hlyr, err, message)
   implicit none
-  ! input 
+  ! input
   ! output
   real(dp),    intent(out)           :: hlyr(:,:) ! soil layer thickness (bucket size) matrix (nHru x nLyr)
   integer(i4b),intent(out)           :: err       ! error code
@@ -112,13 +112,13 @@ subroutine vic_soil_layer(hlyr, err, message)
 end subroutine
 
 !***************************
-! Read VIC soil parameters 
+! Read VIC soil parameters
 !***************************
 subroutine read_soil_param_vic(param, err, message)
   implicit none
-  ! input 
+  ! input
   ! output
-  real(dp),    intent(out)                   :: param(:,:)   ! calibrating parameter list 
+  real(dp),    intent(out)                   :: param(:,:)   ! calibrating parameter list
   integer(i4b),intent(out)                   :: err          ! error code
   character(*),intent(out)                   :: message      ! error message
   ! local variables
@@ -137,15 +137,15 @@ subroutine read_soil_param_vic(param, err, message)
 end subroutine
 
 !***************************
-! replace VIC soil parameters 
+! replace VIC soil parameters
 !***************************
 subroutine replace_soil_param_vic(param, hModel, parMxyMz, adjParam, err, message)
-  use globalData, only: betaMeta, calBetaName, nSoilBetaModel 
+  use globalData, only: betaMeta, calBetaName, nSoilBetaModel
   use get_ixname, only: get_ixBeta
   implicit none
   !input variables
-  real(dp),         intent(in)   :: param(:,:)    ! original soil parameters 
-  real(dp),         intent(in)   :: hModel(:,:)   ! Model layer thickness at model hrus 
+  real(dp),         intent(in)   :: param(:,:)    ! original soil parameters
+  real(dp),         intent(in)   :: hModel(:,:)   ! Model layer thickness at model hrus
   type(namedvar2),  intent(in)   :: parMxyMz(:)   ! soil model parameter at model layer x model hrus
   ! output
   real(dp),         intent(out)  :: adjParam(:,:) ! adjusted soil parameter
@@ -163,7 +163,7 @@ subroutine replace_soil_param_vic(param, hModel, parMxyMz, adjParam, err, messag
     do iPar=1,nSoilBetaModel
       associate( ix=>get_ixBeta(trim(calBetaName(iPar))) )
       select case( betaMeta(ix)%pname )
-        case('binfilt');  adjParam(iHru,5)     = parMxyMz(iPar)%varData(1, iHru) 
+        case('binfilt');  adjParam(iHru,5)     = parMxyMz(iPar)%varData(1, iHru)
         case('D1');       adjParam(iHru,6)     = parMxyMz(iPar)%varData(nLyr,iHru)
         case('D2');       adjParam(iHru,7)     = parMxyMz(iPar)%varData(nLyr,iHru)
         case('D3');       adjParam(iHru,8)     = parMxyMz(iPar)%varData(nLyr,iHru)
@@ -183,16 +183,16 @@ subroutine replace_soil_param_vic(param, hModel, parMxyMz, adjParam, err, messag
 end subroutine
 
 !***************************
-! Adjust VIC soil parameters with multipliers 
+! Adjust VIC soil parameters with multipliers
 !***************************
 subroutine adj_soil_param_vic(param, multiplier, adjParam,  err, message)
 !! This routine takes the adjustable parameter set "param" from namelist, reads into "origparam_name",
-!! computes the new parameters, writes them into "calibparam_name" 
+!! computes the new parameters, writes them into "calibparam_name"
   use globalData, only: calParMeta, nCalPar
   implicit none
   !input variables
-  real(dp),    intent(in)    :: param(:,:)    ! original soil parameters 
-  type(var_d), intent(in)    :: multiplier(:) ! mulitpliers for calibrating soil parameter 
+  real(dp),    intent(in)    :: param(:,:)    ! original soil parameters
+  type(var_d), intent(in)    :: multiplier(:) ! mulitpliers for calibrating soil parameter
   ! output
   real(dp),    intent(out)   :: adjParam(:,:) ! adjusted soil parameter
   integer(i4b),intent(out)   :: err           ! error code
@@ -247,7 +247,7 @@ subroutine adj_soil_param_vic(param, multiplier, adjParam,  err, message)
     if(adjParam(iHru,8) .lt. 0.0001) then
       adjParam(iHru,8) = 0.0001
     elseif(adjParam(iHru,8) .gt. 1000) then
-      adjParam(iHru,8) = 1000.0 
+      adjParam(iHru,8) = 1000.0
     endif
     !bulk density for each layer
     do iPar = 34,36
@@ -257,7 +257,7 @@ subroutine adj_soil_param_vic(param, multiplier, adjParam,  err, message)
         adjParam(iHru,iPar) = 1880.
       endif
     enddo
-  enddo 
+  enddo
   return
 end subroutine
 
@@ -269,18 +269,18 @@ subroutine adj_vege_param_vic(multiplier, err, message)
   implicit none
 
   ! input variables
-  type(var_d),          intent(in) :: multiplier(:)             ! list of calibratin parameters 
+  type(var_d),          intent(in) :: multiplier(:)             ! list of calibratin parameters
   ! output
   integer(i4b),intent(out)         :: err                       ! error code
   character(*),intent(out)         :: message                   ! error message
   ! local variables
-  integer(i4b)                     :: vegClass                  ! vegetation class 
+  integer(i4b)                     :: vegClass                  ! vegetation class
   real(dp)                         :: vegFrac                   ! fraction of vage class
   real(dp),dimension(nLyr)         :: rootDepth                 ! root zone depth
   real(dp),dimension(nLyr)         :: rootFrac                  ! root zone fraction
   real(dp),dimension(12)           :: laiMonth                  ! monthly LAI
   integer(i4b)                     :: hruID                     ! hru ID
-  integer(i4b)                     :: nTile                     ! number of vege tile 
+  integer(i4b)                     :: nTile                     ! number of vege tile
   integer(i4b)                     :: iPar,iHru,iTile,iMon,iLyr ! loop index
   character(50)                    :: rowfmt                    ! string specifying write format for real value
   integer(i4b)                     :: stat
@@ -309,7 +309,7 @@ subroutine adj_vege_param_vic(multiplier, err, message)
       write(51,rowfmt,advance='no')            (rootDepth(iLyr), iLyr=1,nLyr)
       write(51,rowfmt)                         (rootFrac(iLyr), iLyr=1,nLyr)
       write(51,'(5X,12(1X,F6.3))')             (laiMonth(iMon), iMon=1,12)
-    enddo tile 
+    enddo tile
   enddo hru
   ! Close original and modified basin parameter files
   close(UNIT=50)
@@ -330,7 +330,7 @@ subroutine read_vic_sim(sim, err, message)
   character(len=strLen)              :: filename
   real(dp)                           :: cellfraction,basin_area
   real(dp)                           :: auxflux(5)                 ! This is only in case of water balance mode
-  integer(i4b)                       :: ibasin, itime, ivar, icell ! index 
+  integer(i4b)                       :: ibasin, itime, ivar, icell ! index
   integer(i4b)                       :: ncell
   integer(i4b)                       :: dum,c_cell
 

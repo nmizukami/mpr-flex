@@ -1,51 +1,51 @@
-module write_param_nc 
+module write_param_nc
 
   ! netCDF writing routines
-  
+
   use netcdf
   use public_var
   use nrtype
   use data_type                                    ! data strucutre definition
-  
+
   implicit none
-  
+
   private
 
   public::write_nc_soil
   public::write_nc_veg
-  
+
 contains
 
   ! *********************************************************************
-  ! public subroutine: write soil parameter in netCDF 
+  ! public subroutine: write soil parameter in netCDF
   ! *********************************************************************
   subroutine write_nc_soil(fname,           & ! input: output nc filename
-                           hruID,           & ! input: hruID array 
-                           hModel,          & ! input: model layer thickness 
-                           parMxyMz,        & ! input: parameter data structure 
+                           hruID,           & ! input: hruID array
+                           hModel,          & ! input: model layer thickness
+                           parMxyMz,        & ! input: parameter data structure
                            err, message)      ! output: error control
     use globalData,    only: nSoilBetaModel, soilBetaCalName
     implicit none
     ! input variables
     character(*),   intent(in)            :: fname        ! input: filename
     integer(i4b),   intent(in)            :: hruID(:)     ! Hru ID
-    real(dp),       intent(in)            :: hModel(:,:)  ! input: array of model layer thickness at model layer x model hru 
-    type(namedvar2),intent(in)            :: parMxyMz(:)  ! input: data structure for model soil parameter at model layer x model hru 
+    real(dp),       intent(in)            :: hModel(:,:)  ! input: array of model layer thickness at model layer x model hru
+    type(namedvar2),intent(in)            :: parMxyMz(:)  ! input: data structure for model soil parameter at model layer x model hru
     ! output variables
     integer(i4b), intent(out)             :: err          ! error code
     character(*), intent(out)             :: message      ! error message
     ! local variables
     type(defDim)                          :: hruDim
     type(defDim)                          :: sLyrDim
-    real(dp),                 allocatable :: zModel(:,:)  ! array of model layer depth at model layer x model hru 
-    character(len=strLen),    allocatable :: betaNames(:) ! parameter name array 
-    integer(i4b)                          :: iPar         ! loop index for parameter  
-    integer(i4b)                          :: iLyr         ! loop index for model layer 
+    real(dp),                 allocatable :: zModel(:,:)  ! array of model layer depth at model layer x model hru
+    character(len=strLen),    allocatable :: betaNames(:) ! parameter name array
+    integer(i4b)                          :: iPar         ! loop index for parameter
+    integer(i4b)                          :: iLyr         ! loop index for model layer
     character(len=strLen)                 :: cmessage     ! error message of downwind routine
 
     ! initialize error control
     err=0; message='write_nc_soil/'
-    ! Define dimension attributes  
+    ! Define dimension attributes
     hruDim%dimName='hruid'
     hruDim%dimdesc='Model HRU ID'
     hruDim%dimunit='-'
@@ -55,9 +55,9 @@ contains
     ! construct z array
     allocate(zModel,source=hModel)
     do iLyr=2,nLyr
-      zModel(iLyr,:)=zModel(iLyr-1,:)+zModel(iLyr,:) 
+      zModel(iLyr,:)=zModel(iLyr-1,:)+zModel(iLyr,:)
     enddo
-    ! construct soil beta parameter name array 
+    ! construct soil beta parameter name array
     allocate(betaNames(nSoilBetaModel+1),stat=err);if(err/=0)then;message=trim(message)//'error allocating betaNames';return;endif
     betaNames(1:nSoilBetaModel)=soilBetaCalName
     betaNames(nSoilBetaModel+1)='z'
@@ -75,38 +75,38 @@ contains
       call write_array2_dvar(fname,trim(soilBetaCalName(iPar)),parMxyMz(iPar)%varData,(/1,1/),(/nLyr,nHru/),err,cmessage)
       if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
     enddo
-    ! Write soil layers depth 
+    ! Write soil layers depth
     call write_array2_dvar(fname,'z',zModel,(/1,1/),(/nLyr,nHru/),err,cmessage)
     if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
-    return 
+    return
   end subroutine
-  
+
   ! *********************************************************************
-  ! public subroutine: write veg parameters 
+  ! public subroutine: write veg parameters
   ! *********************************************************************
   subroutine write_nc_veg(fname,           & ! input: output nc filename
-                          hruID,           & ! input: hruID array 
-                          vegParMxy,         & ! input: parameter data structure 
+                          hruID,           & ! input: hruID array
+                          vegParMxy,         & ! input: parameter data structure
                           err, message)      ! output: error control
     use globalData,    only: nVegBetaModel, vegBetaCalName
     implicit none
     ! input variables
     character(*),   intent(in)            :: fname        ! input: filename
     integer(i4b),   intent(in)            :: hruID(:)     ! Hru ID
-    type(namedvar2),intent(in)            :: vegParMxy(:) ! input: data structure for model veg parameter at model layer x model hru 
+    type(namedvar2),intent(in)            :: vegParMxy(:) ! input: data structure for model veg parameter at model layer x model hru
     ! output variables
     integer(i4b), intent(out)             :: err          ! error code
     character(*), intent(out)             :: message      ! error message
     ! local variables
     type(defDim)                          :: hruDim
     type(defDim)                          :: monDim
-    integer(i4b)                          :: iPar         ! loop index for parameter  
-    integer(i4b)                          :: iMon         ! loop index for month 
+    integer(i4b)                          :: iPar         ! loop index for parameter
+    integer(i4b)                          :: iMon         ! loop index for month
     character(len=strLen)                 :: cmessage     ! error message of downwind routine
 
     ! initialize error control
     err=0; message='write_nc_veg/'
-    ! Define dimension attributes  
+    ! Define dimension attributes
     hruDim%dimName='hruid'
     hruDim%dimdesc='Model HRU ID'
     hruDim%dimunit='-'
@@ -127,27 +127,27 @@ contains
       call write_array2_dvar(fname,trim(vegBetaCalName(iPar)),vegParMxy(iPar)%varData,(/1,1/),(/nMonth,nHru/),err,cmessage)
       if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
     enddo
-    return 
+    return
   end subroutine
-  
+
   !private subroutine
   subroutine defNetCDF(fname,           &  ! input: output nc filename
                        betaNames,       &  ! input: character array for beta parameter name
-                       nDim1,           &  ! input: number of 1st dimension 
-                       nDim2,           &  ! input: number of 2nd dimension 
-                       defDim1,         &  ! input: 1st dimension name 
-                       defDim2,         &  ! input: 2nd dimension name 
+                       nDim1,           &  ! input: number of 1st dimension
+                       nDim2,           &  ! input: number of 2nd dimension
+                       defDim1,         &  ! input: 1st dimension name
+                       defDim2,         &  ! input: 2nd dimension name
                        err, message)       ! output: error control
-    use globalData,    only: betaMeta 
-    use var_lookup,    only: nBeta 
+    use globalData,    only: betaMeta
+    use var_lookup,    only: nBeta
     implicit none
     ! input variables
     character(*), intent(in)          :: fname           ! filename
-    character(*), intent(in)          :: betaNames(:)    ! parameter name array 
+    character(*), intent(in)          :: betaNames(:)    ! parameter name array
     integer(i4b), intent(in)          :: nDim1           ! number of 1st dimension (hru polygon )
-    integer(i4b), intent(in)          :: nDim2           ! number of 2nd Dimension (e.g., soil layer, month) 
-    type(defDim), intent(in)          :: defDim1         ! 1st dimension name 
-    type(defDim), intent(in)          :: defDim2         ! 2nd dimension name 
+    integer(i4b), intent(in)          :: nDim2           ! number of 2nd Dimension (e.g., soil layer, month)
+    type(defDim), intent(in)          :: defDim1         ! 1st dimension name
+    type(defDim), intent(in)          :: defDim2         ! 2nd dimension name
     ! output variables
     integer(i4b), intent(out)         :: err             ! error code
     character(*), intent(out)         :: message         ! error message
@@ -155,12 +155,12 @@ contains
     type(par_meta),  allocatable      :: betaMetaTemp(:) ! meta data for beta parameter estimated via MPR
     integer(i4b)                      :: ncid            ! NetCDF file ID
     integer(i4b)                      :: dim1ID          ! 1st dimension ID (hru)
-    integer(i4b)                      :: dim2ID          ! 2nd dimension ID (soil layer, month) 
-    integer(i4b)                      :: nBetaOut        ! number of beta parameter to be output 
+    integer(i4b)                      :: dim2ID          ! 2nd dimension ID (soil layer, month)
+    integer(i4b)                      :: nBetaOut        ! number of beta parameter to be output
     integer(i4b)                      :: iPar            ! variable index
     integer(i4b)                      :: iBeta           ! variable index
     character(len=strLen)             :: cmessage        ! error message of downwind routine
-    
+
     ! initialize error control
     err=0; message='defNetCDF/'
     ! define file
@@ -172,16 +172,16 @@ contains
     if(err/=0)then; message=trim(message)//trim(nf90_strerror(err)); return; endif
     err = nf90_def_dim(ncid, trim(defDim2%dimName), nDim2, dim2id)
     if(err/=0)then; message=trim(message)//trim(nf90_strerror(err)); return; endif
-    ! define coordinate variable - variable name is the same as dimension 
+    ! define coordinate variable - variable name is the same as dimension
     call defvar(defDim1%dimName,trim(defDim1%dimDesc),'-', (/defDim1%dimName/), nf90_int, err,cmessage)
     call defvar(defDim2%dimName,trim(defDim2%dimDesc),'-', (/defDim2%dimName/), nf90_int, err,cmessage)
     nBetaOut=size(betaNames)
-    allocate(betaMetaTemp(nBetaOut)) 
+    allocate(betaMetaTemp(nBetaOut))
     do iBeta=1,nBetaOut
       do iPar=1,nBeta
         if ( betaMeta(iPar)%pname==betaNames(iBeta) )then;betaMetaTemp(iBeta)=betaMeta(iPar); exit; endif
       enddo
-      ! define parameter values 
+      ! define parameter values
       call defvar(trim(betaMetaTemp(iBeta)%pname),trim(betaMetaTemp(iBeta)%pname),'-',(/defDim2%dimName,defDim1%dimName/),nf90_double,err,cmessage)
       if(err/=0)then; message=trim(message)//trim(nf90_strerror(err)); return; endif
     end do
@@ -191,7 +191,7 @@ contains
     ! close NetCDF file
     err = nf90_close(ncid)
     if(err/=0)then; message=trim(message)//trim(nf90_strerror(err)); return; endif
-    
+
     contains
 
       subroutine defvar(vname,vdesc,vunit,dimNames,ivtype,err,message)
@@ -210,7 +210,7 @@ contains
         integer(i4b)              :: iVarId                     ! variable ID
         integer(i4b)              :: nf90_fill_int=-999         ! fill value for integer type variable
         real(dp)                  :: nf90_fill_double=-999.0_dp ! fill value for double type variable
-       
+
         ! define dimension IDs
         do id=1,size(dimNames)
          err=nf90_inq_dimid(ncid,trim(dimNames(id)),dimIDs(id))
@@ -225,7 +225,7 @@ contains
         ! add variable units
         err = nf90_put_att(ncid,iVarId,'units',trim(vunit))
         if(err/=0)then; message=trim(message)//trim(nf90_strerror(err)); return; endif
-        ! add variable fillvalue 
+        ! add variable fillvalue
         if (ivtype == nf90_double) then
           err = nf90_put_att(ncid, iVarId, '_FillValue', nf90_fill_double)
           if(err/=0)then; message=trim(message)//trim(nf90_strerror(err)); return; endif
@@ -270,7 +270,7 @@ contains
     ! close output file
     err = nf90_close(ncid)
     if(err/=0)then; message=trim(message)//trim(nf90_strerror(err)); return; endif
-    return 
+    return
   end subroutine
 
   ! private subroutine: write a double precision vector
@@ -307,10 +307,10 @@ contains
     ! close output file
     err = nf90_close(ncid)
     if(err/=0)then; message=trim(message)//trim(nf90_strerror(err)); return; endif
-    return 
+    return
   end subroutine
 
-  ! private subroutine: write a double precision 2d array 
+  ! private subroutine: write a double precision 2d array
   subroutine write_array2_dvar(fname,        &  ! input: filename
                                vname,        &  ! input: variable name
                                dvar,         &  ! input: variable data
@@ -344,10 +344,10 @@ contains
     ! close output file
     err = nf90_close(ncid)
     if(err/=0)then; message=trim(message)//trim(nf90_strerror(err)); return; endif
-    return 
+    return
   end subroutine
 
-  ! private subroutine: write an integer 2d array 
+  ! private subroutine: write an integer 2d array
   subroutine write_array2_ivar(fname,        &  ! input: filename
                                vname,        &  ! input: variable name
                                ivar,         &  ! input: variable data
@@ -381,7 +381,7 @@ contains
     ! close output file
     err = nf90_close(ncid)
     if(err/=0)then; message=trim(message)//trim(nf90_strerror(err)); return; endif
-    return 
+    return
   end subroutine
 
-end module write_param_nc 
+end module write_param_nc
