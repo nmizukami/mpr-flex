@@ -182,7 +182,7 @@ contains
         if ( betaMeta(iPar)%pname==betaNames(iBeta) )then;betaMetaTemp(iBeta)=betaMeta(iPar); exit; endif
       enddo
       ! define parameter values
-      call defvar(trim(betaMetaTemp(iBeta)%pname),trim(betaMetaTemp(iBeta)%pname),'-',(/defDim2%dimName,defDim1%dimName/),nf90_double,err,cmessage)
+      call defvar(trim(betaMetaTemp(iBeta)%pname),trim(betaMetaTemp(iBeta)%pname),'-',(/defDim2%dimName,defDim1%dimName/),nf90_float,err,cmessage)
       if(err/=0)then; message=trim(message)//trim(nf90_strerror(err)); return; endif
     end do
     ! end definitions

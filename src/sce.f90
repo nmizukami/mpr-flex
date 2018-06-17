@@ -264,7 +264,7 @@ contains
     FA = obj_func(pval)
 
     ! PRINT THE INITIAL POINT AND ITS CRITERION VALUE
-    if ( not (restart) .or. ( restart .and. (ICALL == 0) ) ) then
+    if ( .not. (restart) .or. ( restart .and. (ICALL == 0) ) ) then
       open(ISCE,file=trim(adjustl(tmp_file)), action='write', status='unknown')
       write(ISCE,400)
       write(ISCE,500)
@@ -338,7 +338,7 @@ contains
 
     ! STEP1.2 GENERATE npt1-1 RANDOM POINTS DISTRIBUTED UNIFORMLY IN THE PARAMETER
     ! SPACE, AND COMPUTE THE CORRESPONDING FUNCTION VALUES
-    if ( not (restart) .or. ( restart .and. ( ICALL >= 1 .and. ICALL <= npt1-1 )) ) then ! if restart is used and if INITIAL points is less than npt1
+    if ( .not. (restart) .or. ( restart .and. ( ICALL >= 1 .and. ICALL <= npt1-1 )) ) then ! if restart is used and if INITIAL points is less than npt1
       if ( restart .and. (IPRINT==2 .or. IPRINT==1) ) then
         open(unit=ISCE,file=trim(adjustl(tmp_file)), action='write', position='append')
         do I = 1, ICALL
@@ -1081,7 +1081,7 @@ contains
     !local
     integer(i4b)              :: I, J     ! loop index
     integer(i4b)              :: L,IR
-    real(i4b)                 :: Q
+    real(dp)                 :: Q
     integer(i4b)              :: INDXT
 
     do J = 1, N
