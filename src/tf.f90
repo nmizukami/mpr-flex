@@ -451,6 +451,7 @@ subroutine D1( err, message, ixDepend, sdata, tdata, ks_in, phi_in, gammaPar, D1
     end associate
     ! cap value with upper and lower bounds
     where ( D1_out > D1_max ) D1_out=D1_max
+    where ( abs(D1_out - 0._dp) <= epsilon(0._dp) )  D1_out=D1_min
     where ( D1_out > 0._dp .and. D1_out < D1_min ) D1_out=D1_min
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
@@ -559,6 +560,7 @@ subroutine D2( err, message, ixDepend, sdata, tdata, ks_in, D4_in, gammaPar, D2_
     end associate
     ! cap value with upper and lower bounds
     where ( D2_out > D2_max ) D2_out=D2_max
+    where ( abs(D2_out - 0._dp) <= epsilon(0._dp) )  D2_out=D2_min
     where ( D2_out > 0._dp .and. D2_out < D2_min ) D2_out=D2_min
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
