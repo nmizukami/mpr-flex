@@ -106,6 +106,7 @@ contains
      case('fc');               get_ixBeta = ixBeta%fc                ! field capacity[-]
      case('wp');               get_ixBeta = ixBeta%wp                ! wilting point [-]
      case('myu');              get_ixBeta = ixBeta%myu               ! Fractional soil moisture content at wilting point [-]
+     case('sof');              get_ixBeta = ixBeta%sof               ! Fractional soil organic content [-]
      case('binfilt');          get_ixBeta = ixBeta%binfilt           ! variable infilitration curve parameter
      case('D1');               get_ixBeta = ixBeta%D1                !
      case('D4');               get_ixBeta = ixBeta%D4                !

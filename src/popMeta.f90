@@ -57,6 +57,8 @@ subroutine paramMaster(err,message)
   !specific yield transfer function
   gammaMeta(ixGamma%myu1gamma1)      = par_meta('myu1gamma1'     ,     3.5_dp,   3.85_dp,   3.15_dp,"myu"      ,     1, "soil", .False.,      "na", -999.0_dp,       "na", -999.0_dp,.False.)
   gammaMeta(ixGamma%myu1gamma2)      = par_meta('myu1gamma2'     ,    1.66_dp,   1.83_dp,   1.50_dp,"myu"      ,     1, "soil", .False.,      "na", -999.0_dp,       "na", -999.0_dp,.False.)
+  ! organic soil franction transfer function
+  gammaMeta(ixGamma%sof1gamma1)      = par_meta('sof1gamma1'     ,     1.72_dp,  1.55_dp,   1.89_dp,"sof"      ,     1, "soil", .False.,      "na", -999.0_dp,       "na", -999.0_dp,.False.)
   ! total depth multiplier
   gammaMeta(ixGamma%z1gamma1)        = par_meta('z1gamma1'       ,     1.0_dp,    0.1_dp,    4.0_dp,"z"        ,     1, "soil", .False.,      "na", -999.0_dp,       "na", -999.0_dp,.False.)
   ! layer fractions
@@ -100,6 +102,7 @@ subroutine paramMaster(err,message)
   betaMeta(ixBeta%fc)              = par_meta('fc'             ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
   betaMeta(ixBeta%wp)              = par_meta('wp'             ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
   betaMeta(ixBeta%myu)             = par_meta('myu'            ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
+  betaMeta(ixBeta%sof)             = par_meta('sof'            ,     0.0_dp,    0.0_dp,    1.0_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
   betaMeta(ixBeta%binfilt)         = par_meta('binfilt'        ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .False.)
   betaMeta(ixBeta%D1)              = par_meta('D1'             ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",   -1.0_dp,   "pnorm",   -1.0_dp, .False.)
   betaMeta(ixBeta%D2)              = par_meta('D2'             ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",   -1.0_dp,   "pnorm",   -1.0_dp, .False.)
@@ -180,6 +183,7 @@ subroutine popMprMeta(err,message)
   sdata_meta(ixVarSoilData%silt_pct)     = var_meta('silt_pct'     ,"silt percentage"                                    ,"%"           ,"2D", "double" )
   sdata_meta(ixVarSoilData%clay_pct)     = var_meta('clay_pct'     ,"clay percentage"                                    ,"%"           ,"2D", "double" )
   sdata_meta(ixVarSoilData%bulk_density) = var_meta('bulk_density' ,"bulk density"                                       ,"kg m-3"      ,"2D", "double" )
+  sdata_meta(ixVarSoilData%soc)          = var_meta('soc'          ,"soil carbon content"                                ,"g/kg"        ,"2D", "double" )
   ! Vege data variables
   vdata_meta(ixVarVegData%polyid)        = var_meta('polyid'       ,"vege polygon id"                                    ,"-"           ,"1D", "integer")
   vdata_meta(ixVarVegData%vegclass)      = var_meta('vegclass'     ,"vegetation class"                                   ,"-"           ,"1D", "integer")

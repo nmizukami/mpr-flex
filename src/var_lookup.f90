@@ -10,6 +10,10 @@ MODULE var_lookup
 
  private
 
+ ! local variables
+ integer(i4b),parameter :: ixVal=1                     ! an example integer
+ integer(i4b),parameter :: iLength=storage_size(ixVal) ! size of the example integer
+
 ! ***********************************************************************************************************
 ! 1.Define indices for gamma parameters
 ! ***********************************************************************************************************
@@ -39,6 +43,7 @@ MODULE var_lookup
    integer(i4b)     :: psis1gamma3     = imiss  !
    integer(i4b)     :: myu1gamma1      = imiss  !
    integer(i4b)     :: myu1gamma2      = imiss  !
+   integer(i4b)     :: sof1gamma1      = imiss  ! soil organic fraction TF param
    integer(i4b)     :: z1gamma1        = imiss  ! total depth mulitplier
    integer(i4b)     :: h1gamma1        = imiss  ! fraction of top layer to total depth
    integer(i4b)     :: h2gamma1        = imiss  ! fraction of 2nd layer to total depth
@@ -72,14 +77,15 @@ MODULE var_lookup
    integer(i4b)     :: uhshape         = imiss  ! uh gamma pdf shape parameter
    integer(i4b)     :: uhscale         = imiss  ! uh gamma pdf scale parameter
    integer(i4b)     :: ks              = imiss  ! Saturated conductivity
-   integer(i4b)     :: bd              = imiss  ! bulk density
-   integer(i4b)     :: sd              = imiss  ! soil density
+   integer(i4b)     :: bd              = imiss  ! bulk mineral density
+   integer(i4b)     :: sd              = imiss  ! soil mineral density
    integer(i4b)     :: psis            = imiss  ! saturation matric potential
    integer(i4b)     :: b               = imiss  ! retension courve slope in log space
    integer(i4b)     :: phi             = imiss  ! porosity
    integer(i4b)     :: fc              = imiss  ! field capacity
    integer(i4b)     :: wp              = imiss  ! wilting point
    integer(i4b)     :: myu             = imiss  !
+   integer(i4b)     :: sof             = imiss  ! soil organic fraction [-]
    integer(i4b)     :: binfilt         = imiss  !
    integer(i4b)     :: D1              = imiss  !
    integer(i4b)     :: D2              = imiss  !
@@ -152,6 +158,7 @@ MODULE var_lookup
   integer(i4b)     :: silt_pct     = imiss      ! silt fraction in soil polygon and layer
   integer(i4b)     :: clay_pct     = imiss      ! clay fraction in soil polygon and layer
   integer(i4b)     :: bulk_density = imiss      ! bulk density in soil polygon and layer
+  integer(i4b)     :: soc          = imiss      ! soil carbon content in soil polygon and layer
  endtype iLook_VarSoilData
 
 ! ***********************************************************************************************************
@@ -188,15 +195,16 @@ MODULE var_lookup
                                                                                  11,12,13,14,15,16,17,18,19,20,&
                                                                                  21,22,23,24,25,26,27,28,29,30,&
                                                                                  31,32,33,34,35,36,37,38,39,40,&
-                                                                                 41,42,43,44,45,46,47,48,49,50)
+                                                                                 41,42,43,44,45,46,47,48,49,50,&
+                                                                                 51)
  type(iLook_beta),        public,parameter :: ixBeta         = iLook_beta        (1,2,3,4,5,6,7,8,9,10,&
                                                                                  11,12,13,14,15,16,17,18,19,20,&
                                                                                  21,22,23,24,25,26,27,28,29,30,&
                                                                                  31,32,33,34,35,36,37,38,39,40,&
                                                                                  41,42,43,44,45,46,47,48,49,50,&
-                                                                                 51,52)
+                                                                                 51,52,53)
  type(iLook_VarMapData),  public,parameter :: ixVarMapData   = iLook_VarMapData  (1,2,3,4)
- type(iLook_VarSoilData), public,parameter :: ixVarSoilData  = iLook_VarSoilData (1,2,3,4,5,6)
+ type(iLook_VarSoilData), public,parameter :: ixVarSoilData  = iLook_VarSoilData (1,2,3,4,5,6,7)
  type(iLook_VarVegData),  public,parameter :: ixVarVegData   = iLook_VarVegData  (1,2,3)
  type(iLook_VarTopoData), public,parameter :: ixVarTopoData  = iLook_VarTopoData (1,2,3,4)
  type(iLook_PrpVeg),      public,parameter :: ixPrpVeg       = iLook_PrpVeg      (1,2,3,4,5,6,7,8,9,10,&
@@ -206,12 +214,12 @@ MODULE var_lookup
 ! define size of data vectors
 ! ***********************************************************************************************************
 ! Number of vairables defined
- integer(i4b),parameter,public    :: nGamma = 50
- integer(i4b),parameter,public    :: nBeta = 52
- integer(i4b),parameter,public    :: nVarMapData=4
- integer(i4b),parameter,public    :: nVarSoilData=6
- integer(i4b),parameter,public    :: nVarVegData=3
- integer(i4b),parameter,public    :: nVarTopoData=4
- integer(i4b),parameter,public    :: nPrpVeg=11
+ integer(i4b),parameter,public :: nGamma       = storage_size(ixGamma)/iLength
+ integer(i4b),parameter,public :: nBeta        = storage_size(ixBeta)/iLength
+ integer(i4b),parameter,public :: nVarMapData  = storage_size(ixVarMapData)/iLength
+ integer(i4b),parameter,public :: nVarSoilData = storage_size(ixVarSoilData)/iLength
+ integer(i4b),parameter,public :: nVarVegData  = storage_size(ixVarVegData)/iLength
+ integer(i4b),parameter,public :: nVarTopoData = storage_size(ixVarTopoData)/iLength
+ integer(i4b),parameter,public :: nPrpVeg      = storage_size(ixPrpVeg)/iLength
 
 END MODULE var_lookup

@@ -80,6 +80,8 @@ subroutine comp_model_param(parSxySz,          &  ! in/output: soil parameter va
           call wp( err, message, phi_in=parTemp(ixBeta%phi)%varData, psis_in=parTemp(ixBeta%psis)%varData, b_in=parTemp(ixBeta%b)%varData, gammaPar=gammaPar, wp_out=xPar, tfopt=tfid )
         case(ixBeta%myu)
           call myu( err, message, phi_in=parTemp(ixBeta%phi)%varData, fc_in=parTemp(ixBeta%fc)%varData, gammaPar=gammaPar, myu_out=xPar, tfopt=tfid )
+        case(ixBeta%sof)
+          call sof( err, message, sdata=sdata, gammaPar=gammaPar, sof_out=xPar, tfopt=tfid )
         case(ixBeta%binfilt)
           call binfilt(err, message, sdata=sdata, tdata=tdata, gammaPar=gammaPar, binfilt_out=xPar, tfopt=tfid )
         case(ixBeta%D1)
@@ -176,6 +178,7 @@ subroutine betaDependency( err, message )
       case(ixBeta%fc);      call fc      (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%wp);      call wp      (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%myu);     call myu     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
+      case(ixBeta%sof);     call sof     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%binfilt); call binfilt (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%D1);      call D1      (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%D2);      call D2      (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
@@ -214,7 +217,6 @@ subroutine betaDependency( err, message )
       deallocate(ixDepend)
     endif
   enddo
-  return
 end subroutine
 
 ! ***********
@@ -281,7 +283,6 @@ subroutine betaCompOrder( betaList, err, message)
     end do   ! looping through beta parameters
     if (nassign.eq.size(betaList)) exit
   end do  ! do forever (do until all parameters are assigned)
-  return
 end subroutine
 
 ! *********************************************************************
@@ -355,7 +356,6 @@ subroutine binfilt(err, message, ixDepend, sdata, tdata, gammaPar, binfilt_out, 
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -390,7 +390,6 @@ subroutine residMoist(err, message, ixDepend, gammaPar, residMoist_out, tfopt)
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! ***********
@@ -451,12 +450,11 @@ subroutine D1( err, message, ixDepend, sdata, tdata, ks_in, phi_in, gammaPar, D1
     end associate
     ! cap value with upper and lower bounds
     where ( D1_out > D1_max ) D1_out=D1_max
-    where ( abs(D1_out - 0._dp) <= epsilon(0._dp) )  D1_out=D1_min
+!    where ( abs(D1_out - 0._dp) <= epsilon(0._dp) )  D1_out=D1_min
     where ( D1_out > 0._dp .and. D1_out < D1_min ) D1_out=D1_min
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! ***********
@@ -503,7 +501,6 @@ subroutine Ds( err, message, ixDepend, D1_in, D3_in, Dsmax_in, gammaPar, Ds_out,
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! ***********
@@ -560,12 +557,11 @@ subroutine D2( err, message, ixDepend, sdata, tdata, ks_in, D4_in, gammaPar, D2_
     end associate
     ! cap value with upper and lower bounds
     where ( D2_out > D2_max ) D2_out=D2_max
-    where ( abs(D2_out - 0._dp) <= epsilon(0._dp) )  D2_out=D2_min
+!    where ( abs(D2_out - 0._dp) <= epsilon(0._dp) )  D2_out=D2_min
     where ( D2_out > 0._dp .and. D2_out < D2_min ) D2_out=D2_min
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! ***********
@@ -617,7 +613,6 @@ subroutine Dsmax( err, message, ixDepend, sdata, D1_in, D2_in, D3_in, c_in, phi_
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! ***********
@@ -666,7 +661,6 @@ subroutine D3( err, message, ixDepend, sdata, fc_in, gammaPar, D3_out, tfopt )
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! ***********
@@ -715,7 +709,6 @@ subroutine Ws( err, message, ixDepend, sdata, D3_in, phi_in, gammaPar, Ws_out, t
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! ***********
@@ -752,7 +745,6 @@ subroutine D4( err, message, ixDepend, gammaPar, D4_out, tfopt )
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! ***********
@@ -788,7 +780,6 @@ subroutine cexpt( err, message, ixDepend, D4_in, gammaPar, cexpt_out, tfopt )
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! ***********
@@ -831,7 +822,6 @@ subroutine expt( err, message, ixDepend, b_in, gammaPar, expt_out, tfopt )
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! ************
@@ -874,7 +864,6 @@ subroutine initMoist( err, message, ixDepend, sdata, phi_in, gammaPar, initMoist
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! ***********
@@ -917,7 +906,6 @@ subroutine bubble( err, message, ixDepend, expt_in, gammaPar, bubble_out, tfopt)
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! ***********
@@ -955,7 +943,6 @@ subroutine sd( err, message, ixDepend, gammaPar, sd_out, tfopt )
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! ***********
@@ -998,7 +985,6 @@ subroutine WcrFrac( err, message, ixDepend, fc_in, phi_in, gammaPar, WcrFrac_out
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! ************
@@ -1041,7 +1027,6 @@ subroutine WpwpFrac( err, message, ixDepend, wp_in, phi_in, gammaPar, WpwpFrac_o
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! ************
@@ -1085,7 +1070,6 @@ subroutine twm( err, message, ixDepend, sdata, fc_in, wp_in, gammaPar, twm_out, 
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1129,7 +1113,6 @@ subroutine fwm( err, message, ixDepend, sdata, phi_in, fc_in, gammaPar, fwm_out,
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1173,7 +1156,6 @@ subroutine fsm( err, message, ixDepend, fwm_in, phi_in, wp_in, gammaPar, fsm_out
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1214,7 +1196,6 @@ subroutine fpm( err, message, ixDepend, fwm_in, fsm_in, gammaPar, fpm_out, tfopt
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1257,7 +1238,6 @@ subroutine zk( err, message, ixDepend, phi_in, fc_in, gammaPar, zk_out, tfopt )
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1302,7 +1282,6 @@ subroutine zsk( err, message, ixDepend,  phi_in, fc_in, wp_in, gammaPar, zsk_out
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1349,7 +1328,6 @@ subroutine zpk( err, message, ixDepend, sdata, ks_in, myu_in, gammaPar, zpk_out,
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1392,7 +1370,6 @@ subroutine pfree( err, message, ixDepend, phi_in, wp_in, gammaPar, pfree_out, tf
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1437,7 +1414,6 @@ subroutine zperc( err, message, ixDepend, twm_in, fsm_in, zsk_in, fpm_in, zpk_in
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1479,7 +1455,6 @@ subroutine rexp( err, message, ixDepend, wp_in, gammaPar, rexp_out, tfopt )
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1537,7 +1512,6 @@ subroutine ks( err, message, ixDepend, sdata, gammaPar, ks_out, tfopt )
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1596,7 +1570,66 @@ subroutine bd( err, message, ixDepend, sdata, gammaPar, bd_out, tfopt )
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
+end subroutine
+
+
+! *********************************************************************
+! pedo-transfer function for soil organic fraction
+! *********************************************************************
+subroutine sof( err, message, ixDepend, sdata, gammaPar, sof_out, tfopt )
+  implicit none
+  ! input
+  type(namevar),           optional,intent(in)  :: sdata(:)         ! input(optional): storage of soil data strucuture
+  real(dp),                optional,intent(in)  :: gammaPar(:)      ! input(optional): gamma parameter array
+  integer(i4b),            optional,intent(in)  :: tfopt            ! input(optional): option for transfer function form
+  ! output
+  integer(i4b),                     intent(out) :: err              ! output: error id
+  character(len=strLen),            intent(out) :: message          ! output: error message
+  integer(i4b),allocatable,optional,intent(out) :: ixDepend(:)      ! output(optional): id of dependent beta parameters
+  real(dp),                optional,intent(out) :: sof_out(:,:)     ! output(optional): computed sof
+  ! local
+  integer(i4b)                                  :: tftype           ! option for transfer function form used
+  integer(i4b),parameter                        :: nDepend=0        ! sof parameter depends on no beta parameters
+  real(dp),    parameter                        :: sof_min=0.0_dp   !
+  real(dp),    parameter                        :: sof_max=1.0_dp   !
+  real(dp),allocatable                          :: sof_slope(:,:)
+  real(dp),allocatable                          :: sof_temp(:,:)
+  integer(i4b)                                  :: n1               ! number of 1st dimension
+  integer(i4b)                                  :: n2               ! number of 2nd dimension
+  real(dp),    parameter                        :: conversion=0.001 ! g/kg -> kg/kg
+
+  err=0;message="sof/"
+  if ( present(ixDepend) ) then ! setup dependency
+    allocate(ixDepend(1),stat=err); if(err/=0)then;message=trim(message)//'error allocating ixDepend';return;endif
+    ixDepend=-999_i4b
+  elseif ( present(sdata) .and. present(gammaPar) .and. present(sof_out) )then ! compute parameters with TF
+    tftype=1_i4b
+    if (present(tfopt) ) tftype=tfopt
+    associate ( g1     => gammaPar(ixGamma%sof1gamma1), &
+                soc_in => sdata(ixVarSoilData%soc)%dvar2 )
+    n1=size(soc_in,1)
+    n2=size(soc_in,2)
+    allocate(sof_slope(n1,n2))
+    allocate(sof_temp(n1,n2))
+    sof_slope =0.0_dp
+    sof_temp  =0.0_dp
+    select case(tftype)
+      case(1);  !
+        where ( soc_in /= dmiss )
+          sof_temp = g1*soc_in*conversion
+          sof_slope=(sof_temp-sof_min)/(sof_max-sof_min)
+          where ( sof_slope > 1.0_dp) sof_slope=1.0_dp
+          where ( sof_slope < 0.0_dp) sof_slope=0.0_dp
+          sof_out = sof_slope*(sof_max-sof_min)+sof_min
+        else where
+          sof_out = dmiss
+        end where
+      case default;print*,trim(message)//'OptNotRecognized';stop
+    end select
+    end associate
+  else
+    err=10;message=trim(message)//'WrongOptionalInputs'; return
+  endif
 end subroutine
 
 ! *********************************************************************
@@ -1661,7 +1694,6 @@ subroutine phi( err, message, ixDepend, sdata, gammaPar, phi_out, tfopt )
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1716,7 +1748,6 @@ subroutine fc( err, message, ixDepend, sdata, phi_in, psis_in, b_in, gammaPar, f
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1768,7 +1799,6 @@ subroutine wp( err, message, ixDepend, phi_in, psis_in, b_in, gammaPar, wp_out, 
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1815,7 +1845,6 @@ subroutine retcurve( err, message, ixDepend, sdata, gammaPar, retcurve_out, tfop
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1863,7 +1892,6 @@ subroutine psis( err, message, ixDepend, sdata, gammaPar, psis_out, tfopt )
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1908,7 +1936,6 @@ subroutine myu( err, message, ixDepend, phi_in, fc_in, gammaPar, myu_out, tfopt 
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 ! *********************************************************************
@@ -1967,7 +1994,6 @@ subroutine lai( err, message, ixDepend, vdata, gammaPar, lai_out, tfopt )
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
-  return
 end subroutine
 
 end module tf

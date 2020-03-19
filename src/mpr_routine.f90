@@ -245,6 +245,7 @@ subroutine mpr(hruID,             &     ! input: hruID
 
   ! initialize error control
   err=0; message='mpr/'
+
   !(0) Preparation
   allocate(gammaUpdateMeta, source=gammaMeta) ! copy master gamma parameter metadata
   allocate(betaUpdateMeta,  source=betaMeta)  ! copy master beta parameter metadata
@@ -320,6 +321,7 @@ subroutine mpr(hruID,             &     ! input: hruID
                   err,cmessage)                                  ! output: error control
   if (err/=0)then; message=trim(message)//cmessage; return; endif
   if ( opt==3 .and. nHru /= nGhru )then;err=10;message=trim(message)//'nHru= '//trim(int2str(nGhru))//' NOT '//trim(int2str(nHru));return;endif
+
   !!! ---------------------------------------------
   !!! Start of model hru loop (from mapping file) !!!
   !!! ---------------------------------------------
@@ -327,7 +329,9 @@ subroutine mpr(hruID,             &     ! input: hruID
              wgt           => mapdata(1)%var(ixVarMapData%weight)%dvar1,           &
              nOverPoly     => mapdata(1)%var(ixVarMapData%overlaps)%ivar1,         &
              overSpolyID   => mapdata(1)%var(ixVarMapData%intersector)%ivar1 )
+
   hru_loop: do iHru=1,nHru
+
     ! Get index (iLocal) of hru id that matches with current hru from hru id array in mapping file
     call findix(hruID(iHru), hruMap, iLocal, err, cmessage); if(err/=0)then; message=trim(cmessage)//cmessage; return; endif
     ! Select list of soil polygons contributing a current hru
@@ -360,6 +364,7 @@ subroutine mpr(hruID,             &     ! input: hruID
         allocate(parVxy(iParm)%varData(nMonth, nGpolyLocal),stat=err)
       enddo
     endif
+
   ! (3.1) Extract soil data for current model hru
     call subsetData(sdata, polySub, sdataLocal, 'soil' ,err, cmessage)
     if(err/=0)then; message=trim(message)//cmessage; return; endif
@@ -397,6 +402,7 @@ subroutine mpr(hruID,             &     ! input: hruID
   ! (3.3) Extract topo data for current model hru
     call subsetData(tdata, polySub, tdataLocal, 'topo' ,err, cmessage)
     if(err/=0)then; message=trim(message)//cmessage; return; endif
+
   ! (3.4) Compute model parameters using transfer function
     ! compute model soil parameters
     if (nSoilBetaModel>0_i4b)then
@@ -431,6 +437,7 @@ subroutine mpr(hruID,             &     ! input: hruID
         write(*,"('z            =',20f9.3)") (zModelLocal(iMLyr,iPoly), iMlyr=1,nLyr)
       enddo
     endif
+
   ! ***********
   ! (4) Spatial aggregation of Model parameter
   ! *********************************************************************
@@ -487,6 +494,7 @@ subroutine mpr(hruID,             &     ! input: hruID
         enddo ! end of iMLyr (model layer) loop
       enddo ! end of iPoly
     endif
+
     ! ************
     ! (4.2) Aggregate model parameveter horizontally - use spatial weight netCDF
     ! *********************************************************************
@@ -570,9 +578,10 @@ subroutine mpr(hruID,             &     ! input: hruID
     ! deallocate memmory
     deallocate(polySub,stat=err); if(err/=0)then; message=trim(message)//'error deallocating polyIdSub'; return; endif
     deallocate(wgtSub,stat=err);  if(err/=0)then; message=trim(message)//'error deallocating wgtSub'; return; endif
+
   enddo hru_loop
   end associate
-  return
+
 end subroutine
 
 ! private subroutine:
@@ -592,7 +601,6 @@ subroutine subsetData(entireData, subPolyID, localData, data_name, err, message)
   character(*),         intent(out)   :: message       ! error message
   !local variables
   type(var_meta), allocatable         :: data_meta(:)
-  integer(i4b),allocatable            :: polyID(:)
   integer(i4b)                        :: polyIdx       ! index of polyid variable in dataset
   integer(i4b)                        :: nVarData      ! number of data
   integer(i4b)                        :: iPoly         ! index of soil polygon loop
@@ -608,12 +616,12 @@ subroutine subsetData(entireData, subPolyID, localData, data_name, err, message)
     case('topo');nVarData=nVarTopoData; allocate(data_meta,source=tdata_meta); polyIdx=ixVarTopoData%polyid
   end select
 
-  allocate(polyID(size(entireData(polyIdx)%ivar1)))
-  polyID = entireData(polyIdx)%ivar1
-
   nPoly=size(subPolyID)
+
   do iVar=1,nVarData
+
     localData(ivar)%varName=trim(entireData(ivar)%varName)
+
     select case(trim(data_meta(iVar)%vartype))
       case('integer')
         select case(trim(data_meta(iVar)%vardims))
@@ -640,6 +648,7 @@ subroutine subsetData(entireData, subPolyID, localData, data_name, err, message)
             if(err/=0)then; message=trim(message)//'problem allocating 1D real space for localData data structure'; return; endif
         end select
     end select
+
     do iPoly=1,nPoly
       iLocal=subPolyID(iPoly)
       select case(trim(data_meta(iVar)%vartype))
@@ -655,8 +664,9 @@ subroutine subsetData(entireData, subPolyID, localData, data_name, err, message)
           end select
       end select
     end do
+
   end do
-  return
+
 end subroutine
 
 ! private subroutine:
