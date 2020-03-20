@@ -53,6 +53,7 @@ contains
      case('psis1gamma3');      get_ixGamma = ixGamma%psis1gamma3       ! gamma parameter-3 for 1st saturation potential matric transfer function (koren et al. 2003)
      case('myu1gamma1');       get_ixGamma = ixGamma%myu1gamma1        ! gamma parameter-1 for 1st specific yield transfer function (koren et al. 2003)
      case('myu1gamma2');       get_ixGamma = ixGamma%myu1gamma2        ! gamma parameter-2 for 1st specific yield transfer function (koren et al. 2003)
+     case('sof1gamma1');       get_ixGamma = ixGamma%sof1gamma1        ! gamma parameter-1 for 1st organic matter content transfer function
      case('z1gamma1');         get_ixGamma = ixGamma%z1gamma1          ! gamma parameter-1 for total soil column depth or bucket size [m] (multiplier)
      case('h1gamma1');         get_ixGamma = ixGamma%h1gamma1          ! gamma parameter-1 for top layer thickness [m] (fraction of z)
      case('h2gamma1');         get_ixGamma = ixGamma%h2gamma1          ! gamma parameter-1 2nd layer thickness [m] (franction of z)
