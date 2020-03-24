@@ -11,6 +11,7 @@ implicit none
 private
 
 public::getMapData
+public::read_hru_id
 
 contains
 
@@ -90,7 +91,27 @@ subroutine getMapData(fname,          &   ! input: file name
   enddo var
   err = nf90_close(ncid)
   if(err/=0)then; message=trim(message)//trim(nf90_strerror(err)); return; endif
-  return
+
+end subroutine
+
+
+subroutine read_hru_id(hruid, err, message)
+
+  use read_ncdata, only: get_vec_ivar
+
+  implicit none
+  ! input variables
+  ! output variables
+  integer(i4b),         intent(out)  :: hruid(:)     !
+  integer(i4b),         intent(out)  :: err          ! error code
+  character(len=strLen)              :: message     ! error message from downward subroutine
+  ! local variables
+  character(len=strLen)              :: cmessage     ! error message from downward subroutine
+
+  err=0; message="read_hru_id/"
+  call get_vec_ivar(trim(mpr_input_dir)//trim(fname_mapping), trim("hru_id"), 1, nHru, hruid, err, cmessage)
+  if (err/=0)then; message=trim(message)//trim(cmessage); return; endif
+
 end subroutine
 
 end module read_mapdata
