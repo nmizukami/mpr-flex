@@ -27,6 +27,8 @@ module nrtype
     integer, parameter :: DPC = c_double_complex
     !> logical
     integer, parameter :: LGC = KIND(.true.)
+    !> character length
+    integer, parameter :: strLen=256             ! length of character string
     ! Real kinds
     integer, parameter :: kr4 = selected_real_kind(6,37)       ! single precision real
     integer, parameter :: kr8 = selected_real_kind(15,307)     ! double precision real

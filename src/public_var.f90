@@ -7,7 +7,6 @@ module public_var
   save
 
   ! some common constant variables
-  integer,     parameter,public   :: strLen=256             ! length of character string
   integer(i4b),parameter,public   :: nMonth=12              ! number of months
   integer(i4b),parameter,public   :: imiss=-999             ! missing value for integer value
   real(dp),    parameter,public   :: dmiss=-999.0_dp        ! missing value for floating value
