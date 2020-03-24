@@ -15,9 +15,9 @@ module public_var
 
   ! Namelist variables
   ! &runconfig
-  integer(i4b),         public    :: opt
-  integer(i4b),         public    :: opt_method
+  integer(i4b),         public    :: idModel
   character(len=strLen),public    :: mpr_param_file
+  character(len=strLen),public    :: inParList
   ! mprconfig
   character(len=strLen),public    :: mpr_input_dir
   character(len=strLen),public    :: mpr_output_dir
@@ -37,44 +37,7 @@ module public_var
   character(len=strLen),public    :: dname_slyrs
   character(len=strLen),public    :: dname_tpoly
   character(len=strLen),public    :: dname_vpoly
-  ! calconfig
-  character(len=strLen),public    :: filelist_name
-  character(len=strLen),public    :: cellfrac_name
-  character(len=strLen),public    :: origparam_name
-  character(len=strLen),public    :: calibparam_name
-  character(len=strLen),public    :: origvege_name
-  character(len=strLen),public    :: calivege_name
-  character(len=strLen),public    :: region_info
-  character(len=strLen),public    :: sim_dir
-  character(len=strLen),public    :: obs_name
-  character(len=strLen),public    :: executable
-  character(len=strLen),public    :: basin_objfun_weight_file
-  integer(i4b),         public    :: agg
-  integer(i4b),         public    :: dt
-  integer(i4b),         public    :: sim_len
-  integer(i4b),         public    :: start_cal
-  integer(i4b),         public    :: end_cal
-  integer(i4b),         public    :: nHru                       ! sum of hrus where model run
-  integer(i4b),         public    :: nbasin                     ! number of basin to be jointly calibrated
-  logical(lgc),         public    :: isRoute                    ! T if sim runoff is routed w/ gamma UH implemented in mpr-flex, F if sim runoff is routed outside
-  ! modelconfig
-  integer(i4b),         public    :: idModel
-  integer(i4b),         public    :: TotNpar  != 54(VIC)
-  integer(i4b),         public    :: nLyr     != 3 (VIC)
-  character(len=strLen),public    :: inParList
-  ! optimization routine
-  ! common
-  integer(i8b),         public    :: maxn                       ! maximum number of trials before optimization is terminated
-  integer(i8b),         public    :: nseed                      ! starting seed for random number generator
-  character(len=strLen),public    :: state_file                 ! state file
-  character(len=strLen),public    :: restrt_file                ! restart file
-  logical(lgc),         public    :: isRestart                  ! ues restart option?
-  ! DDS
-  real(dp),             public    :: rpar                       ! search radius
-  logical(lgc),         public    :: isMax                      ! maximization or minimization
-  ! SCE
-  real(dp),             public    :: percen
-  integer(i4b),         public    :: numcpx                     !
-  integer(i4b),         public    :: cpxstop                    !
+  integer(i4b),         public    :: nLyr
+  integer(i4b),         public    :: nHru
 
 end module public_var
