@@ -12,6 +12,7 @@ public::comp_model_depth
 public::map_slyr2mlyr
 
 contains
+
 ! ***********
 ! public subroutine to compute model layer thickness and bottom depth
 ! *********************************************************************
@@ -22,6 +23,7 @@ contains
                               err, message)        ! output: error id and message
 
   use var_lookup,  only:ixVarSoilData,nVarSoilData ! index of soil data variables and number of variables
+
   implicit none
   ! input
   real(dp),     intent(in)    :: hfrac(:)          ! fraction of total soil layer for each model layer
@@ -45,15 +47,18 @@ contains
 
   ! Initialize error control
   err=0; message=trim(message)//'comp_model_depth/'
+
   ! Get number of soil layer
   associate( hslyrs => soilData(ixVarSoilData%hslyrs)%dvar2 )
   nSLyr=size(hslyrs,1)
   nPoly=size(hslyrs,2)
+
   ! Make mask to exclude layers with missing soil texture data assuming
   allocate(mask(nSLyr,nPoly),stat=err); if(err/=0)then;message=trim(message)//'error allocating mask';return;endif
   mask = ( soilData(ixVarSoilData%sand_pct)%dvar2 > 0 .and. &
            soilData(ixVarSoilData%clay_pct)%dvar2 > 0 .and. &
            soilData(ixVarSoilData%silt_pct)%dvar2 > 0)
+
   do iPoly=1,nPoly
     allocate(lyr_packed(count(mask(:,iPoly))),stat=err); if(err/=0)then;message=trim(message)//'error allocating lyr_packed';return;endif
     lyr_packed = pack( hslyrs(:,iPoly), mask(:,iPoly) )
@@ -87,7 +92,7 @@ contains
     deallocate(lyr_packed)
   enddo
   end associate
-  return
+
 end subroutine
 
 ! *****************************************************************************
@@ -121,19 +126,23 @@ end subroutine
 
   ! initialize error control
   err=0; message='map_slyr2mlyr/'
-  ! dimensions
+
   nSLyr=size(hSoil,1)  !get soil layer number
   nPoly=size(hSoil,2)  !get polygon
   if (nPoly /= size(zModel,2))then;err=30;message=trim(message)//'number of polygon mismatch'; return; endif
+
   allocate(zSoil,source=hSoil)
   do iSLyr=2,nSlyr
     zSoil(iSlyr,:)=hSoil(iSlyr,:)+zSoil(iSlyr-1,:)
   enddo
+
   do iPoly=1,nPoly
+
     do iMLyr=1,nLyr
       lyrmap(iPoly)%layer(iMLyr)%weight = dmiss
       lyrmap(iPoly)%layer(iMLyr)%ixSubLyr = imiss
     enddo
+
     if ( zModel(1,iPoly) >= dmiss .and. zModel(1,iPoly) <= dmiss) then !if model layer depth has missing value
       do iMLyr=1,nLyr
         lyrmap(iPoly)%layer(iMLyr)%weight  = dmiss
@@ -175,12 +184,14 @@ end subroutine
           endif
         enddo
       enddo
+
       ! Error check
       do iMLyr=1,nLyr
         if (idxTop(iMlyr)>11)then;             err=30;message=trim(message)//'index of idxTop not assinged'; return;endif
         if (idxBot(iMlyr)>11)then;             err=30;message=trim(message)//'index of idxBot not assinged'; return;endif
         if (idxTop(iMlyr)-idxBot(iMlyr)>0)then;err=30;message=trim(message)//'index of idxTop lower than idxBot';return;endif
       enddo
+
       !-- Compute weight of soil layer contributing to each model layer and populate lyrmap variable
       do iMLyr=1,nLyr
         ctr = 1
@@ -204,15 +215,18 @@ end subroutine
           ctr = ctr+1
         enddo
       enddo
+
       deallocate(Zs_bot,stat=err); if(err/=0)then; message=trim(message)//'error deallocating Zs_bot'; return; endif
       deallocate(Zs_top,stat=err); if(err/=0)then; message=trim(message)//'error deallocating Zs_top'; return; endif
       deallocate(Zm_top,stat=err); if(err/=0)then; message=trim(message)//'error deallocating Zm_top'; return; endif
       deallocate(Zm_bot,stat=err); if(err/=0)then; message=trim(message)//'error deallocating Zm_bot'; return; endif
       deallocate(idxTop,stat=err); if(err/=0)then; message=trim(message)//'error deallocating idxTop'; return; endif
       deallocate(idxBot,stat=err); if(err/=0)then; message=trim(message)//'error deallocating idxBot'; return; endif
+
     endif
+
   enddo
-  return
+
  end subroutine
 
 end module modelLayer

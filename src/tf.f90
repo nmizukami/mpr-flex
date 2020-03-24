@@ -148,7 +148,7 @@ subroutine comp_model_param(parSxySz,          &  ! in/output: soil parameter va
     idBeta=get_ixBeta(trim(vegBetaCalName(iParm)))
     parVxy(iParm)%varData=parTemp(idBeta)%varData
   enddo
-  return
+
 end subroutine
 
 ! ***********

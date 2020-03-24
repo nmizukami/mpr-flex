@@ -45,12 +45,14 @@ subroutine read_inParList(infile, err, message)
   allocate(tempCalParMeta(nBeta))
   call file_open(trim(infile), unt, err, cmessage)
   if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
+
   ! get to the start of the variable descriptions
   do iline=1,maxLines
     read(unt,'(a)',iostat=iend)temp; if (iend/=0)exit    ! read line of data
     if (temp(1:1)/='!') exit                             ! assume first line not comment is format code
   end do ! looping through file to find the format code
   read(temp,*)ffmt ! to get format
+
   ixLocal=0_i4b
   line:do iline=1,maxLines
     ! read a line of data and exit iif an error code (character read, so only possible error is end of file)
@@ -71,12 +73,14 @@ subroutine read_inParList(infile, err, message)
       err=32; return
     endif
   enddo line
+
   ! close file unit
   close(unt)
+
   ! save 'inParMeta'
   allocate(inParMeta(ixLocal))
   inParMeta=tempCalParMeta(1:ixLocal)
-  return
+
 end subroutine
 
 ! ************************************************************************************************
@@ -198,15 +202,15 @@ subroutine get_parm_meta( err, message)
       endif
     enddo
     nCalBetaDir=nCalPar-nCalGamma      ! Save number of beta parameter to be directly calibrated
-    if (nCalPar > 0_i4b) then          ! Save 'calParMeta'
+    if (nCalPar > 0) then          ! Save 'calParMeta'
       allocate(calParMeta(nCalPar))
       calParMeta=tempParSubset(1:nCalPar)
     endif
-    if (nCalGamma > 0_i4b) then              ! Save'calGammaMeta'
+    if (nCalGamma > 0) then              ! Save'calGammaMeta'
       allocate(calGammaMeta(nCalGamma))
       calGammaMeta=tempGammaMeta(1:nCalGamma)
     endif
-    return
+
   end subroutine
 
   ! Private subroutine: Get list of beta parameters (excluding z and h) computed with MPR.
@@ -390,7 +394,7 @@ subroutine param_setup( err, message )
       parMask (idx)   = calScaleMeta(iPar)%mask(ixHV)
     enddo
   enddo
-  return
+
 end subroutine
 
 !*********************************************************
@@ -465,7 +469,7 @@ subroutine print_config()
   end do
   print*,"!-----------------------------------------------------------"
   print*,"!-----------------------------------------------------------"
-  return
+
 end subroutine
 
 !**********************************
@@ -501,7 +505,7 @@ subroutine check_gammaH( err, message)
   else
     print*, 'No gamma parameters listed in CalPar->No MPR computation'
   endif
-  return
+
 end subroutine
 
 end module process_meta

@@ -1,8 +1,8 @@
 module mpr_routine
 
-  use nrtype                                           ! Including numerical type definition
-  use data_type                                        ! Including custum data structure definition
-  use public_var                                       ! Including common constant (physical constant, other e.g., missingVal, etc.)
+  use nrtype
+  use data_type
+  use public_var, only: nHru, nLyr, nMonth
 
   implicit none
 
@@ -18,9 +18,11 @@ contains
 ! ************************************************************************************************
 ! this subroutine is used for opt=3 in namelist (run only mpr and output parameters)
 subroutine run_mpr( calParam, restartFile, err, message )
+
   use globalData,    only: calScaleMeta, calParMeta, calGammaMeta, parArray, parMask, nCalPar, nSoilBetaModel, nVegBetaModel
   use model_wrapper, only: read_hru_id
   use write_param_nc,only: write_nc_soil,write_nc_veg
+
   implicit none
   ! input variables
   real(dp),             intent(in)  :: calParam(:)                   ! parameter in namelist, not necessarily all parameters are calibrated
@@ -43,10 +45,15 @@ subroutine run_mpr( calParam, restartFile, err, message )
   character(len=strLen)             :: cmessage                      ! error message from subroutine
 
   err=0; message='run_mpr/' ! to initialize error control
+
   if ( any(calParMeta(:)%beta /= "beta") )then ! calPar need to include min. one gamma parameter to be used for MPR
+
     if ( idModel/=0 )then;idModel=0;print*,trim(message)//'idModel is set to zero - model inepenedent';endif
+
     allocate(params, source=calParam) ! copy calParameter default
+
     call restartIO( params, restartFile ) ! check restartFile exist, if it does, update params vector, otherwise wite them in restartFile
+
     ! transform parameter vector to custom data type - calParStr and pnormCoef
     idx=1
     do iPar=1,nCalPar !beta and gamma parameter values
@@ -65,37 +72,46 @@ subroutine run_mpr( calParam, restartFile, err, message )
       pnormCoef(iPar)%var=params(idx:idx+1)
       idx=idx+2
     end do
+
     ! Get hruID from mapping file
     call read_hru_id(idModel, hruID, err, cmessage)
     if (err/=0)then;message=trim(message)//trim(cmessage);return;endif
+
     do iPar=1,nSoilBetaModel
       allocate(parMxyMz(iPar)%varData(nLyr,nHru),stat=err)
     enddo
     do iPar=1,nVegBetaModel
       allocate(vegParMxy(iPar)%varData(nMonth,nHru),stat=err)
     enddo
+
     mask=calParMeta(:)%beta/="beta"
     allocate(paramGammaStr(count(mask)))
     paramGammaStr=pack(calParStr,mask)
+
     do iPar=1,size(paramGammaStr)
       if (size(paramGammaStr(iPar)%var)>1)then;message=trim(message)//'gammaParameter should not have perLayer value';return;endif
     enddo
+
     !perform MPR
     call mpr(hruID, pnormCoef, paramGammaStr, calGammaMeta, hModel, parMxyMz, vegParMxy, err, cmessage) ! to output model layer thickness and model parameter via MPR
     if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
+
     !! Write parameter derived from MPR in netCDF
-    if (nSoilBetaModel>0_i4b)then
+    if (nSoilBetaModel>0)then
       call write_nc_soil(trim(mpr_output_dir)//trim(soil_param_nc), hruID, hModel, parMxyMz, err, cmessage)
       if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
     endif
-    if (nVegBetaModel>0_i4b)then
+
+    if (nVegBetaModel>0)then
       call write_nc_veg(trim(mpr_output_dir)//trim(veg_Param_nc), hruID, vegParMxy, err, cmessage)
       if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
     endif
+
   else
+
     print*,trim(message)//'there is no gamma pamameters in parameter input file to perform MPR';stop
+
   endif
-  return
 
   contains
 
@@ -164,6 +180,7 @@ subroutine mpr(hruID,             &     ! input: hruID
                parMxyMz,          &     ! output: MPR derived soil parameter
                vegParMxy,         &     ! output: MPR derived veg parameter
                err, message)            ! output: error id and message
+
   use model_wrapper,        only:read_hru_id
   use popMeta,              only:popMprMeta
   use globalData,           only:betaMeta, gammaMeta, soilBetaCalName, vegBetaCalName, calScaleMeta, &
@@ -249,10 +266,12 @@ subroutine mpr(hruID,             &     ! input: hruID
   !(0) Preparation
   allocate(gammaUpdateMeta, source=gammaMeta) ! copy master gamma parameter metadata
   allocate(betaUpdateMeta,  source=betaMeta)  ! copy master beta parameter metadata
+
   ! Swap gammaUpdateMeta%val with adjusted gammaPar value
   do iGamma=1,size(gammaParStr)
     gammaUpdateMeta(gammaParMeta(iGamma)%ixMaster)%val=gammaParStr(iGamma)%var(1)
   enddo
+
   ! Swap betaUpdateMeta%hpnorm and vpnorm with adjusted pnorm coefficient value
   do iParm=1,size(pnormCoefStr)
     associate(ix=>get_ixBeta(calScaleMeta(iParm)%betaname))
@@ -260,11 +279,14 @@ subroutine mpr(hruID,             &     ! input: hruID
       betaUpdateMeta(ix)%vpnorm=pnormCoefStr(iParm)%var(2)
     end associate
   enddo
+
   call popMprMeta( err, cmessage)   !for sdata_meta, vdata_meta, map_meta
   if(err/=0)then; message=trim(message)//cmessage; return; endif
+
   !call pop_hfrac(gammaParStr, gammaParMeta, hfrac, err, cmessage) ! to get hfrac
   call pop_hfrac( gammaUpdateMeta, hfrac, err, cmessage) ! to get hfrac
   if(err/=0)then; message=trim(message)//cmessage; return; endif
+
   ! *****
   ! (1) Get Geophysical data - THIS SHOULD BE OUTSIDE MPR SOUBROUTINE
   ! *********************************************
@@ -441,7 +463,7 @@ subroutine mpr(hruID,             &     ! input: hruID
   ! ***********
   ! (4) Spatial aggregation of Model parameter
   ! *********************************************************************
-    if (nSoilBetaModel>0_i4b)then
+    if (nSoilBetaModel>0)then
       ! **********
       ! (4.1) Aggregate model parameveter vertical direction - soil data layers to model soil layers
       ! *********************************************************************
@@ -700,7 +722,7 @@ subroutine pop_hfrac( gammaUpdateMeta, hfrac, err, message)
   !mask=(dummy>0)
   !if ( count(mask)/=nLyr-1 ) stop 'number of h1gamma prameters mismatch with nLyr'
   !#hfrac=pack(dummy,mask)
-  return
+
 end subroutine
 
 ! private function
@@ -730,7 +752,7 @@ subroutine findix(scl, vec, iSelect, ierr, message)
   iSelect = i(1)  ! de-vectorize the found index
   if(vec(iSelect) /= scl)&
     ierr=60; message=trim(message)//'unable to find matched value'; return
-  return
+
 end subroutine
 
 end module mpr_routine
