@@ -20,7 +20,9 @@ program main_calibration
   integer(i4b)                      :: ierr            ! error code
   character(len=strLen)             :: cmessage        ! error message from suroutine
 
-  nmlfile='namelist.dds.local'
+   call getarg(1,nmlfile)
+   if(len_trim(nmlfile)==0) call handle_err(50,'need to supply name of the namelist file as a command-line argument')
+
   ! Read configuration namelists and save variables
   call read_nml( trim(nmlfile), ierr, cmessage ); call handle_err(ierr,cmessage)
   ! Populate master parameter meta.  Saved data: betaMeta, gammaMeta

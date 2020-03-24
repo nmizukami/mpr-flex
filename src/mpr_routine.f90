@@ -299,7 +299,7 @@ subroutine mpr(hruID,             &     ! input: hruID
                           vegClass,                                &
                           vcls2prp,                                &
                           err, cmessage)
-   if(err/=0)then; message=message//cmessage; return; endif
+   if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
   ! (1.3) Get topo data
   call getTopoData(trim(mpr_input_dir)//trim(fname_topo),& ! input: topographical data input name (netCDF)
                    tdata_meta,                           & ! input: topographical data meta
