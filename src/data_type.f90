@@ -1,9 +1,9 @@
 module data_type
 
-! Here define custum data type    
+! Here define custum data type
 
   use nrtype
-  use public_var 
+  use public_var
 
   implicit none
 
@@ -12,55 +12,55 @@ module data_type
 ! ***********************************************************************************************************
 type,public  :: par_meta
   character(len=strLen)        :: pname  =''        ! parameter name
-  real(dp)                     :: val    =-999.0_dp ! default bound 
+  real(dp)                     :: val    =-999.0_dp ! default bound
   real(dp)                     :: lwr    =-999.0_dp ! lower and upper bounds
   real(dp)                     :: upr    =-999.0_dp ! lower and upper bounds
   character(len=strLen)        :: beta   =''        ! name of parent beta parameter - if parameter is beta parameter, use "beta"
-  integer(i4b)                 :: tftype =-999_i4b  ! id of transfer function type 
+  integer(i4b)                 :: tftype =-999_i4b  ! id of transfer function type
   character(len=strLen)        :: ptype  =''        ! name of parent beta parameter - if parameter is beta parameter, use "beta"
-  logical(lgc)                 :: flag   =.False.   ! flag to calibrate or not 
-  character(len=strLen)        :: hups   =''        ! scaling operator for horizontal direction 
-  real(dp)                     :: hpnorm =-999.0_dp ! scaling operator for horizontal direction 
-  character(len=strLen)        :: vups   =''        ! scaling operator for vertical direction 
-  real(dp)                     :: vpnorm =-999.0_dp ! scaling operator for horizontal direction 
+  logical(lgc)                 :: flag   =.False.   ! flag to calibrate or not
+  character(len=strLen)        :: hups   =''        ! scaling operator for horizontal direction
+  real(dp)                     :: hpnorm =-999.0_dp ! scaling operator for horizontal direction
+  character(len=strLen)        :: vups   =''        ! scaling operator for vertical direction
+  real(dp)                     :: vpnorm =-999.0_dp ! scaling operator for horizontal direction
   logical(lgc)                 :: perLyr =.False.   ! calibrate per layer (only applicable to multiplier method)
 endtype par_meta
 
-! extended parameter meta data for selected set 
+! extended parameter meta data for selected set
 type,extends(par_meta), public  :: cpar_meta
   integer(i4b)        :: ixMaster=-999   ! idex of master parameter list
 endtype cpar_meta
 
 ! ***********************************************************************************************************
-! Define data structure of beta parameters 
+! Define data structure of beta parameters
 ! ***********************************************************************************************************
 type, public :: beta_meta
-  integer(i4b),allocatable     :: depend(:)         ! list of idex of dependent beta parameter 
-  integer(i4b)                 :: order=-999_i4b    ! computing order 
+  integer(i4b),allocatable     :: depend(:)         ! list of idex of dependent beta parameter
+  integer(i4b)                 :: order=-999_i4b    ! computing order
 endtype beta_meta
 
 ! ***********************************************************************************************************
-! Define data structure of input parameter metadata 
+! Define data structure of input parameter metadata
 ! ***********************************************************************************************************
 type,public :: scale_meta
   character(len=strLen)            :: betaname=''        ! Beta name
-  real(dp)                         :: pdefault(2)        ! default P exponent values 
-  logical(lgc)                     :: mask(2)            ! logical to tell scaling parameter is calibrated or not 
-endtype scale_meta 
+  real(dp)                         :: pdefault(2)        ! default P exponent values
+  logical(lgc)                     :: mask(2)            ! logical to tell scaling parameter is not necessary (e.g., majority)
+endtype scale_meta
 
 ! ***********************************************************************************************************
-! Define data structure of input parameter metadata 
+! Define data structure of input parameter metadata
 ! ***********************************************************************************************************
 type,public :: input_meta
   character(len=strLen)            :: betaname=''              ! Beta name
   integer(i4b)                     :: calMethod=1              ! which calibration methods? 0=skip, 1=MPR, 2=Direct
   integer(i4b)                     :: TF=1                     ! which Transfer function type?
-  logical(lgc)                     :: isScaleCalH =.False.     ! calibrating scaling operators for horizontal direction? 
-  logical(lgc)                     :: isScaleCalV =.False.     ! calibrating scaling operators for vertical direction? 
-endtype input_meta 
+  logical(lgc)                     :: isScaleCalH =.False.     ! calibrating scaling operators for horizontal direction?
+  logical(lgc)                     :: isScaleCalV =.False.     ! calibrating scaling operators for vertical direction?
+endtype input_meta
 
 ! ***********************************************************************************************************
-! Define data structure of variable metadata - soil propeties, topography, vege propeties, model hru propeties 
+! Define data structure of variable metadata - soil propeties, topography, vege propeties, model hru propeties
 ! ***********************************************************************************************************
 type,public :: var_meta
   character(len=strLen)            :: varname=''               ! name
@@ -71,7 +71,7 @@ type,public :: var_meta
 endtype var_meta
 
 ! ***********************************************************************************************************
-! Define data structure of netCDF dimension metadata  
+! Define data structure of netCDF dimension metadata
 ! ***********************************************************************************************************
   type, public :: defDim
     character(len=32)         :: dimName=''
@@ -84,64 +84,64 @@ endtype var_meta
 ! ********************************************
 ! ipolydata(:)%var(:)%data(:)
 ! 1st level - horizontal
-! 2nd level - variable index 
+! 2nd level - variable index
 ! 3rd level - data
-type,public :: ivar 
+type,public :: ivar
   integer(i4b),allocatable       :: dat(:)
-endtype ivar 
-type,public :: ipolydata 
+endtype ivar
+type,public :: ipolydata
   type(ivar),allocatable         :: var(:)
-endtype ipolydata 
+endtype ipolydata
 
 ! *****
 ! data structure to hold polygon data only real type
 ! ********************************************
 ! ipolydata(:)%var(:)%data(:)
 ! 1st level - horizontal
-! 2nd level - variable index 
+! 2nd level - variable index
 ! 3rd level - data
-type,public :: dvar 
+type,public :: dvar
   real(dp),allocatable      :: dat(:)
-endtype dvar 
-type,public :: dpolydata 
+endtype dvar
+type,public :: dpolydata
   type(dvar),allocatable    :: var(:)
-endtype dpolydata 
+endtype dpolydata
 
 ! *****
-! data structure to hold integer type data (both vector and 2D) 
+! data structure to hold integer type data (both vector and 2D)
 ! ********************************************
 ! poly(:)%layer(:)%weight(:)
 !                 %ixSubLyr(:)
 ! 1st level - horizontal
-! 2nd level - model layer 
-! 3rd level - weight and index of sublayer 
-type,public :: mapping 
+! 2nd level - model layer
+! 3rd level - weight and index of sublayer
+type,public :: mapping
   real(dp),    allocatable          :: weight(:)
   integer(i4b),allocatable          :: ixSubLyr(:)
-endtype mapping 
-type,public :: poly 
+endtype mapping
+type,public :: poly
   type(mapping),allocatable    :: layer(:)
 endtype poly
 
 ! *****
 ! Other data type (need to clean up)
 ! ********************************************
-! Define derived types to hold data values in vector (soil properties or model parameters) given their indices 
+! Define derived types to hold data values in vector (soil properties or model parameters) given their indices
 ! use "layer" for 2nd layer name
-! ** double precision type 
+! ** double precision type
  type,public :: lyr_d
    real(dp),allocatable              :: layer(:)
  endtype lyr_d
- ! ** integer type 
+ ! ** integer type
  type,public :: lyr_i
    integer(i4b),allocatable          :: layer(:)
  endtype lyr_i
 ! use "var" for 2nd layer name
-! ** double precision type 
+! ** double precision type
  type, public :: var_d
   real(dp),allocatable               :: var(:)
  endtype var_d
- ! ** integer type 
+ ! ** integer type
  type, public :: var_i
   integer(i4b),allocatable           :: var(:)
  endtype var_i
@@ -155,7 +155,7 @@ endtype poly
    integer(i4b),allocatable          :: dat(:)
  endtype dat_i1d
 
-! Define derived types to hold data values in 2D array (soil properties or model parameters) given their indices 
+! Define derived types to hold data values in 2D array (soil properties or model parameters) given their indices
 ! ** double precision type
  type,public :: dat_d2d
    real(dp),allocatable         :: dat(:,:)
@@ -165,7 +165,7 @@ endtype poly
    integer(i4b),allocatable     :: dat(:,:)
  endtype dat_i2d
 
-! Define derived types to hold data values in vector and 2D array (soil properties or model parameters) given their indices 
+! Define derived types to hold data values in vector and 2D array (soil properties or model parameters) given their indices
 ! ** double precision type
  type,public :: dat_d12d
    real(dp),allocatable         :: dat1d(:)
