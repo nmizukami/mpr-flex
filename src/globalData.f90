@@ -25,10 +25,8 @@ character(len=strLen),save,allocatable,public  :: vegBetaCalName(:)         ! su
 real(dp),             save,allocatable,public  :: parArray(:,:)             ! calibrating parameter array - input for optimization routine
 logical(lgc),         save,allocatable,public  :: parMask(:)                ! calibrating parameter mask vector - input for optimization routine
 ! Number of parameters
-integer(i4b),         save,            public  :: nCalBetaDir               ! number of beta parameters to be directly calibrated
 integer(i4b),         save,            public  :: nCalGamma                 ! number of gamma parameters to be calibrated
 integer(i4b),         save,            public  :: nCalPar                   ! sum of beta parameter directly calibrated and gamma parameters calibrated
-integer(i4b),         save,            public  :: nCalParSum                ! Total number of calibrating parameters = n(gamma)+m1(beta)+m2(beta_per_layer)*nLyr(m1+m2=nCalBetaDir)
 integer(i4b),         save,            public  :: nBetaNeed                 ! number of beta parameters computed in MPR including calibrating beta and their dependent beta
 integer(i4b),         save,            public  :: nSoilBetaModel            ! number of soil parameters to be estimated with MPR
 integer(i4b),         save,            public  :: nVegBetaModel             ! number of vegetation parameters to be estimated with MPR

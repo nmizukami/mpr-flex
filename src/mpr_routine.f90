@@ -16,11 +16,10 @@ contains
 ! ************************************************************************************************
 ! Public subroutine: run MPR and save estimated parameters in netCDF
 ! ************************************************************************************************
-! this subroutine is used for opt=3 in namelist (run only mpr and output parameters)
 subroutine run_mpr( calParam, restartFile, err, message )
 
-  use globalData,    only: calScaleMeta, calParMeta, calGammaMeta, parArray, parMask, nCalPar, nSoilBetaModel, nVegBetaModel
-  use model_wrapper, only: read_hru_id
+  use globalData,    only: calScaleMeta, calGammaMeta, parArray, parMask, nCalGamma, nSoilBetaModel, nVegBetaModel
+  use read_mapdata,  only: read_hru_id
   use write_param_nc,only: write_nc_soil,write_nc_veg
 
   implicit none
@@ -32,12 +31,12 @@ subroutine run_mpr( calParam, restartFile, err, message )
   character(len=strLen),intent(out) :: message                       ! error message
   ! local
   real(dp),             allocatable :: params(:)                     ! parameter vector that is input into mpr
-  type(var_d)                       :: calParStr(nCalPar)            ! parameter storage including perLayr values converted from parameter array
+  type(var_d)                       :: calParStr(nCalGamma)            ! parameter storage including perLayr values converted from parameter array
   type(var_d)                       :: pnormCoef(size(calScaleMeta)) ! parameter storage converted from parameter array
   type(var_d),          allocatable :: paramGammaStr(:)              ! calibratin gamma parameter storage extracted from calParStr
   integer(i4b)                      :: idx                           ! counter
   integer(i4b)                      :: iPar                          ! loop index for parameter
-  logical(lgc)                      :: mask(nCalPar)                 ! 1D mask
+  logical(lgc)                      :: mask(nCalGamma)               ! 1D mask
   integer(i4b)                      :: hruID(nHru)                   ! Hru ID
   real(dp)                          :: hModel(nLyr,nHru)             ! storage of model layer thickness at model layer x model hru
   type(namedvar2)                   :: parMxyMz(nSoilBetaModel)      ! storage of model soil parameter at model layer x model hru
@@ -46,9 +45,7 @@ subroutine run_mpr( calParam, restartFile, err, message )
 
   err=0; message='run_mpr/' ! to initialize error control
 
-  if ( any(calParMeta(:)%beta /= "beta") )then ! calPar need to include min. one gamma parameter to be used for MPR
-
-    if ( idModel/=0 )then;idModel=0;print*,trim(message)//'idModel is set to zero - model inepenedent';endif
+  if ( any(calGammaMeta(:)%beta /= "beta") )then ! calPar need to include min. one gamma parameter to be used for MPR
 
     allocate(params, source=calParam) ! copy calParameter default
 
@@ -56,8 +53,8 @@ subroutine run_mpr( calParam, restartFile, err, message )
 
     ! transform parameter vector to custom data type - calParStr and pnormCoef
     idx=1
-    do iPar=1,nCalPar !beta and gamma parameter values
-      if (calParMeta(iPar)%perLyr)then
+    do iPar=1,nCalGamma !beta and gamma parameter values
+      if (calGammaMeta(iPar)%perLyr)then
         allocate(calParStr(iPar)%var(nLyr))
         calParStr(iPar)%var=params(idx:idx+nLyr-1)
         idx=idx+nLyr
@@ -74,7 +71,7 @@ subroutine run_mpr( calParam, restartFile, err, message )
     end do
 
     ! Get hruID from mapping file
-    call read_hru_id(idModel, hruID, err, cmessage)
+    call read_hru_id( hruID, err, cmessage)
     if (err/=0)then;message=trim(message)//trim(cmessage);return;endif
 
     do iPar=1,nSoilBetaModel
@@ -84,7 +81,7 @@ subroutine run_mpr( calParam, restartFile, err, message )
       allocate(vegParMxy(iPar)%varData(nMonth,nHru),stat=err)
     enddo
 
-    mask=calParMeta(:)%beta/="beta"
+    mask=calGammaMeta(:)%beta/="beta"
     allocate(paramGammaStr(count(mask)))
     paramGammaStr=pack(calParStr,mask)
 
@@ -129,8 +126,8 @@ subroutine run_mpr( calParam, restartFile, err, message )
     if ( isExistFile ) then !  if state file exists, read it and update params
       print*, 'read restart file'
       open(unit=70,file=trim(adjustl(restartFile)), action='read', status = 'unknown')
-      do i=1,nCalPar
-        if (calParMeta(i)%perLyr)then
+      do i=1,nCalGamma
+        if (calGammaMeta(i)%perLyr)then
           do j=1,nLyr
             read(70,*) cdummy, params(i), ldummy, cdummy
           end do
@@ -139,27 +136,27 @@ subroutine run_mpr( calParam, restartFile, err, message )
         endif
       end do
       do i=1,size(calScaleMeta)
-         read(70,*) cdummy, params(nCalPar+2*i-1), ldummy, cdummy
-         read(70,*) cdummy, params(nCalPar+2*i), ldummy, cdummy
+         read(70,*) cdummy, params(nCalGamma+2*i-1), ldummy, cdummy
+         read(70,*) cdummy, params(nCalGamma+2*i), ldummy, cdummy
       end do
       close(70)
     else          !otherwise write out
       print*, 'write restart file'
       open(unit=70,file=trim(adjustl(restartFile)), action='write', status = 'unknown')
-      do i=1,nCalPar
-        if (calParMeta(i)%perLyr)then
+      do i=1,nCalGamma
+        if (calGammaMeta(i)%perLyr)then
           do j=1,nLyr
-            write(70,100) calParMeta(i)%pname(1:20), parArray(i,1), parMask(i), 'Beta-par-perLayer'
+            write(70,100) calGammaMeta(i)%pname(1:20), parArray(i,1), parMask(i), 'Beta-par-perLayer'
             100 format(1X,A,1X,ES17.10,1X,L9,1X,A20)
           end do
         else
-          write(70,200) calParMeta(i)%pname(1:20), parArray(i,1), parMask(i), 'Gamma-par'
+          write(70,200) calGammaMeta(i)%pname(1:20), parArray(i,1), parMask(i), 'Gamma-par'
           200 format(1X,A,1X,ES17.10,1X,L9,1X,A20)
         endif
       enddo
       do i=1,size(calScaleMeta)
-         write(70,300) calScaleMeta(i)%betaname(1:20), parArray(nCalPar+2*i-1,1), parMask(nCalPar+2*i-1), 'H-scaling-par'
-         write(70,300) calScaleMeta(i)%betaname(1:20), parArray(nCalPar+2*i  ,1), parMask(nCalPar+2*i),   'V-scaling-par'
+         write(70,300) calScaleMeta(i)%betaname(1:20), parArray(nCalGamma+2*i-1,1), parMask(nCalGamma+2*i-1), 'H-scaling-par'
+         write(70,300) calScaleMeta(i)%betaname(1:20), parArray(nCalGamma+2*i  ,1), parMask(nCalGamma+2*i),   'V-scaling-par'
          300 format(1X,A,1X,ES17.10,1X,L9,1X,A20)
       end do
       close(70)
@@ -181,7 +178,6 @@ subroutine mpr(hruID,             &     ! input: hruID
                vegParMxy,         &     ! output: MPR derived veg parameter
                err, message)            ! output: error id and message
 
-  use model_wrapper,        only:read_hru_id
   use popMeta,              only:popMprMeta
   use globalData,           only:betaMeta, gammaMeta, soilBetaCalName, vegBetaCalName, calScaleMeta, &
                                  sdata_meta, vdata_meta, tdata_meta, map_meta, nSoilBetaModel, nVegBetaModel
@@ -342,7 +338,7 @@ subroutine mpr(hruID,             &     ! input: hruID
                   nGhru,                                     &   ! output: number of hru
                   err,cmessage)                                  ! output: error control
   if (err/=0)then; message=trim(message)//cmessage; return; endif
-  if ( opt==3 .and. nHru /= nGhru )then;err=10;message=trim(message)//'nHru= '//trim(int2str(nGhru))//' NOT '//trim(int2str(nHru));return;endif
+  if ( nHru /= nGhru )then;err=10;message=trim(message)//'nHru= '//trim(int2str(nGhru))//' NOT '//trim(int2str(nHru));return;endif
 
   !!! ---------------------------------------------
   !!! Start of model hru loop (from mapping file) !!!
