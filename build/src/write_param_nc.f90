@@ -152,7 +152,7 @@ contains
     integer(i4b), intent(out)         :: err             ! error code
     character(*), intent(out)         :: message         ! error message
     ! local variables
-    type(par_meta),  allocatable      :: betaMetaTemp(:) ! meta data for beta parameter estimated via MPR
+    type(betaPar_meta), allocatable   :: betaMetaTemp(:) ! meta data for beta parameter estimated via MPR
     integer(i4b)                      :: ncid            ! NetCDF file ID
     integer(i4b)                      :: dim1ID          ! 1st dimension ID (hru)
     integer(i4b)                      :: dim2ID          ! 2nd dimension ID (soil layer, month)

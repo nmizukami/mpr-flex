@@ -86,14 +86,15 @@ end subroutine
 subroutine get_parm_meta( err, message)
   ! Process inParMeta along with betaMeta and gammaMeta (popMeta.f90)
   ! Saved data:  calGammaMeta, calBetaName
-  use data_type,  only:par_meta, cpar_meta, scale_meta
+  use data_type,  only: cpar_meta, scale_meta
   use globalData, only:inParMeta,      & ! meta for beta parameter listed in 'inParList' nml input
                        gammaMeta,      & ! meta for all gamma parameters
                        betaMeta,       & ! meta for all beta parameters
                        calGammaMeta,   & ! meta for only gamma parameters listed in input
                        calBetaName,    & ! list of beta parameters calibrated with MPR
                        calScaleMeta,   & ! meta for beta parameter whose scaling operator(s) is calibrated
-                       nCalGamma,      & ! number of gamma parameters to be calibrated
+                       nCalGamma,      & ! number of gamma parameters to be computed
+                       nCalScale,      & ! number of scaling parameters to be computed
                        nSoilBetaModel, & ! number of soil beta parameters to be calibrated via MPR
                        nVegBetaModel,  & ! number of veg beta parameters to be calibrated via MPR
                        soilBetaCalName,& ! list of Soil parameters to be estimated via MPR
@@ -158,11 +159,6 @@ subroutine get_parm_meta( err, message)
           tempParSubset(nCalGamma)%tftype   = gammaMeta(iGamma)%tftype
           tempParSubset(nCalGamma)%ptype    = gammaMeta(iGamma)%ptype
           tempParSubset(nCalGamma)%flag     = .True.
-          tempParSubset(nCalGamma)%hups     = gammaMeta(iGamma)%hups
-          tempParSubset(nCalGamma)%hpnorm   = gammaMeta(iGamma)%hpnorm
-          tempParSubset(nCalGamma)%vups     = gammaMeta(iGamma)%vups
-          tempParSubset(nCalGamma)%vpnorm   = gammaMeta(iGamma)%vpnorm
-          tempParSubset(nCalGamma)%perLyr   = gammaMeta(iGamma)%perLyr
         endif
       end do
     enddo
@@ -244,6 +240,7 @@ subroutine get_parm_meta( err, message)
     else
 
       print*, 'NO gamma parameters included in the list'
+
     endif
 
   end subroutine
@@ -257,46 +254,45 @@ subroutine get_parm_meta( err, message)
     integer(i4b),         intent(out)   :: err                   ! error code
     !local
     type(scale_meta),     allocatable   :: tempBetaCalScale(:)   !
-    integer(i4b)                        :: nScaleBeta            ! counter
 
     err=0; message="get_scaleInBeta/"
 
     allocate(tempBetaCalScale(size(inParMeta)),stat=err);if(err/=0)then;message=trim(message)//'error allocating tempBetaCalScale';return;endif
 
-    nScaleBeta=0
     do iPar=1,size(inParMeta)!if beta parameter is estimated with MPR or even not calibrated, calibrate scaling parameter
 
       associate( hups      => betaMeta(get_ixBeta(inParMeta(iPar)%betaname))%hups,   &
                  vups      => betaMeta(get_ixBeta(inParMeta(iPar)%betaname))%vups,   &
                  hpower    => betaMeta(get_ixBeta(inParMeta(iPar)%betaname))%hpnorm, &
-                 vpower    => betaMeta(get_ixBeta(inParMeta(iPar)%betaname))%vpnorm, &
-                 hscaleMask=> inParMeta(iPar)%isScaleCalH, &
-                 vscaleMask=> inParMeta(iPar)%isScaleCalV )
+                 vpower    => betaMeta(get_ixBeta(inParMeta(iPar)%betaname))%vpnorm)
+                 !hscaleMask=> inParMeta(iPar)%isScaleCalH, &
+!                 vscaleMask=> inParMeta(iPar)%isScaleCalV )
 
-      nScaleBeta=nScaleBeta+1
-      tempBetaCalScale(nScaleBeta)%betaname    = inParMeta(iPar)%betaname
-      tempBetaCalScale(nScaleBeta)%pdefault(1) = hpower
-      tempBetaCalScale(nScaleBeta)%pdefault(2) = vpower
-      tempBetaCalScale(nScaleBeta)%mask(1)     = hscaleMask
-      tempBetaCalScale(nScaleBeta)%mask(2)     = vscaleMask
+      tempBetaCalScale(iPar)%betaname    = inParMeta(iPar)%betaname
+      tempBetaCalScale(iPar)%pdefault(1) = hpower
+      tempBetaCalScale(iPar)%pdefault(2) = vpower
+      tempBetaCalScale(iPar)%mask(1)     = .true.
+      tempBetaCalScale(iPar)%mask(2)     = .true.
 
       ! Check beta meta data for scaling and if value is -999 or na, turns off calibration
-      if (hscaleMask .and. (hpower==-999.0_dp .or. hups=='na'))then
+      if (hpower==-999.0_dp .or. hups=='na') then
         print*,'Switch horizontal upscale calibration to False for',inParMeta(iPar)%betaname
-        tempBetaCalScale(nScaleBeta)%mask(1)=.False.
+        tempBetaCalScale(iPar)%mask(1)=.False.
       endif
 
-      if (vscaleMask .and. (vpower==-999.0_dp .or. vups=='na'))then
+      if (vpower==-999.0_dp .or. vups=='na') then
         print*,'Switch vertical upscale calibration to False for',inParMeta(iPar)%betaname
-        tempBetaCalScale(nScaleBeta)%mask(2)=.False.
+        tempBetaCalScale(iPar)%mask(2)=.False.
       endif
 
       end associate
 
     enddo
 
-    allocate(calScaleMeta(nScaleBeta),stat=err);if(err/=0)then;message=trim(message)//'error allocating calScaleMeta';return;endif
-    calScaleMeta=tempBetaCalScale(1:nScaleBeta)
+    allocate(calScaleMeta(size(inParMeta)),stat=err);if(err/=0)then;message=trim(message)//'error allocating calScaleMeta';return;endif
+    calScaleMeta=tempBetaCalScale(1:size(inParMeta))
+
+    nCalScale = size(inParMeta)*2
 
   end subroutine
 
@@ -306,7 +302,7 @@ end subroutine
 ! Public subroutine: convert parameter data structure to simple arrays
 ! ************************************************************************************************
 subroutine param_setup( err, message )
-  use globalData,  only:parArray, parMask, calGammaMeta, nCalGamma, calScaleMeta
+  use globalData,  only:parArray, parMask, calGammaMeta, nCalGamma, nCalScale, calScaleMeta
   implicit none
   !output variables
   integer(i4b),     intent(out) :: err                    ! error code
@@ -320,7 +316,7 @@ subroutine param_setup( err, message )
   ! initialize error control
   err=0; message='param_setput/'
 
-  nCalParSum = nCalGamma+size(calScaleMeta)*2
+  nCalParSum = nCalGamma+nCalScale
 
   allocate(parArray(nCalParSum,3),stat=err);if(err/=0)then;message=trim(message)//'error allocating parArray';return;endif
   allocate(parMask(nCalParSum),stat=err);if(err/=0)then;message=trim(message)//'error allocating parMask';return;endif
@@ -429,7 +425,9 @@ subroutine check_gammaH( err, message)
 
   ! initialize error control
   err=0; message='check_gammaH/'
+
   allocate(checkH(nLyr-1))
+
   id=-999
   if ( allocated(calGammaMeta) )then
     !check h parameters - now can chcek up to 5 layers

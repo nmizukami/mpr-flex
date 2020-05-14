@@ -10,7 +10,7 @@ module data_type
 ! ***********************************************************************************************************
 ! Define data structure of master parameter (both gamma and beta) metadata
 ! ***********************************************************************************************************
-type,public  :: par_meta
+type,public  :: gammaPar_meta
   character(len=strLen)        :: pname  =''        ! parameter name
   real(dp)                     :: val    =-999.0_dp ! default bound
   real(dp)                     :: lwr    =-999.0_dp ! lower and upper bounds
@@ -19,15 +19,18 @@ type,public  :: par_meta
   integer(i4b)                 :: tftype =-999_i4b  ! id of transfer function type
   character(len=strLen)        :: ptype  =''        ! name of parent beta parameter - if parameter is beta parameter, use "beta"
   logical(lgc)                 :: flag   =.False.   ! flag to calibrate or not
+endtype gammaPar_meta
+
+type,extends(gammaPar_meta), public  :: betaPar_meta
   character(len=strLen)        :: hups   =''        ! scaling operator for horizontal direction
   real(dp)                     :: hpnorm =-999.0_dp ! scaling operator for horizontal direction
   character(len=strLen)        :: vups   =''        ! scaling operator for vertical direction
   real(dp)                     :: vpnorm =-999.0_dp ! scaling operator for horizontal direction
   logical(lgc)                 :: perLyr =.False.   ! calibrate per layer (only applicable to multiplier method)
-endtype par_meta
+endtype betaPar_meta
 
 ! extended parameter meta data for selected set
-type,extends(par_meta), public  :: cpar_meta
+type,extends(gammaPar_meta), public  :: cpar_meta
   integer(i4b)        :: ixMaster=-999   ! idex of master parameter list
 endtype cpar_meta
 
@@ -53,10 +56,7 @@ endtype scale_meta
 ! ***********************************************************************************************************
 type,public :: input_meta
   character(len=strLen)            :: betaname=''              ! Beta name
-  integer(i4b)                     :: calMethod=1              ! which calibration methods? 0=skip, 1=MPR, 2=Direct
   integer(i4b)                     :: TF=1                     ! which Transfer function type?
-  logical(lgc)                     :: isScaleCalH =.False.     ! calibrating scaling operators for horizontal direction?
-  logical(lgc)                     :: isScaleCalV =.False.     ! calibrating scaling operators for vertical direction?
 endtype input_meta
 
 ! ***********************************************************************************************************

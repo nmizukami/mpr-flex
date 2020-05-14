@@ -54,16 +54,11 @@ subroutine run_mpr( calParam, restartFile, err, message )
     ! transform parameter vector to custom data type - calParStr and pnormCoef
     idx=1
     do iPar=1,nCalGamma !beta and gamma parameter values
-      if (calGammaMeta(iPar)%perLyr)then
-        allocate(calParStr(iPar)%var(nLyr))
-        calParStr(iPar)%var=params(idx:idx+nLyr-1)
-        idx=idx+nLyr
-      else
-        allocate(calParStr(iPar)%var(1))
-        calParStr(iPar)%var=params(idx)
-        idx=idx+1
-      endif
+      allocate(calParStr(iPar)%var(1))
+      calParStr(iPar)%var=params(idx)
+      idx=idx+1
     end do
+
     do iPar=1,size(calScaleMeta) ! scaling parameter for beta parameter estimated with MPR
       allocate(pnormCoef(iPar)%var(2))
       pnormCoef(iPar)%var=params(idx:idx+1)
@@ -127,13 +122,7 @@ subroutine run_mpr( calParam, restartFile, err, message )
       print*, 'read restart file'
       open(unit=70,file=trim(adjustl(restartFile)), action='read', status = 'unknown')
       do i=1,nCalGamma
-        if (calGammaMeta(i)%perLyr)then
-          do j=1,nLyr
-            read(70,*) cdummy, params(i), ldummy, cdummy
-          end do
-        else
-          read(70,*) cdummy, params(i), ldummy, cdummy
-        endif
+         read(70,*) cdummy, params(i), ldummy, cdummy
       end do
       do i=1,size(calScaleMeta)
          read(70,*) cdummy, params(nCalGamma+2*i-1), ldummy, cdummy
@@ -144,15 +133,8 @@ subroutine run_mpr( calParam, restartFile, err, message )
       print*, 'write restart file'
       open(unit=70,file=trim(adjustl(restartFile)), action='write', status = 'unknown')
       do i=1,nCalGamma
-        if (calGammaMeta(i)%perLyr)then
-          do j=1,nLyr
-            write(70,100) calGammaMeta(i)%pname(1:20), parArray(i,1), parMask(i), 'Beta-par-perLayer'
-            100 format(1X,A,1X,ES17.10,1X,L9,1X,A20)
-          end do
-        else
-          write(70,200) calGammaMeta(i)%pname(1:20), parArray(i,1), parMask(i), 'Gamma-par'
-          200 format(1X,A,1X,ES17.10,1X,L9,1X,A20)
-        endif
+        write(70,200) calGammaMeta(i)%pname(1:20), parArray(i,1), parMask(i), 'Gamma-par'
+        200 format(1X,A,1X,ES17.10,1X,L9,1X,A20)
       enddo
       do i=1,size(calScaleMeta)
          write(70,300) calScaleMeta(i)%betaname(1:20), parArray(nCalGamma+2*i-1,1), parMask(nCalGamma+2*i-1), 'H-scaling-par'
@@ -228,8 +210,8 @@ subroutine mpr(hruID,             &     ! input: hruID
   integer(i4b)                       :: iSub                        ! Loop index of multiple soi layers in model layer
   integer(i4b)                       :: ixStart                     ! starting index of subset geophysical polygons in the entire dataset
   integer(i4b)                       :: ixEnd                       ! ending index of subset geophysical polygons in the entire dataset
-  type(par_meta),allocatable         :: gammaUpdateMeta(:)
-  type(par_meta),allocatable         :: betaUpdateMeta(:)
+  type(gammaPar_meta),allocatable    :: gammaUpdateMeta(:)
+  type(betaPar_meta), allocatable    :: betaUpdateMeta(:)
   integer(i4b)                       :: nGpoly,nVpoly,nTpoly        ! number of geophyical propertiy polygon in entire data domain (nGpoly=nVpoly=nTpoly)
   integer(i4b)                       :: nSlyrs                      ! number of soil layers
   integer(i4b)                       :: nGhru                       ! number of hrus in soil mapping file)
@@ -692,7 +674,7 @@ subroutine pop_hfrac( gammaUpdateMeta, hfrac, err, message)
   use var_lookup,           only: ixGamma
   implicit none
   !input variables
-  type(par_meta),       intent(in)  :: gammaUpdateMeta(:)
+  type(gammaPar_meta),  intent(in)  :: gammaUpdateMeta(:)
   !output variables
   real(dp),             intent(out) :: hfrac(:)
   integer(i4b),         intent(out) :: err         ! error code

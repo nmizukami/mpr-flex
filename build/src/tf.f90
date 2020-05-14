@@ -38,7 +38,7 @@ subroutine comp_model_param(parSxySz,          &  ! in/output: soil parameter va
   type(namevar),        intent(in)    :: sdata(:)               ! storage of soil data strucuture
   type(namevar),        intent(in)    :: tdata(:)               ! storage of topo data strucuture
   type(namevar),        intent(in)    :: vdata(:)               ! storage of veg data strucuture
-  type(par_meta)                      :: gammaParMasterMeta(:)
+  type(gammaPar_meta),  intent(in)    :: gammaParMasterMeta(:)
   integer(i4b),         intent(in)    :: nSLyr                  ! number of soil layer
   integer(i4b),         intent(in)    :: nGpoly                 ! number of soil polygons
   ! output

@@ -37,7 +37,9 @@ module public_var
   character(len=strLen),public    :: dname_slyrs
   character(len=strLen),public    :: dname_tpoly
   character(len=strLen),public    :: dname_vpoly
-  integer(i4b),         public    :: nLyr
   integer(i4b),         public    :: nHru
+
+  integer(i4b),         public    :: nLyr
+  real(dp),allocatable, public    :: hfrac(:)
 
 end module public_var
