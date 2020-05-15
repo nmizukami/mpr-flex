@@ -236,6 +236,27 @@ contains
  end function
 
 ! *******************************************************************************************************************
+! function: get the index of the named variables for climate data
+! *******************************************************************************************************************
+ function get_ixDataClim(varName)
+   USE var_lookup,only:ixVarClimData              ! indices of the named variables
+   implicit none
+   ! define dummy variables
+   character(*), intent(in) :: varName            ! variable name
+   integer(i4b)             :: get_ixDataClim     ! index of the named variable
+   ! get the index of the named variables
+   select case(trim(varName))
+     case('polyid'); get_ixDataClim = ixVarClimData%polyid ! polygon ID
+     case('prec');   get_ixDataClim = ixVarClimData%prec   ! Monthly total precipitation [mm]
+     case('tavg');   get_ixDataClim = ixVarClimData%tavg   ! Monthly mean air temperature [degree-C]
+     case('wind');   get_ixDataClim = ixVarClimData%wind   ! Monthly mean wind speed [m s-1]
+     case('rh');     get_ixDataClim = ixVarClimData%rh     ! Monthly mean relative humidity [percent]
+     ! get to here if cannot find the variable
+     case default;     get_ixDataClim = imiss
+   endselect
+ end function
+
+! *******************************************************************************************************************
 ! function: get the index of the named variables for vegetation properties
 ! *******************************************************************************************************************
  function get_ixPrpVeg(varName)

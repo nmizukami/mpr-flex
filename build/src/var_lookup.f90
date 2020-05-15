@@ -152,7 +152,7 @@ MODULE var_lookup
 !  Define index for variables in soil data
 ! ***********************************************************************************************************
  type, public  ::  iLook_VarSoilData
-  integer(i4b)     :: polyid       = imiss      ! soil polygon id
+  integer(i4b)     :: polyid       = imiss      ! polygon id
   integer(i4b)     :: hslyrs       = imiss      ! soil layer thickness
   integer(i4b)     :: sand_pct     = imiss      ! sand fraction in soil polygon and layer
   integer(i4b)     :: silt_pct     = imiss      ! silt fraction in soil polygon and layer
@@ -165,11 +165,22 @@ MODULE var_lookup
 !  Define index for variables in topographical data
 ! ***********************************************************************************************************
  type, public  ::  iLook_VarTopoData
-  integer(i4b)     :: polyid       = imiss      ! soil polygon id
+  integer(i4b)     :: polyid       = imiss      ! polygon id
   integer(i4b)     :: ele_mean     = imiss      ! mean elevation over a soil polygon
   integer(i4b)     :: ele_std      = imiss      ! standard deviation of elevation over a soil polygon
   integer(i4b)     :: slp_mean     = imiss      ! mean slope over a soil polygon
  endtype iLook_VarTopoData
+
+! ***********************************************************************************************************
+!  Define index for variables in monthly climate data
+! ***********************************************************************************************************
+ type, public  ::  iLook_VarClimData
+  integer(i4b)     :: polyid       = imiss      ! polygon id
+  integer(i4b)     :: prec         = imiss      ! monthly total precipitation [mm]
+  integer(i4b)     :: tavg         = imiss      ! monthly mean air temperature [degree-C]
+  integer(i4b)     :: wind         = imiss      ! monthly mean wind speed  [m/s]
+  integer(i4b)     :: rh           = imiss      ! monthly mean relative humidity [%]
+ endtype iLook_VarClimData
 
 ! ***********************************************************************************************************
 !  Define indices for Veg properties
@@ -207,6 +218,7 @@ MODULE var_lookup
  type(iLook_VarSoilData), public,parameter :: ixVarSoilData  = iLook_VarSoilData (1,2,3,4,5,6,7)
  type(iLook_VarVegData),  public,parameter :: ixVarVegData   = iLook_VarVegData  (1,2,3)
  type(iLook_VarTopoData), public,parameter :: ixVarTopoData  = iLook_VarTopoData (1,2,3,4)
+ type(iLook_VarClimData), public,parameter :: ixVarClimData  = iLook_VarClimData (1,2,3,4,5)
  type(iLook_PrpVeg),      public,parameter :: ixPrpVeg       = iLook_PrpVeg      (1,2,3,4,5,6,7,8,9,10,&
                                                                                   11)
 
@@ -220,6 +232,7 @@ MODULE var_lookup
  integer(i4b),parameter,public :: nVarSoilData = storage_size(ixVarSoilData)/iLength
  integer(i4b),parameter,public :: nVarVegData  = storage_size(ixVarVegData)/iLength
  integer(i4b),parameter,public :: nVarTopoData = storage_size(ixVarTopoData)/iLength
+ integer(i4b),parameter,public :: nVarClimData = storage_size(ixVarClimData)/iLength
  integer(i4b),parameter,public :: nPrpVeg      = storage_size(ixPrpVeg)/iLength
 
 END MODULE var_lookup

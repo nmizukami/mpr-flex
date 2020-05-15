@@ -26,6 +26,7 @@ module public_var
   character(len=strLen),public    :: fname_soil
   character(len=strLen),public    :: fname_topo
   character(len=strLen),public    :: fname_veg
+  character(len=strLen),public    :: fname_clim
   character(len=strLen),public    :: fname_mapping
   character(len=strLen),public    :: dname_overPoly
   character(len=strLen),public    :: dname_hru
@@ -37,6 +38,7 @@ module public_var
   character(len=strLen),public    :: dname_slyrs
   character(len=strLen),public    :: dname_tpoly
   character(len=strLen),public    :: dname_vpoly
+  character(len=strLen),public    :: dname_cpoly
   integer(i4b),         public    :: nHru
 
   integer(i4b),         public    :: nLyr

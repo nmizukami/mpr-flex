@@ -13,24 +13,26 @@ module read_config
                          inParList
 
 ! MPR configuration
-  namelist / mprconfig /  mpr_input_dir,          &
-                          mpr_output_dir,         &
-                          soil_param_nc,          &
-                          veg_param_nc,           &
-                          fname_soil,             &
-                          fname_topo,             &
-                          fname_veg,              &
-                          fname_mapping,          &
-                          dname_overPoly,         &
-                          dname_hru,              &
-                          sclass_table,           &
-                          vclass_table,           &
-                          nVclass,                &
-                          dname_spoly,            &
-                          dname_slyrs,            &
-                          dname_tpoly,            &
-                          dname_vpoly,            &
-                          nHru
+  namelist / mprio /  mpr_input_dir,          &
+                      mpr_output_dir,         &
+                      soil_param_nc,          &
+                      veg_param_nc,           &
+                      fname_soil,             &
+                      fname_topo,             &
+                      fname_veg,              &
+                      fname_clim,             &
+                      fname_mapping,          &
+                      dname_overPoly,         &
+                      dname_hru,              &
+                      sclass_table,           &
+                      vclass_table,           &
+                      nVclass,                &
+                      dname_spoly,            &
+                      dname_slyrs,            &
+                      dname_tpoly,            &
+                      dname_vpoly,            &
+                      dname_cpoly,            &
+                      nHru
   namelist /space / nHru, &
                     nLyr
 
@@ -60,9 +62,9 @@ subroutine read_nml(nmlfile, err, message)
   read(unit=30, NML=runconfig, iostat=err)
   if (err/=0)then; message=trim(message)//"Error:Read runconfig"; return; endif
 
-  ! read "mprconfig" group
-  read(unit=30, NML=mprconfig, iostat=err)
-  if (err/=0)then; message=trim(message)//"Error:Read mprconfig"; return; endif
+  ! read "mprio" group
+  read(unit=30, NML=mprio, iostat=err)
+  if (err/=0)then; message=trim(message)//"Error:Read mprio"; return; endif
 
   ! read "space" group
   read(unit=30, NML=space, iostat=err)
