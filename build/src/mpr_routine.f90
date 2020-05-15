@@ -36,7 +36,6 @@ subroutine run_mpr( calParam, restartFile, err, message )
   type(var_d),          allocatable :: paramGammaStr(:)              ! calibratin gamma parameter storage extracted from calParStr
   integer(i4b)                      :: idx                           ! counter
   integer(i4b)                      :: iPar                          ! loop index for parameter
-  logical(lgc)                      :: mask(nCalGamma)               ! 1D mask
   integer(i4b)                      :: hruID(nHru)                   ! Hru ID
   real(dp)                          :: hModel(nLyr,nHru)             ! storage of model layer thickness at model layer x model hru
   type(namedvar2)                   :: parMxyMz(nSoilBetaModel)      ! storage of model soil parameter at model layer x model hru
@@ -45,7 +44,7 @@ subroutine run_mpr( calParam, restartFile, err, message )
 
   err=0; message='run_mpr/' ! to initialize error control
 
-  if ( any(calGammaMeta(:)%beta /= "beta") )then ! calPar need to include min. one gamma parameter to be used for MPR
+  if ( nCalGamma /= 0) then
 
     allocate(params, source=calParam) ! copy calParameter default
 
@@ -53,9 +52,10 @@ subroutine run_mpr( calParam, restartFile, err, message )
 
     ! transform parameter vector to custom data type - calParStr and pnormCoef
     idx=1
+    allocate(paramGammaStr(nCalGamma) ,stat=err)
     do iPar=1,nCalGamma !beta and gamma parameter values
-      allocate(calParStr(iPar)%var(1))
-      calParStr(iPar)%var=params(idx)
+      allocate(paramGammaStr(iPar)%var(1))
+      paramGammaStr(iPar)%var=params(idx)
       idx=idx+1
     end do
 
@@ -74,14 +74,6 @@ subroutine run_mpr( calParam, restartFile, err, message )
     enddo
     do iPar=1,nVegBetaModel
       allocate(vegParMxy(iPar)%varData(nMonth,nHru),stat=err)
-    enddo
-
-    mask=calGammaMeta(:)%beta/="beta"
-    allocate(paramGammaStr(count(mask)))
-    paramGammaStr=pack(calParStr,mask)
-
-    do iPar=1,size(paramGammaStr)
-      if (size(paramGammaStr(iPar)%var)>1)then;message=trim(message)//'gammaParameter should not have perLayer value';return;endif
     enddo
 
     !perform MPR
@@ -114,33 +106,51 @@ subroutine run_mpr( calParam, restartFile, err, message )
     logical                              :: isExistFile ! logical to check if the file exist or not
     integer(i4b)                         :: i,j         ! loop index for parameter
     integer(i4b)                         :: idummy      ! dummy integer vaiable
-    logical(lgc)                         :: ldummy      ! dummy logical vaiable
     character(len=strLen)                :: cdummy      ! dummy character vaiable
 
     inquire(file=trim(restartFile), exist=isExistFile)
     if ( isExistFile ) then !  if state file exists, read it and update params
+
       print*, 'read restart file'
       open(unit=70,file=trim(adjustl(restartFile)), action='read', status = 'unknown')
+
       do i=1,nCalGamma
-         read(70,*) cdummy, params(i), ldummy, cdummy
+         read(70,*) cdummy, params(i), cdummy
       end do
+
+      do i=1,nLyr
+         read(70,*) cdummy, hfrac(i), cdummy
+      end do
+
       do i=1,size(calScaleMeta)
-         read(70,*) cdummy, params(nCalGamma+2*i-1), ldummy, cdummy
-         read(70,*) cdummy, params(nCalGamma+2*i), ldummy, cdummy
+         read(70,*) cdummy, params(nCalGamma+2*i-1), cdummy
+         read(70,*) cdummy, params(nCalGamma+2*i), cdummy
       end do
+
       close(70)
+
     else          !otherwise write out
+
       print*, 'write restart file'
       open(unit=70,file=trim(adjustl(restartFile)), action='write', status = 'unknown')
+
       do i=1,nCalGamma
-        write(70,200) calGammaMeta(i)%pname(1:20), parArray(i,1), parMask(i), 'Gamma-par'
-        200 format(1X,A,1X,ES17.10,1X,L9,1X,A20)
+        write(70,200) calGammaMeta(i)%pname(1:20), parArray(i,1), 'Gamma-par'
+        200 format(1X,A,1X,ES17.10,1X,A20)
       enddo
+
+      do i=1,nLyr
+        write (cdummy, '(A5,I1)') 'hfrac', i
+        write(70,201) adjustl(cdummy(1:20)),i, hfrac(i), 'layer-frac'
+        201 format(1X,A20,I1,1X,ES17.10,1X,A20)
+      enddo
+
       do i=1,size(calScaleMeta)
-         write(70,300) calScaleMeta(i)%betaname(1:20), parArray(nCalGamma+2*i-1,1), parMask(nCalGamma+2*i-1), 'H-scaling-par'
-         write(70,300) calScaleMeta(i)%betaname(1:20), parArray(nCalGamma+2*i  ,1), parMask(nCalGamma+2*i),   'V-scaling-par'
-         300 format(1X,A,1X,ES17.10,1X,L9,1X,A20)
+         write(70,300) calScaleMeta(i)%betaname(1:20), parArray(nCalGamma+2*i-1,1), 'H-scaling-par'
+         write(70,300) calScaleMeta(i)%betaname(1:20), parArray(nCalGamma+2*i  ,1), 'V-scaling-par'
+         300 format(1X,A,1X,ES17.10,1X,A20)
       end do
+
       close(70)
     endif
     return
@@ -162,22 +172,24 @@ subroutine mpr(hruID,             &     ! input: hruID
 
   use popMeta,              only:popMprMeta
   use globalData,           only:betaMeta, gammaMeta, soilBetaCalName, vegBetaCalName, calScaleMeta, &
-                                 sdata_meta, vdata_meta, tdata_meta, map_meta, nSoilBetaModel, nVegBetaModel
+                                 sdata_meta, vdata_meta, tdata_meta, cdata_meta, map_meta, nSoilBetaModel, nVegBetaModel
   use get_ixname,           only:get_ixGamma, get_ixBeta
   use tf,                   only:comp_model_param              ! Including Soil model parameter transfer function
   use modelLayer,           only:comp_model_depth              ! Including model layr depth computation routine
   use modelLayer,           only:map_slyr2mlyr                 ! Including model layr computation routine
   use upscaling,            only:aggreg                        ! Including Upscaling operator
-  use read_mapdata,         only:getMapData                    ! routine to read mapping data into data structures
+  use read_soildata,        only:getSoilData                   ! routine to read soil data into data structures
+  use read_soildata,        only:mod_hslyrs                    ! routine to modify soil layer thickness and updata soil data structure
   use read_vegdata,         only:getVegData                    ! routine to read veg data into data structures
   use read_vegdata,         only:getVegClassLookup             ! routine to read veg calss-property lookupu table
-  use read_soildata,        only:getSoilData                   ! routine to read soil data into data structures
-  use read_topodata,        only:getTopoData                   ! routine to read soil data into data structures
-  use read_soildata,        only:mod_hslyrs                    ! routine to modify soil layer thickness and updata soil data structure
+  use read_topodata,        only:getTopoData                   ! routine to read topography data into data structures
+  use read_climdata,        only:getClimData                   ! routine to read climate data into data structures
+  use read_mapdata,         only:getMapData                    ! routine to read mapping data into data structures
   use var_lookup,           only:ixBeta, ixGamma               !
   use var_lookup,           only:ixVarSoilData,nVarSoilData    ! index of soil data variables and number of variables
   use var_lookup,           only:ixVarVegData,nVarVegData      ! index of vege data variables and number of variables
-  use var_lookup,           only:ixVarTopoData,nVarTopoData    ! index of vege data variables and number of variables
+  use var_lookup,           only:ixVarTopoData,nVarTopoData    ! index of topography data variables and number of variables
+  use var_lookup,           only:ixVarClimData,nVarClimData    ! index of climate data variables and number of variables
   use var_lookup,           only:ixVarMapData,nVarMapData      ! index of map data variables and number of variables
   use var_lookup,           only:ixPrpVeg,nPrpVeg              ! index of veg properties and number of properties
 
@@ -196,7 +208,7 @@ subroutine mpr(hruID,             &     ! input: hruID
   character(len=strLen),intent(out)  :: message                     ! error message
   ! local
   character(len=strLen)              :: cmessage                    ! error message from downward subroutine
-  integer(i2b),parameter             :: iHruPrint = 1               ! model hru id (index) for which everything is printed for checking
+  integer(i2b),parameter             :: iHruPrint = -999            ! model hru id (index) for which everything is printed for checking
   integer(i4b),parameter             :: nSub=11                     ! max. number of Soil layer within Model layer
   integer(i4b)                       :: iLocal                      ! index of hru array in mapping file that match hru id of interest
   integer(i4b)                       :: iGamma                      ! index loop
@@ -212,17 +224,18 @@ subroutine mpr(hruID,             &     ! input: hruID
   integer(i4b)                       :: ixEnd                       ! ending index of subset geophysical polygons in the entire dataset
   type(gammaPar_meta),allocatable    :: gammaUpdateMeta(:)
   type(betaPar_meta), allocatable    :: betaUpdateMeta(:)
-  integer(i4b)                       :: nGpoly,nVpoly,nTpoly        ! number of geophyical propertiy polygon in entire data domain (nGpoly=nVpoly=nTpoly)
+  integer(i4b)                       :: nGpoly,nVpoly,nTpoly,nCpoly ! number of geophyical propertiy polygon in entire data domain (nGpoly=nVpoly=nTpoly)
   integer(i4b)                       :: nSlyrs                      ! number of soil layers
   integer(i4b)                       :: nGhru                       ! number of hrus in soil mapping file)
   integer(i4b)                       :: nGpolyLocal                 ! number of subset overlapped soil polygon for each model HRU
-  real(dp)                           :: hfrac(nLyr-1)               ! fraction of soil depth for each model layer
   type(namevar)                      :: sdata(nVarSoilData)         ! soil data container for all the soil polygons
   type(namevar)                      :: sdataLocal(nVarSoilData)    ! soil data container for local soil polygon
-  type(namevar)                      :: vdata(nVarVegData)          ! veg data container for all the veg polygons
-  type(namevar)                      :: vdataLocal(nVarVegData)     ! veg data container for local vege polygon
-  type(namevar)                      :: tdata(nVarTopoData)         ! veg data container for all the veg polygons
-  type(namevar)                      :: tdataLocal(nVarTopoData)    ! veg data container for local vege polygon
+  type(namevar)                      :: vdata(nVarVegData)          ! veg data container for all the polygons
+  type(namevar)                      :: vdataLocal(nVarVegData)     ! veg data container for local polygon
+  type(namevar)                      :: tdata(nVarTopoData)         ! veg data container for all the polygons
+  type(namevar)                      :: tdataLocal(nVarTopoData)    ! veg data container for local polygon
+  type(namevar)                      :: cdata(nVarClimData)         ! climate data container for all the polygons
+  type(namevar)                      :: cdataLocal(nVarClimData)    ! climate data container for local polygon
   integer(i4b)                       :: vegClass(nVclass)           ! veg class array (e.g., IGBP)
   type(var_d)                        :: vcls2prp(nVclass)           ! storage of property value for each veg class
   integer(i4b)                       :: iVclass                     ! ID (= index) of vege class
@@ -261,10 +274,6 @@ subroutine mpr(hruID,             &     ! input: hruID
   call popMprMeta( err, cmessage)   !for sdata_meta, vdata_meta, map_meta
   if(err/=0)then; message=trim(message)//cmessage; return; endif
 
-  !call pop_hfrac(gammaParStr, gammaParMeta, hfrac, err, cmessage) ! to get hfrac
-  call pop_hfrac( gammaUpdateMeta, hfrac, err, cmessage) ! to get hfrac
-  if(err/=0)then; message=trim(message)//cmessage; return; endif
-
   ! *****
   ! (1) Get Geophysical data - THIS SHOULD BE OUTSIDE MPR SOUBROUTINE
   ! *********************************************
@@ -280,6 +289,7 @@ subroutine mpr(hruID,             &     ! input: hruID
   if(err/=0)then; message=trim(message)//cmessage; return; endif
   call mod_hslyrs(sdata, gammaUpdateMeta(ixGamma%z1gamma1)%val, err,cmessage) ! modify soil layer thickness in sdata data structure
   if(err/=0)then; message=trim(message)//cmessage; return; endif
+
   ! (1.2)  veg class - properties lookup table ...
   ! (1.2.1) Read in veg data netCDF...
    do iVclass=1,nVclass
@@ -293,6 +303,7 @@ subroutine mpr(hruID,             &     ! input: hruID
                    err, cmessage)                          ! output: error control
    if(err/=0)then; message=message//cmessage; return; endif
    if(nGpoly/=nVpoly)then;err=10;message=trim(message)//'nGpoly='//trim(int2str(nGpoly))//'NotEqualTOnVpoly='//trim(int2str(nVpoly));return;endif
+
   ! (1.2.2) Read in veg class-property lookup table
    call getvegClassLookup(trim(mpr_input_dir)//trim(vclass_table), &
                           nVclass,                                 &
@@ -300,6 +311,7 @@ subroutine mpr(hruID,             &     ! input: hruID
                           vcls2prp,                                &
                           err, cmessage)
    if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
+
   ! (1.3) Get topo data
   call getTopoData(trim(mpr_input_dir)//trim(fname_topo),& ! input: topographical data input name (netCDF)
                    tdata_meta,                           & ! input: topographical data meta
@@ -309,6 +321,17 @@ subroutine mpr(hruID,             &     ! input: hruID
                    err, cmessage)
   if(err/=0)then; message=trim(message)//cmessage; return; endif
   if(nGpoly/=nTpoly)then;err=10;message=trim(message)//'nGpoly='//trim(int2str(nGpoly))//'NotEqualTOnTpoly='//trim(int2str(nTpoly));return;endif
+
+  ! (1.3) Get topo data
+  call getClimData(trim(mpr_input_dir)//trim(fname_clim),& ! input: climate data input name (netCDF)
+                   cdata_meta,                           & ! input: climate data meta
+                   dname_cpoly,                          & ! input: spatial dimension (polygon ID)
+                   cdata,                                & ! input-output: climate data structure
+                   nCpoly,                               & ! output: number of dimension (i.e. number of geophysical data polygon)
+                   err, cmessage)
+  if(err/=0)then; message=trim(message)//cmessage; return; endif
+  if(nGpoly/=nCpoly)then;err=10;message=trim(message)//'nGpoly='//trim(int2str(nGpoly))//'NotEqualTOnTpoly='//trim(int2str(nTpoly));return;endif
+
   ! *****
   ! (2.) Read in mapping netcdf - THIS SHOULD BE OUTSIDE MPR SOUBROUTINE
   ! *********************************************
@@ -334,6 +357,7 @@ subroutine mpr(hruID,             &     ! input: hruID
 
     ! Get index (iLocal) of hru id that matches with current hru from hru id array in mapping file
     call findix(hruID(iHru), hruMap, iLocal, err, cmessage); if(err/=0)then; message=trim(cmessage)//cmessage; return; endif
+
     ! Select list of soil polygons contributing a current hru
     ixEnd       = sum(nOverPoly(1:iLocal));
     ixStart     = ixEnd-nOverPoly(iLocal)+1
@@ -352,8 +376,9 @@ subroutine mpr(hruID,             &     ! input: hruID
         allocate(soil2model_map(iPoly)%layer(iMLyr)%ixSubLyr(nSub),stat=err);if(err/=0)then;message=trim(message)//'error allocating lyrmap%layer%ixSubLyr';return;endif
       enddo
     enddo
+
     ! allocate memmory
-    if (nSoilBetaModel>0_i4b)then !if at least one soil parameter is included
+    if (nSoilBetaModel>0) then
       do iParm=1,nSoilBetaModel
         allocate(parSxySz(iParm)%varData(nSlyrs,nGpolyLocal),stat=err); if(err/=0)then;message=message//'error allocating parSxySz%varData';return;endif
         allocate(parSxyMz(iParm)%varData(nLyr,nGpolyLocal),stat=err);   if(err/=0)then;message=message//'error allocating parSxyMz%varData';return;endif
@@ -368,6 +393,7 @@ subroutine mpr(hruID,             &     ! input: hruID
   ! (3.1) Extract soil data for current model hru
     call subsetData(sdata, polySub, sdataLocal, 'soil' ,err, cmessage)
     if(err/=0)then; message=trim(message)//cmessage; return; endif
+
     if ( iHru == iHruPrint ) then
       print*,' '
       print*,'****************************************************'
@@ -396,11 +422,17 @@ subroutine mpr(hruID,             &     ! input: hruID
         end do
       enddo
     endif
+
   ! (3.2) Extract vege data for current model hru
     call subsetData(vdata, polySub, vdataLocal, 'veg' ,err, cmessage)
     if(err/=0)then; message=trim(message)//cmessage; return; endif
+
   ! (3.3) Extract topo data for current model hru
     call subsetData(tdata, polySub, tdataLocal, 'topo' ,err, cmessage)
+    if(err/=0)then; message=trim(message)//cmessage; return; endif
+
+  ! (3.3) Extract topo data for current model hru
+    call subsetData(cdata, polySub, cdataLocal, 'clim' ,err, cmessage)
     if(err/=0)then; message=trim(message)//cmessage; return; endif
 
   ! (3.4) Compute model parameters using transfer function
@@ -408,6 +440,7 @@ subroutine mpr(hruID,             &     ! input: hruID
     if (nSoilBetaModel>0_i4b)then
       call comp_model_param(parSxySz, parVxy, sdataLocal, tdataLocal, vdataLocal, gammaUpdateMeta, nSlyrs, nGpolyLocal, err, cmessage)
       if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
+
       if ( iHru == iHruPrint ) then
         print*,'(2) Print Model parameter at native resolution'
         if (nSoilBetaModel>0_i4b)then
@@ -427,9 +460,11 @@ subroutine mpr(hruID,             &     ! input: hruID
         endif
       endif
     end if
+
     ! (4.1.1) Compute Model layer depth
     call comp_model_depth(hModelLocal, zModelLocal, hfrac, sdataLocal, err, cmessage)
     if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
+
     if ( iHru == iHruPrint ) then
       print*, '(3.1.1) Print model depth ---'
       write(*,"(' Layer       =',20I9)") (iMLyr, iMlyr=1,nlyr)
@@ -522,8 +557,8 @@ subroutine mpr(hruID,             &     ! input: hruID
                         betaUpdateMeta(ix)%hpnorm,           &
                         err, cmessage)
             if ( iHru == iHruPrint ) then
-              print*,'-----------------------------------'
-              print*,'Aggregated soil parameter '
+              write(*,"(a)")'-----------------------------------'
+              write(*,"(a)")'Aggregated soil parameter '
               write(*,"(1X,A17,'(layer ',I2,') = ',100f9.3)") betaUpdateMeta(ix)%pname,iMLyr ,parMxyMz(iParm)%varData(iMLyr,iHru)
             endif
           endif
@@ -588,12 +623,13 @@ end subroutine
 subroutine subsetData(entireData, subPolyID, localData, data_name, err, message)
   use var_lookup,           only:ixVarSoilData,nVarSoilData  ! index of soil data variables and number of variables
   use var_lookup,           only:ixVarVegData,nVarVegData    ! index of vege data variables and number of variables
-  use var_lookup,           only:ixVarTopoData,nVarTopoData  ! index of vege data variables and number of variables
-  use globalData,           only:sdata_meta,vdata_meta, tdata_meta
+  use var_lookup,           only:ixVarTopoData,nVarTopoData  ! index of topograpy data variables and number of variables
+  use var_lookup,           only:ixVarClimData,nVarClimData  ! index of climate data variables and number of variables
+  use globalData,           only:sdata_meta, vdata_meta, tdata_meta, cdata_meta
   implicit none
   !input variables
   type(namevar),        intent(in)    :: entireData(:) ! soil data container for all the soil polygons
-  integer(i4b),         intent(in)    :: subPolyID(:)  ! subset of soil polygon id
+  integer(i4b),         intent(in)    :: subPolyID(:)  ! subset of polygon id
   character(*),         intent(in)    :: data_name     ! data_name e.g., soil, vege
   !output variables
   type(namevar),        intent(inout) :: localData(:) ! soil data container for local soil polygon
@@ -614,6 +650,7 @@ subroutine subsetData(entireData, subPolyID, localData, data_name, err, message)
     case('soil');nVarData=nVarSoilData; allocate(data_meta,source=sdata_meta); polyIdx=ixVarSoilData%polyid
     case('veg'); nVarData=nVarVegData;  allocate(data_meta,source=vdata_meta); polyIdx=ixVarVegData%polyid
     case('topo');nVarData=nVarTopoData; allocate(data_meta,source=tdata_meta); polyIdx=ixVarTopoData%polyid
+    case('clim');nVarData=nVarClimData; allocate(data_meta,source=cdata_meta); polyIdx=ixVarClimData%polyid
   end select
 
   nPoly=size(subPolyID)

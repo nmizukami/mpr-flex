@@ -63,9 +63,6 @@ subroutine paramMaster(err,message)
   gammaMeta(ixGamma%sof1gamma1)      = gammaPar_meta('sof1gamma1'     ,     1.72_dp,  1.55_dp,   1.89_dp,"sof"      ,     1, "soil", .False.)
   ! total depth multiplier
   gammaMeta(ixGamma%z1gamma1)        = gammaPar_meta('z1gamma1'       ,     1.0_dp,    0.1_dp,    4.0_dp,"z"        ,     1, "soil", .False.)
-  ! layer fractions
-  gammaMeta(ixGamma%h1gamma1)        = gammaPar_meta('h1gamma1'       ,    0.05_dp,   0.01_dp,    0.1_dp,"h1"       ,     1, "soil", .False.)
-  gammaMeta(ixGamma%h2gamma1)        = gammaPar_meta('h2gamma1'       ,     0.3_dp,   0.12_dp,    0.5_dp,"h2"       ,     1, "soil", .False.)
   ! transfer function
   gammaMeta(ixGamma%binfilt1gamma1)  = gammaPar_meta('binfilt1gamma1' ,     0.0_dp,   -2.0_dp,    1.0_dp,"binfilt"  ,     1, "soil", .False.)
   gammaMeta(ixGamma%binfilt1gamma2)  = gammaPar_meta('binfilt1gamma2' ,     1.0_dp,    0.8_dp,    1.2_dp,"binfilt"  ,     1, "soil", .False.)
@@ -116,11 +113,6 @@ subroutine paramMaster(err,message)
   betaMeta(ixBeta%Ws)              = betaPar_meta('Ws'             ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",   -1.0_dp,   "pnorm",   -1.0_dp, .False.)
   betaMeta(ixBeta%expt)            = betaPar_meta('expt'           ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
   betaMeta(ixBeta%bbl)             = betaPar_meta('bbl'            ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%h1)              = betaPar_meta('h1'             ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%h2)              = betaPar_meta('h2'             ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%h3)              = betaPar_meta('h3'             ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%h4)              = betaPar_meta('h4'             ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%h5)              = betaPar_meta('h5'             ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
   betaMeta(ixBeta%z)               = betaPar_meta('z'              ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
   betaMeta(ixBeta%WcrFrac)         = betaPar_meta('WcrFrac'        ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
   betaMeta(ixBeta%WpwpFrac)        = betaPar_meta('WpwpFrac'       ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
@@ -159,11 +151,13 @@ subroutine popMprMeta(err,message)
   use var_lookup, only:ixVarSoilData
   use var_lookup, only:ixVarVegData
   use var_lookup, only:ixVarTopoData
+  use var_lookup, only:ixVarClimData
   use var_lookup, only:ixPrpVeg
   use globalData, only:map_meta
   use globalData, only:sdata_meta
   use globalData, only:tdata_meta
   use globalData, only:vdata_meta
+  use globalData, only:cdata_meta
   use globalData, only:vprp_meta
 
   implicit none
@@ -195,6 +189,12 @@ subroutine popMprMeta(err,message)
   tdata_meta(ixVarTopoData%ele_mean)     = var_meta('ele_mean'     ,"mean elevation"                                     ,"m"           ,"1D", "double" )
   tdata_meta(ixVarTopoData%ele_std)      = var_meta('ele_std'      ,"std elevation"                                      ,"m"           ,"1D", "double" )
   tdata_meta(ixVarTopoData%slp_mean)     = var_meta('slp_mean'     ,"mean slope"                                         ,"-"           ,"1D", "double" )
+  ! topo data variables
+  cdata_meta(ixVarClimData%polyid)       = var_meta('polyid'       ,"climate polygon id"                                 ,"-"           ,"1D", "integer")
+  cdata_meta(ixVarClimData%prec)         = var_meta('prec'         ,"monthly total precipitation"                        ,"mm"          ,"2D", "double" )
+  cdata_meta(ixVarClimData%tavg)         = var_meta('tavg'         ,"monthly mean temperature"                           ,"degree-C"    ,"2D", "double" )
+  cdata_meta(ixVarClimData%wind)         = var_meta('wind'         ,"monthly mean wind speed"                            ,"m s-1"       ,"2D", "double" )
+  cdata_meta(ixVarClimData%rh)           = var_meta('rh'           ,"monthly mean relative humidity"                     ,"percent"     ,"2D", "double" )
   ! Vege property variables
   vprp_meta(ixPrpVeg%lai)                = var_meta('lai'          ,"Monthly lai"                                        ,"m2 m-2"      ,"2D", "double")
   vprp_meta(ixPrpVeg%vegtype)            = var_meta('vegtype'      ,'vegetation type'                                    ,"-"           ,"1D", "integer")

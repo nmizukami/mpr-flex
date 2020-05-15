@@ -67,15 +67,9 @@ contains
       Ztot_in = sum(lyr_packed)  ! Total depth for soil layer
       nFrac=size(hfrac)          ! number of layer fraction that is input
       if (nLyr == 1) then
-        if (nFrac /= 1) then
-          err=10;message=trim(message)//'if model has single soil layer, nFrac has to be one';return
-        endif
         hModel(1,iPoly)=Ztot_in
         zModel(1,iPoly)=hModel(1,iPoly)
       else
-        if (nFrac+1 /= nLyr)then
-          err=15;message=trim(message)//'number of nFrac does not match with number of model layer';return
-        endif
         topZ=0.0_dp ! depth of model layer top (1st model layer = 0 m)
         do iLyr=1,nLyr-1
           hModel(iLyr,iPoly)=hfrac(iLyr)*(Ztot_in-topZ)
