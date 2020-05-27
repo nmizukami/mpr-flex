@@ -2,100 +2,39 @@
 ! General run configuration
 !---------------------------------------
 &runconfig
-!> Option to run the program
-!> 1 = calibrate parameters 
-!> 2 = run model with parameters given by restart file or default in param metafile
-!> 3 = estimate parameter with MPR (this option neglect calconfig and dds nml group)
-opt                    = 1
-!> if opt = 1, use following optimization method, 
-!> 1 = DDS
-!> 2 = SCE 
-opt_method             = 2
-!> List of parameter (name, value, flag) based on input calPar used for only if opt=3, ignored otherwise 
-mpr_param_file         = "PATH_TO/MPR_Param.txt"
+!>  ! name of ascii file listing computing parameters 
+inParList                = "./mpr/settings/calBeta.txt" 
+!> List of parameter (name, value, type) based on input calPar used for only if opt=2, ignored otherwise 
+mpr_param_file         = "./mpr/settings/MPR_Param.txt"
 /
 
-!---------------------------------------
-! MPR 
-!---------------------------------------
-&mprconfig
-mpr_input_dir          = "MPRINPUT"                ! name of directory including geophysical data and weight mapping data
-mpr_output_dir         = "PAROUTPUT"               ! name of directory where estimated parameters are saved with option 2
-soil_param_nc          = "soil_temp.nc"            ! name of soil parameter output netCDF
-veg_param_nc           = "veg_temp.nc"             ! name of veg parameter output netCDF
-fname_soil             = "soil_data.nc"            ! name soil variable netCDF
-fname_topo             = "topo_data.nc"            ! name topographic variable netCDF
-fname_veg              = "veg_data.nc"             ! name vegetation varialbe netCDF
-fname_mapping          = "statsgo_HCDN.sub.nc"     ! name of mapping from geophysical grid to model hru) netCDF
-dname_overPoly         = "overlapPoly"             ! name of dimension of polygon intersectiong hru in geophy.data-model.hru mapping NetCDf
-dname_hru              = "hru_id"                  ! name of model hru dimension in mapping netCDF
-sclass_table           = "USDA_soil_class.txt"     ! name of USDA soil class look up table (WILL BE REMOVED)
-vclass_table           = "NOAHMP_veg_type.txt"     ! name of vegetation class look up table
-nVclass                = NUMVCLASS "               ! number of vegetation class 
-dname_spoly            = "polyid"                  ! name of soil polygon dimension in soil netCDf
-dname_slyrs            = "layer"                   ! name of soil layer dimension in soil data in soil netCDf
-dname_tpoly            = "polyid"                  ! name of vegetation polygon dimension in vegetation netCDf
-dname_vpoly            = "polyid"                  ! name of vegetation polygon dimension in vegetation netCDf
+&mprio
+mpr_input_dir          = "MPRINPUT"                            ! name of directory including geophysical data and weight mapping data
+mpr_output_dir         = "PAROUTPUT"                           ! name of directory where estimated parameters are saved with option 2
+soil_param_nc          = "soil_para.nc"                        ! name of soil parameter output netCDF
+veg_param_nc           = "veg_param.nc"                        ! name of veg parameter output netCDF
+fname_soil             = "soil_data.nc"                        ! name soil variable netCDF
+fname_topo             = "topo_data.nc"                        ! name topographic variable netCDF
+fname_veg              = "veg_data.nc"                         ! name vegetation varialbe netCDF
+fname_clim             = "clim_data.nc"                        ! name of climate netCDF
+fname_mapping          = "spatialweights_grid160_<TARGET>.nc"  ! name of mapping netCDF (geophysical polygon to model hru)
+dname_overPoly         = "data"                                ! name of dimension of polygon intersectiong hru in geophy.data-model.hru mapping NetCDf
+dname_hru              = "hru_id"                              ! name of model hru dimension in mapping netCDF
+sclass_table           = "USDA_soil_class.txt"                 ! name of USDA soil class look up table (WILL BE REMOVED)
+vclass_table           = "NOAHMP_veg_type.txt"                 ! name of vegetation class look up table
+nVclass                = NUMVCLASS "                           ! number of vegetation class 
+dname_spoly            = "polyid"                              ! name of soil polygon dimension in soil netCDf
+dname_slyrs            = "lyr"                                 ! name of soil layer dimension in soil data in soil netCDf
+dname_tpoly            = "polyid"                              ! name of vegetation polygon dimension in vegetation netCDf
+dname_vpoly            = "polyid"                              ! name of vegetation polygon dimension in vegetation netCDf
+dname_cpoly            = "polyid"                              ! name of vegetation polygon dimension in vegetation netCDf
 /
 
-!---------------------------------------
-! Model run & Calibration 
-!---------------------------------------
-&calconfig
-filelist_name            = "FILELIST"         ! name of ascii listing model output name
-cellfrac_name            = "CELLFRAC"         ! name of ascii listing fraction of all the hru contributing to basin 
-origparam_name           = "ORIGSOIL"         ! name of original parameter file
-calibparam_name          = "CALISOIL"         ! name of adjusted parameter file (updated with each model run iteration)
-origvege_name            = "ORIGVEG"          ! name of original vege parameter file 
-calivege_name            = "CALIVEG"          ! name of adjusted vege parameter file
-region_info              = "INFO"             ! name of ascii listing basin_id, number of hru
-sim_dir                  = "OUTDIR"           ! name of directory where model outputs
-obs_name                 = "CALIBFLOW"        ! name of ascii observed flow data
-executable               = "EXE"              ! name of model executable
-basin_objfun_weight_file = "OBJWEIGHT"        ! name of ascii listing weight of each basin that is appplied to basin objective function   
-agg                      =  1                 ! method for aggregaion of basin objective function
-dt                       = 86400              ! simulation time step [sec]
-sim_len                  = 6940               ! number of simulation time step 
-start_cal                = 3652               ! time step when calibration starts
-end_cal                  = 6940               ! time step when calibration end
-nbasin                   = 1                  ! number of calibrating basins
-nHru                     = 1                  ! sum of hrus consisting of each basin
-isRoute                  = T                  ! T=route in mpr-flex, F=route outside mpr-flex
+&space
+nHru                   = 1                                     ! total target hrus
+nLyr                   = 1                                     ! number of soil layers
 /
 
-!---------------------------------------
-! Model Setting 
-!---------------------------------------
-&modelconfig
-idModel                  = IDMODEL            ! id of model
-TotNpar                  = NUMPAR             ! total number of soil parameters
-nLyr                     = NUMLYR             ! number of soil layers
-inParList                = "calBeta.txt"      ! name of ascii file listing calibrating parameters
-/
-
-!---------------------------------------
-! DDS parameters
-!---------------------------------------
-&DDS
-rpar          =  0.2                           ! perturbation window (default 0.2)
-isRestart     =  F                             ! F -> start with the begining, T -> start with restart file
-nseed         =  32                            ! starting seed for random number generator
-maxn          =  1000                          ! maximum number of objective function evaluation (i.e., iteration) 
-isMax         =  F                             ! maximization (.True.) or minimization (.False.) 
-restrt_file   = "./restart_dds.txt"            ! name of ascii restart file 
-state_file    = "./region_xx_dds_output.txt" ! name of ascii history file
-/
-
-!---------------------------------------
-! SCE parameters
-!---------------------------------------
-&SCE
-isRestart     =  F                             ! F -> start with the begining, T -> start with restart file
-nseed         =  32                            ! starting seed for random number generator
-maxn          =  1000                          ! maximum number of objective function evaluation (i.e., iteration) 
-percen        =  0.001                         ! 
-numcpx        =  5                             ! 
-cpxstop       =  5                             ! 
-restrt_file   = "./restart_sce.txt"            ! name of ascii restart file 
-state_file    = "./region_xx_sceua_output.txt" ! name of ascii history file
+&soil
+hfrac                  = 1.0                                   ! default layer fraction 
 /
