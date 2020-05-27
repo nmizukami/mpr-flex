@@ -1,9 +1,14 @@
-module tf
+MODULE tf
+
 ! Library of model parameter transfer function
 use nrtype                                        ! variable types, etc.
 use data_type                                     ! Including custum data structure definition
 use public_var                                    ! Including common constant (physical constant, other e.g., missingVal, etc.)
-use var_lookup, only:ixVarSoilData, ixVarTopoData, ixVarVegData, ixBeta, ixGamma, nBeta
+use var_lookup, only:ixVarSoilData, &
+                     ixVarTopoData, &
+                     ixVarVegData,  &
+                     ixVarClimData, &
+                     ixBeta, ixGamma, nBeta
 
 implicit none
 
@@ -13,7 +18,7 @@ public :: comp_model_param
 public :: betaDependency
 public :: betaCompOrder
 
-contains
+CONTAINS
 
 ! ********************************************************************************************
 ! Public subroutine: Execute computation of model-dependant soil parameter transfer function
@@ -1776,7 +1781,7 @@ subroutine wp( err, message, ixDepend, phi_in, psis_in, b_in, gammaPar, wp_out, 
   err=0;message="wp/"
   if ( present(ixDepend) ) then ! setup dependency
     allocate(ixDepend(nDepend),stat=err); if(err/=0)then;message=trim(message)//'error allocating ixDepend';return;endif
-    ixDepend=(/ixBeta%ks,ixBeta%phi,ixBeta%b/)
+    ixDepend=(/ixBeta%psis, ixBeta%phi, ixBeta%b/)
   elseif ( present(phi_in) .and. present(psis_in) .and. present(b_in) .and. present(gammaPar) .and. present(wp_out) )then ! compute parameters with TF
     tftype=1_i4b
     if (present(tfopt) ) tftype=tfopt
@@ -1938,6 +1943,9 @@ subroutine myu( err, message, ixDepend, phi_in, fc_in, gammaPar, myu_out, tfopt 
   endif
 end subroutine
 
+
+
+
 ! *********************************************************************
 ! Monthly LAI
 ! *********************************************************************
@@ -1961,6 +1969,7 @@ subroutine lai( err, message, ixDepend, vdata, gammaPar, lai_out, tfopt )
   real(dp),allocatable                          :: laislope(:,:)
   integer(i4b)                                  :: n1               ! number of 1st dimension
   integer(i4b)                                  :: n2               ! number of 2nd dimension
+  integer(i4b)                                  :: conversion=0.1   ! scaling (data is givin data*10)
 
   err=1;message="lai/"
   if ( present(ixDepend) ) then ! setup dependency
@@ -1980,7 +1989,7 @@ subroutine lai( err, message, ixDepend, vdata, gammaPar, lai_out, tfopt )
     select case(tftype)
       case(1);  !
         where ( lai_in /= dmiss )
-          lai_temp = g1*lai_in*0.1
+          lai_temp = g1*lai_in*conversion
           laislope=(lai_temp-lai_min)/(lai_max-lai_min)
           where ( laislope > 1.0_dp) laislope=1.0_dp
           where ( laislope < 0.0_dp) laislope=0.0_dp
@@ -1996,4 +2005,4 @@ subroutine lai( err, message, ixDepend, vdata, gammaPar, lai_out, tfopt )
   endif
 end subroutine
 
-end module tf
+END MODULE tf
