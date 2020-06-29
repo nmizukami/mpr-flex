@@ -48,6 +48,10 @@ subroutine paramMaster(err,message)
   gammaMeta(ixGamma%fc1gamma1)       = gammaPar_meta('fc1gamma1'      ,     1.0_dp,    0.8_dp,    1.2_dp,"fc"       ,     1, "soil", .False.)
   !wilting point transfer function
   gammaMeta(ixGamma%wp1gamma1)       = gammaPar_meta('wp1gamma1'      ,     1.0_dp,    0.8_dp,    1.2_dp,"wp"       ,     1, "soil", .False.)
+  !residual transfer function
+  gammaMeta(ixGamma%resid1gamma1)    = gammaPar_meta('resid1gamma1'   ,     0.2_dp,    0.1_dp,    0.9_dp,"resid"    ,     1, "soil", .False.)
+  !transpire transfer function
+  gammaMeta(ixGamma%transp1gamma1)   = gammaPar_meta('transp1gamma1'  ,     0.5_dp,    0.2_dp,    0.8_dp,"transp"   ,     1, "soil", .False.)
   !b transfer function
   gammaMeta(ixGamma%b1gamma1)        = gammaPar_meta('b1gamma1'       ,   3.100_dp,  2.480_dp,  3.800_dp,"b"        ,     1, "soil", .False.)
   gammaMeta(ixGamma%b1gamma2)        = gammaPar_meta('b1gamma2'       ,   0.157_dp,  0.120_dp,  0.188_dp,"b"        ,     1, "soil", .False.)
@@ -100,6 +104,8 @@ subroutine paramMaster(err,message)
   betaMeta(ixBeta%phi)             = betaPar_meta('phi'            ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
   betaMeta(ixBeta%fc)              = betaPar_meta('fc'             ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
   betaMeta(ixBeta%wp)              = betaPar_meta('wp'             ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
+  betaMeta(ixBeta%resid)           = betaPar_meta('resid'          ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
+  betaMeta(ixBeta%transp)          = betaPar_meta('transp'         ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
   betaMeta(ixBeta%myu)             = betaPar_meta('myu'            ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
   betaMeta(ixBeta%sof)             = betaPar_meta('sof'            ,     0.0_dp,    0.0_dp,    1.0_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
   betaMeta(ixBeta%binfilt)         = betaPar_meta('binfilt'        ,     1.0_dp,    0.8_dp,    1.2_dp,     "beta",  -999,  "soil", .False.,  "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .False.)

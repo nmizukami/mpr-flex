@@ -45,6 +45,8 @@ contains
      case('phi2gamma6');       get_ixGamma = ixGamma%phi2gamma6        ! gamma parameter-6 for 2nd porosity transfer function
      case('fc1gamma1');        get_ixGamma = ixGamma%fc1gamma1         ! gamma parameter-1 for 1st field capacity transfer function (koren et al. 2003)
      case('wp1gamma1');        get_ixGamma = ixGamma%wp1gamma1         ! gamma parameter-1 for 1st wilting point transfer function (koren et al. 2003)
+     case('resid1gamma1');     get_ixGamma = ixGamma%resid1gamma1      ! gamma parameter-1 for 1st residual transfer function
+     case('transp1gamma1');    get_ixGamma = ixGamma%transp1gamma1     ! gamma parameter-1 for 1st soil transpire transfer function
      case('b1gamma1');         get_ixGamma = ixGamma%b1gamma1          ! gamma parameter-1 for 1st retention curve slope transfer function (cosby et al. 1984)
      case('b1gamma2');         get_ixGamma = ixGamma%b1gamma2          ! gamma parameter-2 for 1st retention curve slope transfer function (cosby et al. 1984)
      case('b1gamma3');         get_ixGamma = ixGamma%b1gamma3          ! gamma parameter-3 for 1st retention curve slope transfer function (Cosby et al. 1984)
@@ -106,6 +108,8 @@ contains
      case('phi');              get_ixBeta = ixBeta%phi               ! porosity [-]
      case('fc');               get_ixBeta = ixBeta%fc                ! field capacity[-]
      case('wp');               get_ixBeta = ixBeta%wp                ! wilting point [-]
+     case('resid');            get_ixBeta = ixBeta%resid             ! residual [-]
+     case('transp');           get_ixBeta = ixBeta%transp            ! transpire [-]
      case('myu');              get_ixBeta = ixBeta%myu               ! Fractional soil moisture content at wilting point [-]
      case('sof');              get_ixBeta = ixBeta%sof               ! Fractional soil organic content [-]
      case('binfilt');          get_ixBeta = ixBeta%binfilt           ! variable infilitration curve parameter

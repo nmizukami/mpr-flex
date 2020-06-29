@@ -35,6 +35,8 @@ MODULE var_lookup
    integer(i4b)     :: phi2gamma6      = imiss  !
    integer(i4b)     :: fc1gamma1       = imiss  !
    integer(i4b)     :: wp1gamma1       = imiss  !
+   integer(i4b)     :: resid1gamma1    = imiss  !
+   integer(i4b)     :: transp1gamma1   = imiss  !
    integer(i4b)     :: b1gamma1        = imiss  !
    integer(i4b)     :: b1gamma2        = imiss  !
    integer(i4b)     :: b1gamma3        = imiss  !
@@ -84,6 +86,8 @@ MODULE var_lookup
    integer(i4b)     :: phi             = imiss  ! porosity
    integer(i4b)     :: fc              = imiss  ! field capacity
    integer(i4b)     :: wp              = imiss  ! wilting point
+   integer(i4b)     :: resid           = imiss  ! residual
+   integer(i4b)     :: transp          = imiss  ! transpire
    integer(i4b)     :: myu             = imiss  !
    integer(i4b)     :: sof             = imiss  ! soil organic fraction [-]
    integer(i4b)     :: binfilt         = imiss  !
@@ -207,13 +211,13 @@ MODULE var_lookup
                                                                                  21,22,23,24,25,26,27,28,29,30,&
                                                                                  31,32,33,34,35,36,37,38,39,40,&
                                                                                  41,42,43,44,45,46,47,48,49,50,&
-                                                                                 51)
+                                                                                 51,52,53)
  type(iLook_beta),        public,parameter :: ixBeta         = iLook_beta        (1,2,3,4,5,6,7,8,9,10,&
                                                                                  11,12,13,14,15,16,17,18,19,20,&
                                                                                  21,22,23,24,25,26,27,28,29,30,&
                                                                                  31,32,33,34,35,36,37,38,39,40,&
                                                                                  41,42,43,44,45,46,47,48,49,50,&
-                                                                                 51,52,53)
+                                                                                 51,52,53,54,55)
  type(iLook_VarMapData),  public,parameter :: ixVarMapData   = iLook_VarMapData  (1,2,3,4)
  type(iLook_VarSoilData), public,parameter :: ixVarSoilData  = iLook_VarSoilData (1,2,3,4,5,6,7)
  type(iLook_VarVegData),  public,parameter :: ixVarVegData   = iLook_VarVegData  (1,2,3)
