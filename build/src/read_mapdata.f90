@@ -109,7 +109,7 @@ subroutine read_hru_id(hruid, err, message)
   character(len=strLen)              :: cmessage     ! error message from downward subroutine
 
   err=0; message="read_hru_id/"
-  call get_vec_ivar(trim(mpr_input_dir)//trim(fname_mapping), trim("hru_id"), 1, nHru, hruid, err, cmessage)
+  call get_vec_ivar(trim(mpr_input_dir)//trim(fname_mapping), "hru_id", 1, nHru, hruid, err, cmessage)
   if (err/=0)then; message=trim(message)//trim(cmessage); return; endif
 
 end subroutine
