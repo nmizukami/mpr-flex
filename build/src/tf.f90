@@ -75,6 +75,8 @@ subroutine comp_model_param(parSxySz,          &  ! in/output: soil parameter va
           call bd( err, message, sdata=sdata, gammaPar=gammaPar, bd_out=xPar, tfopt=tfid )
         case(ixBeta%phi)
           call phi( err, message, sdata=sdata, gammaPar=gammaPar, phi_out=xPar, tfopt=tfid )
+        case(ixBeta%resid)
+          call resid( err, message, wp_in=parTemp(ixBeta%wp)%varData, gammaPar=gammaPar, resid_out=xPar, tfopt=tfid )
         case(ixBeta%b)
           call retcurve( err, message, sdata=sdata, gammaPar=gammaPar, retcurve_out=xPar, tfopt=tfid )
         case(ixBeta%psis)
@@ -115,6 +117,8 @@ subroutine comp_model_param(parSxySz,          &  ! in/output: soil parameter va
           call WcrFrac( err, message, fc_in=parTemp(ixBeta%fc)%varData, phi_in=parTemp(ixBeta%phi)%varData, gammaPar=gammaPar, WcrFrac_out=xPar, tfopt=tfid )
         case(ixBeta%WpwpFrac)
           call WpwpFrac( err, message, wp_in=parTemp(ixBeta%wp)%varData, phi_in=parTemp(ixBeta%phi)%varData, gammaPar=gammaPar, WpwpFrac_out=xPar, tfopt=tfid )
+        case(ixBeta%transp)
+          call transp( err, message, wp_in=parTemp(ixBeta%wp)%varData, phi_in=parTemp(ixBeta%phi)%varData, gammaPar=gammaPar, transp_out=xPar, tfopt=tfid )
         case(ixBeta%Ws)
           call Ws( err, message, sdata=sdata, D3_in=parTemp(ixBeta%D3)%varData, phi_in=parTemp(ixBeta%phi)%varData, gammaPar=gammaPar, Ws_out=xPar, tfopt=tfid)
         case(ixBeta%twm)
@@ -182,6 +186,8 @@ subroutine betaDependency( err, message )
       case(ixBeta%phi);     call phi     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%fc);      call fc      (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%wp);      call wp      (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
+      case(ixBeta%resid);   call resid   (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
+      case(ixBeta%transp);  call transp  (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%myu);     call myu     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%sof);     call sof     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%binfilt); call binfilt (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
@@ -366,32 +372,35 @@ end subroutine
 ! *********************************************************************
 ! residual_moist parameter
 ! *********************************************************************
-subroutine residMoist(err, message, ixDepend, gammaPar, residMoist_out, tfopt)
+subroutine resid(err, message, ixDepend, wp_in, gammaPar, resid_out, tfopt)
   implicit none
   ! input
+  real(dp),                 optional,intent(in)   :: wp_in(:,:)         ! input(optional): porosity [fraction]
   real(dp),                 optional,intent(in)   :: gammaPar(:)         ! input(optional): gamma parameter array
   integer(i4b),             optional,intent(in)   :: tfopt               ! input(optional): option for transfer function form
   ! output
   integer(i4b),                      intent(out)  :: err                 ! output: error id
   character(len=strLen),             intent(out)  :: message             ! output: error message
   integer(i4b), allocatable,optional,intent(out)  :: ixDepend(:)         ! output(optional): id of dependent beta parameters
-  real(dp),                 optional,intent(out)  :: residMoist_out(:,:) ! input(optional): computed residual moisture [mm]
+  real(dp),                 optional,intent(out)  :: resid_out(:,:)      ! input(optional): computed residual moisture [mm]
   ! local
   integer(i4b)                                    :: tftype              ! option for transfer function form used
-  integer(i4b),        parameter                  :: nDepend=0           ! residMoist parameter depends on no beta parameters
+  integer(i4b),        parameter                  :: nDepend=1           ! resid parameter depends on no beta parameters
 
-  err=0;message="residMoist/"
+  err=0;message="resid/"
   if ( present(ixDepend) ) then ! setup dependency
-    allocate(ixDepend(1),stat=err); if(err/=0)then;message=trim(message)//'error allocating ixDepend';return;endif
-    ixDepend=-999_i4b
-  elseif ( present(gammaPar) .and. present(residMoist_out) )then ! compute parameters with TF
+    allocate(ixDepend(nDepend),stat=err); if(err/=0)then;message=trim(message)//'error allocating ixDepend';return;endif
+    ixDepend=(/ixBeta%wp/)
+  elseif ( present(wp_in) .and. present(gammaPar) .and. present(resid_out) )then ! compute parameters with TF
     tftype=1_i4b
     if (present(tfopt) ) tftype=tfopt
+    associate(g1 => gammaPar(ixGamma%resid1gamma1))
     select case(tftype)
       case(1);
-        residMoist_out = 0._dp
+        resid_out = g1*wp_in
       case default; print*,trim(message)//'OptNotRecognized'; stop
     end select
+    end associate
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
@@ -717,9 +726,14 @@ subroutine Ws( err, message, ixDepend, sdata, D3_in, phi_in, gammaPar, Ws_out, t
 end subroutine
 
 ! ***********
-!  Nijssen baseflow D4 parameter
+!  Nijssen baseflow D4 parameter unit: [-]
 ! *********************************************************************
 subroutine D4( err, message, ixDepend, gammaPar, D4_out, tfopt )
+  ! baseflow [m/s] = D1*Sw + D2*(Sw-D3)^D4
+  ! Sw: soil moisture [m]
+  ! geophysical properties
+  !  h_in     : soil thickness [m]
+  !  fc_in    : field capacity [fraction]
   implicit none
   ! input
   real(dp),                optional,intent(in)  :: gammaPar(:)   ! input(optional): gamma parameter array
@@ -1025,6 +1039,48 @@ subroutine WpwpFrac( err, message, ixDepend, wp_in, phi_in, gammaPar, WpwpFrac_o
           WpwpFrac_out = g1*wp_in/phi_in
         else where
           wpwpFrac_out = dmiss
+        end where
+      case default; print*,trim(message)//'OptNotRecognized'; stop
+    end select
+    end associate
+  else
+    err=10;message=trim(message)//'WrongOptionalInputs'; return
+  endif
+end subroutine
+
+! ************
+! Transpiration parameter  unit [-]
+! *********************************************************************
+subroutine transp( err, message, ixDepend, wp_in, phi_in, gammaPar, transp_out, tfopt )
+  implicit none
+  ! input
+  real(dp),                optional,intent(in)  :: wp_in(:,:)        ! input(optional): wilting point [fraction]
+  real(dp),                optional,intent(in)  :: phi_in(:,:)       ! input(optional): porosity [fraction]
+  real(dp),                optional,intent(in)  :: gammaPar(:)       ! input(optional): gamma parameter array
+  integer(i4b),            optional,intent(in)  :: tfopt             ! input(optional): id for transfer function form
+  ! output
+  integer(i4b),                     intent(out) :: err               ! output: error id
+  character(len=strLen),            intent(out) :: message           ! output: error message
+  integer(i4b),allocatable,optional,intent(out) :: ixDepend(:)       ! output(optional): id of dependent beta parameters
+  real(dp),                optional,intent(out) :: transp_out(:,:) ! output(optional): [frac]
+  ! local
+  integer(i4b)                                  :: tftype            ! option for transfer function form used
+  integer(i4b),parameter                        :: nDepend=2         ! transp parameter depends on 2 beta parameters (phi and wp)
+
+  err=0;message="transp/"
+  if ( present(ixDepend) ) then ! setup dependency
+    allocate(ixDepend(nDepend),stat=err); if(err/=0)then;message=trim(message)//'error allocating ixDepend';return;endif
+    ixDepend=(/ixBeta%phi, ixBeta%wp/)
+  elseif ( present(phi_in) .and. present(wp_in) .and. present(gammaPar) .and. present(transp_out) )then ! compute parameters with TF
+    tftype=1_i4b
+    if (present(tfopt)) tftype=tfopt
+    associate(g1=>gammaPar(ixGamma%transp1gamma1))
+    select case(tftype)
+      case(1);
+        where ( wp_in /= dmiss .and. phi_in /= dmiss )
+          transp_out = (1.0-g1)*wp_in + g1*phi_in
+        else where
+          transp_out = dmiss
         end where
       case default; print*,trim(message)//'OptNotRecognized'; stop
     end select
@@ -1463,7 +1519,7 @@ subroutine rexp( err, message, ixDepend, wp_in, gammaPar, rexp_out, tfopt )
 end subroutine
 
 ! *********************************************************************
-! pedo-transfer function for saturated hydraulic conductivity (ks)
+! pedo-transfer function for saturated hydraulic conductivity (ks) unit m/s
 ! *********************************************************************
 subroutine ks( err, message, ixDepend, sdata, gammaPar, ks_out, tfopt )
   implicit none
@@ -1501,7 +1557,7 @@ subroutine ks( err, message, ixDepend, sdata, gammaPar, ks_out, tfopt )
       case(1);
         where ( sand_in /= dmiss .and. clay_in /= dmiss )
           ks_out = g1 + g2*sand_in + g3*clay_in
-          ks_out = (10**ks_out)*25.4/60/60   ! 25.4 mm/inch. Cosby give Ksat in inch/hr
+          ks_out = (10**ks_out)*25.4/60.0/60.0/1000.0   ! inch/hr -> m/s.  25.4 mm/inch. Cosby give Ksat in inch/hr
         else where
           ks_out = dmiss
         end where
@@ -1638,7 +1694,7 @@ subroutine sof( err, message, ixDepend, sdata, gammaPar, sof_out, tfopt )
 end subroutine
 
 ! *********************************************************************
-! pedo-transfer function for porosity
+! pedo-transfer function for porosity  unit fraction
 ! *********************************************************************
 subroutine phi( err, message, ixDepend, sdata, gammaPar, phi_out, tfopt )
   implicit none
@@ -1942,8 +1998,6 @@ subroutine myu( err, message, ixDepend, phi_in, fc_in, gammaPar, myu_out, tfopt 
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
 end subroutine
-
-
 
 
 ! *********************************************************************
