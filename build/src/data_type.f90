@@ -13,26 +13,30 @@ module data_type
 type,public  :: gammaPar_meta
   character(len=strLen)        :: pname  =''        ! parameter name
   real(dp)                     :: val    =-999.0_dp ! default bound
-  real(dp)                     :: lwr    =-999.0_dp ! lower and upper bounds
-  real(dp)                     :: upr    =-999.0_dp ! lower and upper bounds
+  character(len=strLen)        :: unt    =''        ! unit
   character(len=strLen)        :: beta   =''        ! name of parent beta parameter - if parameter is beta parameter, use "beta"
   integer(i4b)                 :: tftype =-999_i4b  ! id of transfer function type
   character(len=strLen)        :: ptype  =''        ! name of parent beta parameter - if parameter is beta parameter, use "beta"
   logical(lgc)                 :: flag   =.False.   ! flag to calibrate or not
 endtype gammaPar_meta
 
-type,extends(gammaPar_meta), public  :: betaPar_meta
+! extended parameter meta data for selected set
+type,extends(gammaPar_meta), public  :: cpar_meta
+  integer(i4b)        :: ixMaster=-999   ! idex of master parameter list
+endtype cpar_meta
+
+type,public  :: betaPar_meta
+  character(len=strLen)        :: pname  =''        ! parameter name
+  character(len=strLen)        :: desc   =''        ! description
+  character(len=strLen)        :: unt    =''        ! unit
+  character(len=strLen)        :: ptype  =''        !
+  integer(i4b)                 :: tftype =-999_i4b  ! id of transfer function type
   character(len=strLen)        :: hups   =''        ! scaling operator for horizontal direction
   real(dp)                     :: hpnorm =-999.0_dp ! scaling operator for horizontal direction
   character(len=strLen)        :: vups   =''        ! scaling operator for vertical direction
   real(dp)                     :: vpnorm =-999.0_dp ! scaling operator for horizontal direction
   logical(lgc)                 :: perLyr =.False.   ! calibrate per layer (only applicable to multiplier method)
 endtype betaPar_meta
-
-! extended parameter meta data for selected set
-type,extends(gammaPar_meta), public  :: cpar_meta
-  integer(i4b)        :: ixMaster=-999   ! idex of master parameter list
-endtype cpar_meta
 
 ! ***********************************************************************************************************
 ! Define data structure of beta parameters

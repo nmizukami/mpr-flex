@@ -153,8 +153,6 @@ subroutine get_parm_meta( err, message)
           tempParSubset(nCalGamma)%ixMaster = ivar
           tempParSubset(nCalGamma)%pname    = gammaMeta(iGamma)%pname
           tempParSubset(nCalGamma)%val      = gammaMeta(iGamma)%val
-          tempParSubset(nCalGamma)%lwr      = gammaMeta(iGamma)%lwr
-          tempParSubset(nCalGamma)%upr      = gammaMeta(iGamma)%upr
           tempParSubset(nCalGamma)%beta     = gammaMeta(iGamma)%beta
           tempParSubset(nCalGamma)%tftype   = gammaMeta(iGamma)%tftype
           tempParSubset(nCalGamma)%ptype    = gammaMeta(iGamma)%ptype
@@ -318,14 +316,12 @@ subroutine param_setup( err, message )
 
   nCalParSum = nCalGamma+nCalScale
 
-  allocate(parArray(nCalParSum,3),stat=err);if(err/=0)then;message=trim(message)//'error allocating parArray';return;endif
+  allocate(parArray(nCalParSum,1),stat=err);if(err/=0)then;message=trim(message)//'error allocating parArray';return;endif
   allocate(parMask(nCalParSum),stat=err);if(err/=0)then;message=trim(message)//'error allocating parMask';return;endif
   idx=0
   do iPar=1,nCalGamma
     idx=idx+1
     parArray(idx,1) = calGammaMeta(iPar)%val
-    parArray(idx,2) = calGammaMeta(iPar)%lwr
-    parArray(idx,3) = calGammaMeta(iPar)%upr
     parMask (idx)   = calGammaMeta(iPar)%flag
   enddo
 
@@ -333,8 +329,6 @@ subroutine param_setup( err, message )
     do ixHV=1,2
       idx=idx+1
       parArray(idx,1) = calScaleMeta(iPar)%pdefault(ixHV)        ! default value of pnorm value
-      parArray(idx,2) = -100.0_dp                                ! lower bound or pnorm value
-      parArray(idx,3) =  100.0_dp                                ! upper bound of pnorm value
       parMask (idx)   = calScaleMeta(iPar)%mask(ixHV)
     enddo
   enddo
