@@ -144,9 +144,9 @@ subroutine get_parm_meta( err, message)
 
     allocate(tempParSubset(nGamma+nBeta))
 
-    nCalGamma=0     ! Count and Save number of gamma parameter to be calibrated
+    nCalGamma=0     ! Count and save number of gamma parameter to be used
     do iPar=1,size(inParMeta)
-      do iGamma=1,nGamma  ! look for gammma parameters associated with this beta parameter
+      do iGamma=1,nGamma
         if (gammaMeta(iGamma)%beta==inParMeta(iPar)%betaname .and. gammaMeta(iGamma)%tftype==inParMeta(iPar)%TF) then
           nCalGamma = nCalGamma+1
           ivar=get_ixGamma(gammaMeta(iGamma)%pname)
@@ -193,11 +193,6 @@ subroutine get_parm_meta( err, message)
     do iPar=1,size(inParMeta)
       ivar = get_ixBeta(inParMeta(iPar)%betaname)
       if(ivar<=0)then; err=40; message=trim(message)//"BetaNotFoundInMasterMeta[var="//trim(inParMeta(iPar)%betaname)//"]"; return; endif
-      if ( trim(inParMeta(iPar)%betaname) == 'h1' ) cycle
-      if ( trim(inParMeta(iPar)%betaname) == 'h2' ) cycle
-      if ( trim(inParMeta(iPar)%betaname) == 'h3' ) cycle
-      if ( trim(inParMeta(iPar)%betaname) == 'h4' ) cycle
-      if ( trim(inParMeta(iPar)%betaname) == 'h5' ) cycle
       if ( trim(inParMeta(iPar)%betaname) == 'z' )  cycle
       counter=counter+1
       res(counter)=betaMeta(ivar)%pname
@@ -237,7 +232,7 @@ subroutine get_parm_meta( err, message)
 
     else
 
-      print*, 'NO gamma parameters included in the list'
+      print*, 'No gamma parameters included in the list'
 
     endif
 
@@ -263,8 +258,6 @@ subroutine get_parm_meta( err, message)
                  vups      => betaMeta(get_ixBeta(inParMeta(iPar)%betaname))%vups,   &
                  hpower    => betaMeta(get_ixBeta(inParMeta(iPar)%betaname))%hpnorm, &
                  vpower    => betaMeta(get_ixBeta(inParMeta(iPar)%betaname))%vpnorm)
-                 !hscaleMask=> inParMeta(iPar)%isScaleCalH, &
-!                 vscaleMask=> inParMeta(iPar)%isScaleCalV )
 
       tempBetaCalScale(iPar)%betaname    = inParMeta(iPar)%betaname
       tempBetaCalScale(iPar)%pdefault(1) = hpower

@@ -44,7 +44,7 @@ subroutine run_mpr( calParam, restartFile, err, message )
 
   err=0; message='run_mpr/' ! to initialize error control
 
-  if ( nCalGamma /= 0) then
+  if ( nCalGamma > 0) then
 
     allocate(params, source=calParam) ! copy calParameter default
 
@@ -366,6 +366,8 @@ subroutine mpr(hruID,             &     ! input: hruID
     allocate(wgtSub(nGpolyLocal),stat=err); if(err/=0)then;message=message//'error allocating wgtSub';return;endif
     polySub = overSpolyId(ixStart:ixEnd) ! id of soil polygons contributing to current hru
     wgtSub  = wgt(ixStart:ixEnd)         ! weight of soil polygons contributing to current hru
+
+    ! Memory allocation
     allocate(hModelLocal(nLyr,nGpolyLocal),stat=err);    if(err/=0)then;message=message//'error allocating hModelLocal'; return;endif
     allocate(zModelLocal(nLyr,nGpolyLocal),stat=err);    if(err/=0)then;message=message//'error allocating zModelLocal'; return;endif
     allocate(soil2model_map(nGpolyLocal),stat=err);      if(err/=0)then;message=trim(message)//'error allocating soil2model_map';return;endif
@@ -377,14 +379,13 @@ subroutine mpr(hruID,             &     ! input: hruID
       enddo
     enddo
 
-    ! allocate memmory
     if (nSoilBetaModel>0) then
       do iParm=1,nSoilBetaModel
         allocate(parSxySz(iParm)%varData(nSlyrs,nGpolyLocal),stat=err); if(err/=0)then;message=message//'error allocating parSxySz%varData';return;endif
         allocate(parSxyMz(iParm)%varData(nLyr,nGpolyLocal),stat=err);   if(err/=0)then;message=message//'error allocating parSxyMz%varData';return;endif
       enddo
     endif
-    if (nVegBetaModel>0_i4b)then !if at least one veg parameter is included
+    if (nVegBetaModel>0)then
       do iParm=1,nVegBetaModel
         allocate(parVxy(iParm)%varData(nMonth, nGpolyLocal),stat=err)
       enddo
@@ -437,7 +438,7 @@ subroutine mpr(hruID,             &     ! input: hruID
 
   ! (3.4) Compute model parameters using transfer function
     ! compute model soil parameters
-    if (nSoilBetaModel>0_i4b)then
+    if (nSoilBetaModel>0)then
       call comp_model_param(parSxySz, parVxy, sdataLocal, tdataLocal, vdataLocal, gammaUpdateMeta, nSlyrs, nGpolyLocal, err, cmessage)
       if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
 
@@ -573,11 +574,13 @@ subroutine mpr(hruID,             &     ! input: hruID
         deallocate(parSxyMz(iParm)%varData,stat=err);if(err/=0)then; message=message//'error deallocating parSxyMz%varData'; return; endif
       enddo
     endif
+
     ! deallocate memmory
     deallocate(soil2model_map,stat=err); if(err/=0)then; message=trim(message)//'error deallocating soil2model_map';return;endif
     deallocate(hModelLocal,stat=err);    if(err/=0)then; message=trim(message)//'error deallocating hModelLocal';return;endif
     deallocate(zModelLocal,stat=err);    if(err/=0)then; message=trim(message)//'error deallocating zModelLocal';return;endif
-    if (nVegBetaModel>0_i4b)then
+
+    if (nVegBetaModel>0)then
       do iMon=1,nMonth
         do iParm = 1,nVegBetaModel
           allocate( vegParVec(iParm)%var(nGpolyLocal),stat=err); if(err/=0)then; message=trim(message)//'error allocating vegParVec%var'; return; endif
@@ -610,6 +613,7 @@ subroutine mpr(hruID,             &     ! input: hruID
         deallocate(parVxy(iParm)%varData,stat=err);if(err/=0)then; message=message//'error deallocating parVxy%varData'; return; endif
       enddo
     endif
+
     ! deallocate memmory
     deallocate(polySub,stat=err); if(err/=0)then; message=trim(message)//'error deallocating polyIdSub'; return; endif
     deallocate(wgtSub,stat=err);  if(err/=0)then; message=trim(message)//'error deallocating wgtSub'; return; endif
@@ -703,40 +707,6 @@ subroutine subsetData(entireData, subPolyID, localData, data_name, err, message)
     end do
 
   end do
-
-end subroutine
-
-! private subroutine:
-subroutine pop_hfrac( gammaUpdateMeta, hfrac, err, message)
-  use var_lookup,           only: ixGamma
-  implicit none
-  !input variables
-  type(gammaPar_meta),  intent(in)  :: gammaUpdateMeta(:)
-  !output variables
-  real(dp),             intent(out) :: hfrac(:)
-  integer(i4b),         intent(out) :: err         ! error code
-  character(*),         intent(out) :: message     ! error message
-  !local variables
-  real(dp)                          :: dummy(20)
-  !logical(lgc)                      :: mask(20)
-  !integer(i4b)                      :: i
-
-  err=0; message='pop_hfrac/'
-  dummy=-999
-  dummy(1)=gammaUpdateMeta(ixGamma%h1gamma1)%val
-  dummy(2)=gammaUpdateMeta(ixGamma%h2gamma1)%val
-  hfrac=dummy(1:nLyr-1)
-
-  !check h parameters - now can chcek up to 5 layers
-  !do i=1,size(calGammaMeta)
-  !  if (gammaParMeta(i)%pname=="h1gamma1")then;dummy(1)=gammaParStr(i)%var(1);cycle;endif
-  !  if (gammaParMeta(i)%pname=="h2gamma1")then;dummy(2)=gammaParStr(i)%var(1);cycle;endif
-  !  if (gammaParMeta(i)%pname=="h3gamma1")then;dummy(3)=gammaParStr(i)%var(1);cycle;endif
-  !  if (gammaParMeta(i)%pname=="h4gamma1")then;dummy(4)=gammaParStr(i)%var(1);cycle;endif
-  !enddo
-  !mask=(dummy>0)
-  !if ( count(mask)/=nLyr-1 ) stop 'number of h1gamma prameters mismatch with nLyr'
-  !#hfrac=pack(dummy,mask)
 
 end subroutine
 
