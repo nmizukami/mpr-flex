@@ -15,8 +15,7 @@ type(gammaPar_meta),  save,            public  :: gammaMeta(nGamma)         ! me
 type(betaPar_meta),   save,            public  :: betaMeta(nBeta)           ! meta data for all the available beta parameters
 type(beta_meta),      save,            public  :: betaAncilMeta(nBeta)      ! meta data for parameter dependency for all the beta parameters
 ! Based on a list of beta parameters to be estimated from "inParList" nml input
-type(cpar_meta),      save,allocatable,public  :: calParMeta(:)             ! meta data for calibrating beta and gamma parameters based on 'inParList' nml input
-type(cpar_meta),      save,allocatable,public  :: calGammaMeta(:)           ! subset of calParMeta including only gamma parameters.
+type(cpar_meta),      save,allocatable,public  :: calGammaMeta(:)           ! subset of gamma parameters that are used to compute a set of beta parametes.
 type(input_meta),     save,allocatable,public  :: inParMeta(:)              ! meta data for speficification of beta parameteters in "inParList" nml input
 type(scale_meta),     save,allocatable,public  :: calScaleMeta(:)           ! meta data for scaling operator of beta paramets
 integer(i4b),         save,            public  :: calBetaOrderIdx(nBeta)    ! index of beta parameters sorted in computing order (only beta parameter estimated with MPR)
@@ -26,8 +25,7 @@ character(len=strLen),save,allocatable,public  :: vegBetaCalName(:)         ! su
 real(dp),             save,allocatable,public  :: parArray(:,:)             ! calibrating parameter array - input for optimization routine
 logical(lgc),         save,allocatable,public  :: parMask(:)                ! calibrating parameter mask vector - input for optimization routine
 ! Number of parameters
-integer(i4b),         save,            public  :: nCalPar                   ! sum of beta parameter directly calibrated and gamma parameters calibrated
-integer(i4b),         save,            public  :: nCalGamma                 ! number of gamma parameters to be calibrated
+integer(i4b),         save,            public  :: nCalGamma                 ! number of gamma parameters to be used give a set of beta parameters
 integer(i4b),         save,            public  :: nCalScale                 ! number of scaling parameters to be calibrated
 integer(i4b),         save,            public  :: nBetaNeed                 ! number of beta parameters computed in MPR including calibrating beta and their dependent beta
 integer(i4b),         save,            public  :: nSoilBetaModel            ! number of soil parameters to be estimated with MPR

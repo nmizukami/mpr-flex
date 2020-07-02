@@ -29,7 +29,7 @@ program main_calibration
   call read_inParList( trim(inParList), ierr,  cmessage ); call handle_err(ierr,cmessage)
 
   ! Process 'inParMeta' along with master parameter meta data.
-  ! Saved data: 'calParMeta','calGammaMeta', 'calBetaName', calScaleMeta, nCalGamma
+  ! Saved data: 'calGammaMeta', 'calBetaName', calScaleMeta, nCalGamma
   call get_parm_meta(ierr,cmessage); call handle_err(ierr,cmessage)
 
   ! Compute beta parameter dependency. Saved data: betaAncilMeta
