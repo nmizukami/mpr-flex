@@ -183,7 +183,7 @@ MODULE var_lookup
   integer(i4b)     :: prec         = imiss      ! monthly total precipitation [mm]
   integer(i4b)     :: tavg         = imiss      ! monthly mean air temperature [degree-C]
   integer(i4b)     :: wind         = imiss      ! monthly mean wind speed  [m/s]
-  integer(i4b)     :: rh           = imiss      ! monthly mean relative humidity [%]
+  integer(i4b)     :: ai           = imiss      ! annual aridity index
  endtype iLook_VarClimData
 
 ! ***********************************************************************************************************

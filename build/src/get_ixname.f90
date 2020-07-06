@@ -254,7 +254,7 @@ contains
      case('prec');   get_ixDataClim = ixVarClimData%prec   ! Monthly total precipitation [mm]
      case('tavg');   get_ixDataClim = ixVarClimData%tavg   ! Monthly mean air temperature [degree-C]
      case('wind');   get_ixDataClim = ixVarClimData%wind   ! Monthly mean wind speed [m s-1]
-     case('rh');     get_ixDataClim = ixVarClimData%rh     ! Monthly mean relative humidity [percent]
+     case('ai');     get_ixDataClim = ixVarClimData%ai     ! Annual mean aridity index [-]
      ! get to here if cannot find the variable
      case default;     get_ixDataClim = imiss
    endselect

@@ -94,8 +94,8 @@ subroutine paramMaster(err,message)
   !  Master list of beta parameters
   ! -----------------------
   !                                                name        ,  desc                                                            , units   ,   type   , tftype,  h-scale ,   p-norm ,  v scale ,  p-norm  , perLyr
-  betaMeta(ixBeta%uhshape)         = betaPar_meta('uhshape'    , 'shape parameter in Gamma distribution used for overland routing', '-'     ,   "route", -999,      "na", -999.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%uhscale)         = betaPar_meta('uhscale'    , 'scale parameter in Gamma distribution used for overland routing', 's'     ,   "route", -999,      "na", -999.0_dp,      "na", -999.0_dp, .False.)
+  betaMeta(ixBeta%uhshape)         = betaPar_meta('uhshape'    , 'shape parameter in Gamma distribution used for overland routing', '-'     ,   "route", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
+  betaMeta(ixBeta%uhscale)         = betaPar_meta('uhscale'    , 'scale parameter in Gamma distribution used for overland routing', 's'     ,   "route", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
   betaMeta(ixBeta%ks)              = betaPar_meta('ks'         , 'saturated hydraulic conductivity'                               , 'm/s'   ,    "soil", -999,   "pnorm",   -1.0_dp,   "pnorm",   -1.0_dp, .True.)
   betaMeta(ixBeta%bd)              = betaPar_meta('bd'         , 'bulk density'                                                   , ' '     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
   betaMeta(ixBeta%sd)              = betaPar_meta('sd'         , 'soil mineral density'                                           , ' '     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
@@ -200,7 +200,7 @@ subroutine popMprMeta(err,message)
   cdata_meta(ixVarClimData%prec)         = var_meta('prec'         ,"monthly total precipitation"                        ,"mm"          ,"2D", "double" )
   cdata_meta(ixVarClimData%tavg)         = var_meta('tavg'         ,"monthly mean temperature"                           ,"degree-C"    ,"2D", "double" )
   cdata_meta(ixVarClimData%wind)         = var_meta('wind'         ,"monthly mean wind speed"                            ,"m s-1"       ,"2D", "double" )
-  cdata_meta(ixVarClimData%rh)           = var_meta('rh'           ,"monthly mean relative humidity"                     ,"percent"     ,"2D", "double" )
+  cdata_meta(ixVarClimData%ai)           = var_meta('ai'           ,"Annual aridity index"                               ,"-"           ,"1D", "double" )
   ! Vege property variables
   vprp_meta(ixPrpVeg%lai)                = var_meta('lai'          ,"Monthly lai"                                        ,"m2 m-2"      ,"2D", "double")
   vprp_meta(ixPrpVeg%vegtype)            = var_meta('vegtype'      ,'vegetation type'                                    ,"-"           ,"1D", "integer")
