@@ -1,6 +1,7 @@
 module io_netcdf
 
 USE nrtype
+USE public_var, ONLY: imiss, dmiss
 USE netcdf
 
 implicit none
@@ -825,8 +826,8 @@ CONTAINS
   character(*), intent(in)        :: fname        ! filename
   character(*), intent(in)        :: vname        ! variable name
   integer(i4b), intent(in)        :: array(:)     ! variable data
-  integer(i4b), intent(in)        :: iStart(:)    ! start index
-  integer(i4b), intent(in)        :: iCount(:)    ! length of vector
+  integer(i4b), intent(in)        :: iStart       ! start index
+  integer(i4b), intent(in)        :: iCount       ! length of vector
   ! output variables
   integer(i4b), intent(out)       :: ierr         ! error code
   character(*), intent(out)       :: message      ! error message
@@ -845,7 +846,7 @@ CONTAINS
   if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr)); return; endif
 
   ! write data
-  ierr = nf90_put_var(ncid,iVarId,array,start=iStart,count=iCount)
+  ierr = nf90_put_var(ncid,iVarId,array,start=[iStart],count=[iCount])
   if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr)); return; endif
 
   ! close output file
@@ -868,8 +869,8 @@ CONTAINS
   character(*), intent(in)        :: fname        ! filename
   character(*), intent(in)        :: vname        ! variable name
   real(dp), intent(in)            :: array(:)     ! variable data
-  integer(i4b), intent(in)        :: iStart(:)    ! start indices
-  integer(i4b), intent(in)        :: iCount(:)    ! length of vector
+  integer(i4b), intent(in)        :: iStart       ! start indices
+  integer(i4b), intent(in)        :: iCount       ! length of vector
   ! output variables
   integer(i4b), intent(out)       :: ierr         ! error code
   character(*), intent(out)       :: message      ! error message
@@ -888,7 +889,7 @@ CONTAINS
   if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr)); return; endif
 
   ! write data
-  ierr = nf90_put_var(ncid,iVarId,array,start=iStart,count=iCount)
+  ierr = nf90_put_var(ncid,iVarId,array,start=[iStart],count=[iCount])
   if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr)); return; endif
 
   ! close output file
@@ -911,8 +912,8 @@ CONTAINS
   character(*), intent(in)        :: fname        ! filename
   character(*), intent(in)        :: vname        ! variable name
   character(*), intent(in)        :: array(:)     ! variable data
-  integer(i4b), intent(in)        :: iStart(:)    ! start indices
-  integer(i4b), intent(in)        :: iCount(:)    ! length of vector
+  integer(i4b), intent(in)        :: iStart       ! start indices
+  integer(i4b), intent(in)        :: iCount       ! length of vector
   ! output variables
   integer(i4b), intent(out)       :: ierr         ! error code
   character(*), intent(out)       :: message      ! error message
@@ -931,7 +932,7 @@ CONTAINS
   if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr)); return; endif
 
   ! write data
-  ierr = nf90_put_var(ncid,iVarId,array,start=iStart,count=iCount)
+  ierr = nf90_put_var(ncid,iVarId,array,start=[iStart],count=[iCount])
   if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr)); return; endif
 
   ! close output file
@@ -1133,6 +1134,8 @@ CONTAINS
    integer(i4b)                         :: id                     ! loop through dimensions
    integer(i4b)                         :: dimIDs(size(dimNames)) ! vector of dimension IDs
    integer(i4b)                         :: iVarId                 ! variable ID
+   integer(i4b)                         :: fill_int=imiss         ! fill value for integer type variable
+   real(dp)                             :: fill_double=dmiss      ! fill value for double type variable
 
    ! initialize error control
    ierr=0; message='def_var/'
@@ -1146,6 +1149,15 @@ CONTAINS
    ! define variable
    ierr = nf90_def_var(ncid,trim(vname),ivtype,dimIds,iVarId)
    if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr)); return; endif
+
+   ! add variable fillvalue
+   if (ivtype == ncd_double) then
+     ierr = nf90_put_att(ncid, iVarId, '_FillValue', fill_double)
+     if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr)); return; endif
+   else if (ivtype == ncd_int) then
+     ierr = nf90_put_att(ncid, iVarId, '_FillValue', fill_int)
+     if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr)); return; endif
+   endif
 
    if (present(vdesc)) then ! add long_name
      ierr = nf90_put_att(ncid,iVarId,'long_name',trim(vdesc))
