@@ -2001,7 +2001,7 @@ end subroutine
 
 
 ! *********************************************************************
-! Monthly LAI
+! Monthly LAI  unit: m2/m2
 ! *********************************************************************
 subroutine lai( err, message, ixDepend, vdata, gammaPar, lai_out, tfopt )
   implicit none
@@ -2023,7 +2023,7 @@ subroutine lai( err, message, ixDepend, vdata, gammaPar, lai_out, tfopt )
   real(dp),allocatable                          :: laislope(:,:)
   integer(i4b)                                  :: n1               ! number of 1st dimension
   integer(i4b)                                  :: n2               ! number of 2nd dimension
-  integer(i4b)                                  :: conversion=0.1   ! scaling (data is givin data*10)
+  real(dp)                                      :: conversion=0.1   ! scaling (data is givin data*10)
 
   err=1;message="lai/"
   if ( present(ixDepend) ) then ! setup dependency
