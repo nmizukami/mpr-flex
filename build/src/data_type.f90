@@ -78,9 +78,9 @@ endtype var_meta
 ! Define data structure of netCDF dimension metadata
 ! ***********************************************************************************************************
   type, public :: defDim
-    character(len=32)         :: dimName=''
-    character(len=32)         :: dimDesc=''
-    character(len=32)         :: dimUnit=''
+    character(len=32)         :: dname=''
+    character(len=32)         :: desc=''
+    character(len=32)         :: unt=''
   endtype defDim
 
 ! *****

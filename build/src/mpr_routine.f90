@@ -20,7 +20,7 @@ subroutine run_mpr( calParam, restartFile, err, message )
 
   use globalData,    only: calScaleMeta, calGammaMeta, parArray, parMask, nCalGamma, nSoilBetaModel, nVegBetaModel
   use read_mapdata,  only: read_hru_id
-  use write_param_nc,only: write_nc_soil,write_nc_veg
+  use write_param_nc,only: write_nc_beta
 
   implicit none
   ! input variables
@@ -81,15 +81,8 @@ subroutine run_mpr( calParam, restartFile, err, message )
     if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
 
     !! Write parameter derived from MPR in netCDF
-    if (nSoilBetaModel>0)then
-      call write_nc_soil(trim(mpr_output_dir)//trim(soil_param_nc), hruID, hModel, parMxyMz, err, cmessage)
-      if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
-    endif
-
-    if (nVegBetaModel>0)then
-      call write_nc_veg(trim(mpr_output_dir)//trim(veg_Param_nc), hruID, vegParMxy, err, cmessage)
-      if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
-    endif
+    call write_nc_beta(trim(mpr_output_dir)//trim(model_param_nc), hruID, hModel, parMxyMz, vegParMxy, err, cmessage)
+    if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
 
   else
 

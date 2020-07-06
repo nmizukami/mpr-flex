@@ -15,8 +15,7 @@ module read_config
 ! MPR configuration
   namelist / mprio /  mpr_input_dir,          &
                       mpr_output_dir,         &
-                      soil_param_nc,          &
-                      veg_param_nc,           &
+                      model_param_nc,         &
                       fname_soil,             &
                       fname_topo,             &
                       fname_veg,              &

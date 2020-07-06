@@ -21,8 +21,7 @@ module public_var
   ! mprconfig
   character(len=strLen),public    :: mpr_input_dir
   character(len=strLen),public    :: mpr_output_dir
-  character(len=strLen),public    :: soil_param_nc
-  character(len=strLen),public    :: veg_param_nc
+  character(len=strLen),public    :: model_param_nc
   character(len=strLen),public    :: fname_soil
   character(len=strLen),public    :: fname_topo
   character(len=strLen),public    :: fname_veg
