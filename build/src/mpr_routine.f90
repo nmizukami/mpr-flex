@@ -601,7 +601,7 @@ subroutine mpr(hruID,             &     ! input: hruID
           if ( iHru == iHruPrint ) then
             print*,'-----------------------------------'
             print*,'Aggregated vege parameter '
-            write(*,"(1X,A17,'(Month ',I2,') = ',100f9.3)") betaUpdateMeta(ix)%pname, iMon ,parMxyMz(iParm)%varData(iMon,iHru)
+            write(*,"(1X,A17,'(Month ',I2,') = ',100f9.3)") betaUpdateMeta(ix)%pname, iMon ,vegParMxy(iParm)%varData(iMon,iHru)
           endif
           end associate sixth
         enddo
