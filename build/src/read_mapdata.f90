@@ -97,7 +97,7 @@ end subroutine
 
 subroutine read_hru_id(hruid, err, message)
 
-  use read_ncdata, only: get_vec_ivar
+  use io_netcdf, only: get_nc
 
   implicit none
   ! input variables
@@ -109,7 +109,7 @@ subroutine read_hru_id(hruid, err, message)
   character(len=strLen)              :: cmessage     ! error message from downward subroutine
 
   err=0; message="read_hru_id/"
-  call get_vec_ivar(trim(mpr_input_dir)//trim(fname_mapping), "hru_id", 1, nHru, hruid, err, cmessage)
+  call get_nc(trim(mpr_input_dir)//trim(fname_mapping), "hru_id", hruid, 1, nHru, err, cmessage)
   if (err/=0)then; message=trim(message)//trim(cmessage); return; endif
 
 end subroutine
