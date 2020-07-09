@@ -354,30 +354,33 @@ subroutine print_config()
   do i=1,size(inParMeta)
     write(*,*) trim(adjustl(inParMeta(i)%betaname))
   end do
-  write(*,'(A,1X,A)') new_line(' '),'! Calibrating Gamma parameters'
-  write(*,*) '!-----------------------------------------------------------'
-  do i=1,size(calGammaMeta)
-    write(*,*) ( trim(adjustl(calGammaMeta(i)%pname)) )
-  end do
+
   if (size(calBetaName)/=0)then
-    write(*,'(A,1X,A)') new_line(' '),'! Beta parameters to be estimated with MPR excluding z and h'
+
+    write(*,'(A,1X,A)') new_line(' '),'! Beta parameters to be estimated with MPR excluding z'
     write(*,*) '!-----------------------------------------------------------'
     do i=1,size(calBetaName)
       write(*,*) ( trim(adjustl(calBetaName(i))) )
     end do
-    write(*,'(A,1X,A)') new_line(' '),'! List of gamma parameters calibrated'
+
+    write(*,'(A,1X,A)') new_line(' '),'! List of gamma parameters to be used'
     write(*,*) '!-----------------------------------------------------------'
     do i=1,size(calGammaMeta)
       write(*,*) ( trim(adjustl(calGammaMeta(i)%pname)) )
     end do
+
     write(*,'(A,1X,A)') new_line(' '),'! All beta parameters computed with MPR including dependent beta parameters'
     write(*,*) '!-----------------------------------------------------------'
     do i=1,nBetaNeed
       write(*,*) ( trim(adjustl(betaMeta(calBetaOrderIdx(i))%pname)) )
     end do
+
   else
+
     write(*,'(A,1X,A)') new_line(' '), '! No beta parameters estimated with MPR'
+
   endif
+
   write(*,'(A,1X,A)') new_line(' '),'! Parameter Array input to optimization routine'
   write(*,*) '!-----------------------------------------------------------'
   write(*,*) 'Parameter Name        (initial)value    cal.flag   Note'
