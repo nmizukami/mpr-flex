@@ -81,6 +81,8 @@ contains
      case('pfree1gamma1');     get_ixGamma = ixGamma%pfree1gamma1      !
      case('rexp1gamma1');      get_ixGamma = ixGamma%rexp1gamma1       !
      case('lai1gamma1');       get_ixGamma = ixGamma%lai1gamma1        ! gamma parameter-1 for monthly lai (multiplier)
+     case('cht1gamma1');       get_ixGamma = ixGamma%cht1gamma1        ! gamma parameter-1 for height of canopy top
+     case('chb1gamma1');       get_ixGamma = ixGamma%chb1gamma1        ! gamma parameter-1 for height of canopy bottom
       ! get to here if cannot find the variable
       case default;             get_ixGamma = imiss
    end select
@@ -100,7 +102,7 @@ contains
      ! Beta parameters
      case('uhshape');          get_ixBeta = ixBeta%uhshape           ! gamma pdf uh shape parameter [-]
      case('uhscale');          get_ixBeta = ixBeta%uhscale           ! gamma pdf uh scale parameter [-]
-     case('ks');               get_ixBeta = ixBeta%ks                ! saturated hydrologic conductivity [mm/day]
+     case('ks');               get_ixBeta = ixBeta%ks                ! saturated hydrologic conductivity [m/s]
      case('bd');               get_ixBeta = ixBeta%bd                ! soil particle density [kg/m^3]
      case('sd');               get_ixBeta = ixBeta%sd                ! soil particle density [kg/m^3]
      case('psis');             get_ixBeta = ixBeta%psis              ! matric potential [kPa]
@@ -142,7 +144,9 @@ contains
      case('zperc');            get_ixBeta = ixBeta%zperc             !
      case('rexp');             get_ixBeta = ixBeta%rexp              !
      case('rmin');             get_ixBeta = ixBeta%rmin              ! minimum stomatal resistance
-     case('lai');              get_ixBeta = ixBeta%lai               ! monthly lai
+     case('lai');              get_ixBeta = ixBeta%lai               ! monthly lai [m2/m2]
+     case('cht');              get_ixBeta = ixBeta%cht               ! height of canopy top [m]
+     case('chb');              get_ixBeta = ixBeta%chb               ! height of canopy bottom [m]
      case('scf');              get_ixBeta = ixBeta%scf               !
      case('mfmax');            get_ixBeta = ixBeta%mfmax             !
      case('mfmin');            get_ixBeta = ixBeta%mfmin             !
@@ -190,7 +194,8 @@ contains
    ! get the index of the named variables
    select case(trim(varName))
      case('polyid');     get_ixDataVeg = ixVarVegData%polyid     ! veg polygon ID
-     case('lai');        get_ixDataVeg = ixVarVegData%lai        ! monthly lai [m2 m-2]
+     case('lai');        get_ixDataVeg = ixVarVegData%lai        ! monthly lai *10 [m2 m-2]
+     case('ch');         get_ixDataVeg = ixVarVegData%ch         ! canopy height [m]
      case('vegclass');   get_ixDataVeg = ixVarVegData%vegclass   ! veg class in veg polygon and layer
      ! get to here if cannot find the variable
      case default;     get_ixDataVeg = imiss

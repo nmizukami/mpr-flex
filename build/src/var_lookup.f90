@@ -71,6 +71,8 @@ MODULE var_lookup
    integer(i4b)     :: pfree1gamma1    = imiss  !
    integer(i4b)     :: rexp1gamma1     = imiss  !
    integer(i4b)     :: lai1gamma1      = imiss  !
+   integer(i4b)     :: cht1gamma1      = imiss  !
+   integer(i4b)     :: chb1gamma1      = imiss  !
  endtype iLook_gamma
 ! ***********************************************************************************************************
 ! 2.Define indices for beta parameters
@@ -120,7 +122,9 @@ MODULE var_lookup
    integer(i4b)     :: zperc           = imiss  !
    integer(i4b)     :: rexp            = imiss  !
    integer(i4b)     :: rmin            = imiss  ! minimum stomatal resistance
-   integer(i4b)     :: lai             = imiss  ! Lai
+   integer(i4b)     :: lai             = imiss  ! Lai [m2/m2]
+   integer(i4b)     :: cht             = imiss  ! top canopy height [m]
+   integer(i4b)     :: chb             = imiss  ! bottom canopy height [m]
    integer(i4b)     :: scf             = imiss  !
    integer(i4b)     :: mfmax           = imiss  !
    integer(i4b)     :: mfmin           = imiss  !
@@ -148,7 +152,8 @@ MODULE var_lookup
 ! ***********************************************************************************************************
  type, public  ::  iLook_VarVegData
   integer(i4b)     :: polyid          = imiss       ! veg polygon id
-  integer(i4b)     :: lai             = imiss       ! lai
+  integer(i4b)     :: lai             = imiss       ! lai*10 [m2/m2]
+  integer(i4b)     :: ch              = imiss       ! canopy height [m]
   integer(i4b)     :: vegclass        = imiss       ! veg class
  endtype iLook_VarVegData
 
@@ -211,16 +216,16 @@ MODULE var_lookup
                                                                                  21,22,23,24,25,26,27,28,29,30,&
                                                                                  31,32,33,34,35,36,37,38,39,40,&
                                                                                  41,42,43,44,45,46,47,48,49,50,&
-                                                                                 51,52,53)
+                                                                                 51,52,53,54,55)
  type(iLook_beta),        public,parameter :: ixBeta         = iLook_beta        (1,2,3,4,5,6,7,8,9,10,&
                                                                                  11,12,13,14,15,16,17,18,19,20,&
                                                                                  21,22,23,24,25,26,27,28,29,30,&
                                                                                  31,32,33,34,35,36,37,38,39,40,&
                                                                                  41,42,43,44,45,46,47,48,49,50,&
-                                                                                 51,52,53,54,55)
+                                                                                 51,52,53,54,55,56,57)
  type(iLook_VarMapData),  public,parameter :: ixVarMapData   = iLook_VarMapData  (1,2,3,4)
  type(iLook_VarSoilData), public,parameter :: ixVarSoilData  = iLook_VarSoilData (1,2,3,4,5,6,7)
- type(iLook_VarVegData),  public,parameter :: ixVarVegData   = iLook_VarVegData  (1,2,3)
+ type(iLook_VarVegData),  public,parameter :: ixVarVegData   = iLook_VarVegData  (1,2,3,4)
  type(iLook_VarTopoData), public,parameter :: ixVarTopoData  = iLook_VarTopoData (1,2,3,4)
  type(iLook_VarClimData), public,parameter :: ixVarClimData  = iLook_VarClimData (1,2,3,4,5)
  type(iLook_PrpVeg),      public,parameter :: ixPrpVeg       = iLook_PrpVeg      (1,2,3,4,5,6,7,8,9,10,&
