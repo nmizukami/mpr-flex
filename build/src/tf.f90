@@ -143,6 +143,10 @@ subroutine comp_model_param(parSxySz,          &  ! in/output: soil parameter va
           call rexp( err, message, wp_in=parTemp(ixBeta%wp)%varData, gammaPar=gammaPar, rexp_out=xPar, tfopt=tfid )
         case(ixBeta%lai)
           call lai( err, message, vdata=vdata, gammaPar=gammaPar, lai_out=xPar, tfopt=tfid )
+        case(ixBeta%cht)
+          call cht( err, message, vdata=vdata, gammaPar=gammaPar, cht_out=xPar, tfopt=tfid )
+        case(ixBeta%chb)
+          call chb( err, message, cht_in=parTemp(ixBeta%cht)%varData, gammaPar=gammaPar, chb_out=xPar, tfopt=tfid )
       end select ! end of parameter case
       end associate second
     endif
@@ -214,6 +218,8 @@ subroutine betaDependency( err, message )
       case(ixBeta%zperc);   call zperc   (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%rexp);    call rexp    (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%lai);     call lai     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
+      case(ixBeta%cht);     call cht     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
+      case(ixBeta%chb);     call chb     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%z); allocate(ixDepend(1), stat=err); ixDepend=-999_i4b
       case(ixBeta%h1);allocate(ixDepend(1), stat=err); ixDepend=-999_i4b
       case(ixBeta%h2);allocate(ixDepend(1), stat=err); ixDepend=-999_i4b
@@ -2013,7 +2019,7 @@ subroutine lai( err, message, ixDepend, vdata, gammaPar, lai_out, tfopt )
   integer(i4b),                     intent(out) :: err              ! output:           error id
   character(len=strLen),            intent(out) :: message          ! output:           error message
   integer(i4b),allocatable,optional,intent(out) :: ixDepend(:)      ! output(optional): id of dependent beta parameters
-  real(dp),                optional,intent(out) :: lai_out(:,:)     ! output(optional): saturation matric potential [kPa]
+  real(dp),                optional,intent(out) :: lai_out(:,:)     ! output(optional): monthly LAI [m2/m2]
   ! local
   integer(i4b)                                  :: tftype           ! option for transfer function form used
   integer(i4b),parameter                        :: nDepend=0        ! lai parameter depends on no beta parameters
@@ -2025,7 +2031,7 @@ subroutine lai( err, message, ixDepend, vdata, gammaPar, lai_out, tfopt )
   integer(i4b)                                  :: n2               ! number of 2nd dimension
   real(dp)                                      :: conversion=0.1   ! scaling (data is givin data*10)
 
-  err=1;message="lai/"
+  err=0;message="lai/"
   if ( present(ixDepend) ) then ! setup dependency
     allocate(ixDepend(1),stat=err); if(err/=0)then;message=trim(message)//'error allocating ixDepend';return;endif
     ixDepend=-999_i4b
@@ -2050,6 +2056,117 @@ subroutine lai( err, message, ixDepend, vdata, gammaPar, lai_out, tfopt )
           lai_out = laislope*(lai_max-lai_min)+lai_min
         else where
           lai_out = dmiss
+        end where
+      case default;print*,trim(message)//'OptNotRecognized';stop
+    end select
+    end associate
+  else
+    err=10;message=trim(message)//'WrongOptionalInputs'; return
+  endif
+end subroutine
+
+! *********************************************************************
+! height of canopy top  unit: m
+! *********************************************************************
+subroutine cht( err, message, ixDepend, vdata, gammaPar, cht_out, tfopt )
+  implicit none
+  ! input
+  type(namevar),           optional,intent(in)  :: vdata(:)         ! input(optional):  storage of soil data strucuture
+  real(dp),                optional,intent(in)  :: gammaPar(:)      ! inputoptional):   gamma parameter array
+  integer(i4b),            optional,intent(in)  :: tfopt            ! input(optional):  option for transfer function form
+  ! output
+  integer(i4b),                     intent(out) :: err              ! output:           error id
+  character(len=strLen),            intent(out) :: message          ! output:           error message
+  integer(i4b),allocatable,optional,intent(out) :: ixDepend(:)      ! output(optional): id of dependent beta parameters
+  real(dp),                optional,intent(out) :: cht_out(:,:)     ! output(optional): height of canopy top [m]
+  ! local
+  integer(i4b)                                  :: tftype           ! option for transfer function form used
+  integer(i4b),parameter                        :: nDepend=0        ! lai parameter depends on no beta parameters
+  real(dp),parameter                            :: cht_min=0.05_dp  ! minimum plausible canopy top height [m]
+  real(dp),parameter                            :: cht_max=100.0_dp ! maximum plausible canopy top height [m]
+  real(dp),allocatable                          :: cht_temp(:)
+  real(dp),allocatable                          :: chtslope(:)
+  integer(i4b)                                  :: n1               ! number of 1st dimension
+
+  err=0; message="cht/"
+  if ( present(ixDepend) ) then ! setup dependency
+    allocate(ixDepend(1),stat=err); if(err/=0)then;message=trim(message)//'error allocating ixDepend';return;endif
+    ixDepend=-999_i4b
+  elseif ( present(vdata) .and. present(gammaPar) .and. present(cht_out) )then ! compute parameters with TF
+    tftype=1_i4b
+    if ( present(tfopt) ) tftype=tfopt
+    associate(g1=>gammaPar(ixGamma%cht1gamma1), &
+              ch_in => vdata(ixVarVegData%ch)%dvar1 )
+    n1=size(ch_in,1)
+    allocate(chtslope(n1))
+    allocate(cht_temp(n1))
+    chtslope=0.0_dp
+    cht_temp=0.0_dp
+    select case(tftype)
+      case(1);  !
+        where ( ch_in /= dmiss )
+          cht_temp = g1*ch_in
+          chtslope=(cht_temp-cht_min)/(cht_max-cht_min)
+          where ( chtslope > 1.0_dp) chtslope=1.0_dp
+          where ( chtslope < 0.0_dp) chtslope=0.0_dp
+          cht_out(1,:) = chtslope*(cht_max-cht_min)+cht_min
+        else where
+          cht_out(1,:) = dmiss
+        end where
+      case default;print*,trim(message)//'OptNotRecognized';stop
+    end select
+    end associate
+  else
+    err=10;message=trim(message)//'WrongOptionalInputs'; return
+  endif
+end subroutine
+
+! *********************************************************************
+! height of canopy bottom  unit: m
+! *********************************************************************
+subroutine chb( err, message, ixDepend, cht_in, gammaPar, chb_out, tfopt )
+  implicit none
+  ! input
+  real(dp),                optional,intent(in)  :: cht_in(:,:)      ! input(optional):  canopy top height [m]
+  real(dp),                optional,intent(in)  :: gammaPar(:)      ! inputoptional):   gamma parameter array
+  integer(i4b),            optional,intent(in)  :: tfopt            ! input(optional):  option for transfer function form
+  ! output
+  integer(i4b),                     intent(out) :: err              ! output:           error id
+  character(len=strLen),            intent(out) :: message          ! output:           error message
+  integer(i4b),allocatable,optional,intent(out) :: ixDepend(:)      ! output(optional): id of dependent beta parameters
+  real(dp),                optional,intent(out) :: chb_out(:,:)     ! output(optional): height of canopy top [m]
+  ! local
+  integer(i4b)                                  :: tftype           ! option for transfer function form used
+  integer(i4b),parameter                        :: nDepend=0        ! lai parameter depends on no beta parameters
+  real(dp),parameter                            :: chb_min=0.00_dp  ! minimum plausible canopy bottom height [m]
+  real(dp),parameter                            :: chb_max=5.0_dp   ! maximum plausible canopy bottom height [m]
+  real(dp),allocatable                          :: chb_temp(:)
+  real(dp),allocatable                          :: chbslope(:)
+  integer(i4b)                                  :: n1               ! number of 1st dimension
+
+  err=0; message="chb/"
+  if ( present(ixDepend) ) then ! setup dependency
+    allocate(ixDepend(1),stat=err); if(err/=0)then;message=trim(message)//'error allocating ixDepend';return;endif
+    ixDepend=(/ixBeta%cht/)
+  elseif ( present(cht_in) .and. present(gammaPar) .and. present(chb_out) )then ! compute parameters with TF
+    tftype=1_i4b
+    if ( present(tfopt) ) tftype=tfopt
+    associate(g1=>gammaPar(ixGamma%chb1gamma1))
+    n1=size(cht_in,2)
+    allocate(chbslope(n1))
+    allocate(chb_temp(n1))
+    chbslope=0.0_dp
+    chb_temp=0.0_dp
+    select case(tftype)
+      case(1);
+        where ( cht_in(1,:) /= dmiss )
+          chb_temp = g1*cht_in(1,:)
+          chbslope=(chb_temp-chb_min)/(chb_max-chb_min)
+          where ( chbslope > 1.0_dp) chbslope=1.0_dp
+          where ( chbslope < 0.0_dp) chbslope=0.0_dp
+          chb_out(1,:) = chbslope*(chb_max-chb_min)+chb_min
+        else where
+          chb_out(1,:) = dmiss
         end where
       case default;print*,trim(message)//'OptNotRecognized';stop
     end select
