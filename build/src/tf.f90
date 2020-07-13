@@ -37,35 +37,48 @@ subroutine comp_model_param(parSxySz,          &  ! in/output: soil parameter va
   use get_ixname, only:get_ixBeta
   implicit none
   ! in/out
-  type(namedvar2),      intent(inout) :: parSxySz(:)            ! soil parameter values for ParSxySz(:)%varDat(lyr,poly)
-  type(namedvar2),      intent(inout) :: parVxy(:)              ! veg parameter values for ParVxy(:)%varDat(lyr,poly)
+  type(namevar),        intent(inout) :: parSxySz(:)            ! soil parameter values for ParSxySz(:)%varDat(lyr,poly)
+  type(namevar),        intent(inout) :: parVxy(:)              ! veg parameter values for ParVxy(:)%varDat(lyr,poly)
   ! input
   type(namevar),        intent(in)    :: sdata(:)               ! storage of soil data strucuture
   type(namevar),        intent(in)    :: tdata(:)               ! storage of topo data strucuture
   type(namevar),        intent(in)    :: vdata(:)               ! storage of veg data strucuture
   type(gammaPar_meta),  intent(in)    :: gammaParMasterMeta(:)
-  integer(i4b),         intent(in)    :: nSLyr                  ! number of soil layer
-  integer(i4b),         intent(in)    :: nGpoly                 ! number of soil polygons
+  integer(i4b),         intent(in)    :: nSLyr                ! number of soil layer
+  integer(i4b),         intent(in)    :: nGpoly               ! number of soil polygons
   ! output
-  integer(i4b),         intent(out)   :: err                    ! error code
-  character(len=strLen),intent(out)   :: message                ! error message for current routine
+  integer(i4b),         intent(out)   :: err                  ! error code
+  character(len=strLen),intent(out)   :: message              ! error message for current routine
   ! Local
-  type(namedvar2)                     :: parTemp(nBeta)         ! soil parameter values for ParSxySz(:)%dat(lyr,poly)
-  integer(i4b)                        :: ix                     ! index of gamma parameter
-  integer(i4b)                        :: idBeta                 ! id of beta parameter array
-  integer(i4b)                        :: iParm                  ! Loop index of model parameters (e.g., VIC)
+  type(namevar)                       :: parTemp(nBeta)       ! soil parameter values for ParSxySz(:)%dat(lyr,poly)
+  integer(i4b)                        :: ix                   ! index of gamma parameter
+  integer(i4b)                        :: idxBeta              ! id of beta parameter array
+  integer(i4b)                        :: iParm                ! Loop index of model parameters (e.g., VIC)
+  integer(i4b)                        :: nDims                ! number of dimensions
 
   err=0; message="comp_model_param/"
   first: associate(gammaPar=> gammaParMasterMeta(:)%val)
   do iParm = 1,size(calBetaOrderIdx)
     ix = calBetaOrderIdx(iParm)
     if (ix/=-999) then
-      if (trim(betaMeta(ix)%ptype)=='soil')then
-        allocate(parTemp(ix)%varData(nSLyr,nGpoly) ,stat=err); if(err/=0)then;message=trim(message)//'error allocating parTemp';stop;endif
-      elseif (betaMeta(ix)%ptype=='veg')then
-        allocate(parTemp(ix)%varData(nMonth,nGPoly) ,stat=err); if(err/=0)then;message=trim(message)//'error allocating parTemp';stop;endif
-      endif
-      second: associate (xPar => parTemp(ix)%varData, &
+
+      nDims = size(betaMeta(ix)%parDim)
+
+      if (nDims == 1) then
+        allocate(parTemp(ix)%dvar1(nGpoly),stat=err)
+        if(err/=0)then;message=trim(message)//'error allocating parTemp';stop;endif
+      elseif (nDims== 2) then
+        if (trim(betaMeta(ix)%parType)=='soil')then
+          allocate(parTemp(ix)%dvar2(nSLyr, nGpoly),stat=err)
+          if(err/=0)then;message=trim(message)//'error allocating parTemp';stop;endif
+        elseif (trim(betaMeta(ix)%parType)=='veg')then
+          allocate(parTemp(ix)%dvar2(nMonth, nGpoly),stat=err)
+          if(err/=0)then;message=trim(message)//'error allocating parTemp';stop;endif
+        end if
+      end if
+
+      second: associate (xPar => parTemp(ix)%dvar2, &
+                         xPar1=> parTemp(ix)%dvar1, &
                          tfid => betaMeta(ix)%tftype)
       if (tfid==-999_i4b) tfid=1_i4b
       select case(ix)
@@ -76,90 +89,101 @@ subroutine comp_model_param(parSxySz,          &  ! in/output: soil parameter va
         case(ixBeta%phi)
           call phi( err, message, sdata=sdata, gammaPar=gammaPar, phi_out=xPar, tfopt=tfid )
         case(ixBeta%resid)
-          call resid( err, message, wp_in=parTemp(ixBeta%wp)%varData, gammaPar=gammaPar, resid_out=xPar, tfopt=tfid )
+          call resid( err, message, wp_in=parTemp(ixBeta%wp)%dvar2, gammaPar=gammaPar, resid_out=xPar, tfopt=tfid )
         case(ixBeta%b)
           call retcurve( err, message, sdata=sdata, gammaPar=gammaPar, retcurve_out=xPar, tfopt=tfid )
         case(ixBeta%psis)
           call psis( err, message, sdata=sdata, gammaPar=gammaPar, psis_out=xPar, tfopt=tfid )
         case(ixBeta%fc)
-          call fc( err, message, sdata=sdata, phi_in=parTemp(ixBeta%phi)%varData, psis_in=parTemp(ixBeta%psis)%varData, b_in=parTemp(ixBeta%b)%varData, gammaPar=gammaPar, fc_out=xPar, tfopt=tfid )
+          call fc( err, message, sdata=sdata, phi_in=parTemp(ixBeta%phi)%dvar2, psis_in=parTemp(ixBeta%psis)%dvar2, b_in=parTemp(ixBeta%b)%dvar2, gammaPar=gammaPar, fc_out=xPar, tfopt=tfid )
         case(ixBeta%wp)
-          call wp( err, message, phi_in=parTemp(ixBeta%phi)%varData, psis_in=parTemp(ixBeta%psis)%varData, b_in=parTemp(ixBeta%b)%varData, gammaPar=gammaPar, wp_out=xPar, tfopt=tfid )
+          call wp( err, message, phi_in=parTemp(ixBeta%phi)%dvar2, psis_in=parTemp(ixBeta%psis)%dvar2, b_in=parTemp(ixBeta%b)%dvar2, gammaPar=gammaPar, wp_out=xPar, tfopt=tfid )
         case(ixBeta%myu)
-          call myu( err, message, phi_in=parTemp(ixBeta%phi)%varData, fc_in=parTemp(ixBeta%fc)%varData, gammaPar=gammaPar, myu_out=xPar, tfopt=tfid )
+          call myu( err, message, phi_in=parTemp(ixBeta%phi)%dvar2, fc_in=parTemp(ixBeta%fc)%dvar2, gammaPar=gammaPar, myu_out=xPar, tfopt=tfid )
         case(ixBeta%sof)
           call sof( err, message, sdata=sdata, gammaPar=gammaPar, sof_out=xPar, tfopt=tfid )
         case(ixBeta%binfilt)
           call binfilt(err, message, sdata=sdata, tdata=tdata, gammaPar=gammaPar, binfilt_out=xPar, tfopt=tfid )
         case(ixBeta%D1)
-          call D1( err, message, sdata=sdata, tdata=tdata, ks_in=parTemp(ixBeta%ks)%varData, phi_in=parTemp(ixBeta%phi)%varData, gammaPar=gammaPar, D1_out=xPar, tfopt=tfid )
+          call D1( err, message, sdata=sdata, tdata=tdata, ks_in=parTemp(ixBeta%ks)%dvar2, phi_in=parTemp(ixBeta%phi)%dvar2, gammaPar=gammaPar, D1_out=xPar, tfopt=tfid )
         case(ixBeta%D2)
-          call D2( err, message, sdata=sdata, tdata=tdata, ks_in=parTemp(ixBeta%ks)%varData, D4_in=parTemp(ixBeta%D4)%varData, gammaPar=gammaPar, D2_out=xPar, tfopt=tfid )
+          call D2( err, message, sdata=sdata, tdata=tdata, ks_in=parTemp(ixBeta%ks)%dvar2, D4_in=parTemp(ixBeta%D4)%dvar2, gammaPar=gammaPar, D2_out=xPar, tfopt=tfid )
         case(ixBeta%D3)
-          call D3( err, message, sdata=sdata, fc_in=parTemp(ixBeta%fc)%varData, gammaPar=gammaPar, D3_out=xPar, tfopt=tfid )
+          call D3( err, message, sdata=sdata, fc_in=parTemp(ixBeta%fc)%dvar2, gammaPar=gammaPar, D3_out=xPar, tfopt=tfid )
         case(ixBeta%D4)
           call D4( err, message, gammaPar=gammaPar, D4_out=xPar, tfopt=tfid )
         case(ixBeta%Ds)
-          call Ds( err, message, D1_in=parTemp(ixBeta%D1)%varData, D3_in=parTemp(ixBeta%D3)%varData, Dsmax_in=parTemp(ixBeta%Dsmax)%varData, gammaPar=gammaPar, Ds_out=xPar, tfopt=tfid )
+          call Ds( err, message, D1_in=parTemp(ixBeta%D1)%dvar2, D3_in=parTemp(ixBeta%D3)%dvar2, Dsmax_in=parTemp(ixBeta%Dsmax)%dvar2, gammaPar=gammaPar, Ds_out=xPar, tfopt=tfid )
         case(ixBeta%c)
-          call cexpt( err, message, D4_in=parTemp(ixBeta%D4)%varData, gammaPar=gammaPar, cexpt_out=xPar, tfopt=tfid )
+          call cexpt( err, message, D4_in=parTemp(ixBeta%D4)%dvar2, gammaPar=gammaPar, cexpt_out=xPar, tfopt=tfid )
         case(ixBeta%sd)
           call sd( err, message, gammaPar=gammaPar, sd_out=xPar, tfopt=tfid )
         case(ixBeta%expt)
-          call expt( err, message, b_in=parTemp(ixBeta%b)%varData, gammaPar=gammaPar, expt_out=xPar, tfopt=tfid )
+          call expt( err, message, b_in=parTemp(ixBeta%b)%dvar2, gammaPar=gammaPar, expt_out=xPar, tfopt=tfid )
         case(ixBeta%Dsmax)
           call Dsmax( err, message, &
-                      sdata=sdata, D1_in=parTemp(ixBeta%D1)%varData, D2_in=parTemp(ixBeta%D2)%varData, D3_in=parTemp(ixBeta%D3)%varData, c_in=parTemp(ixBeta%c)%varData, phi_in=parTemp(ixBeta%phi)%varData, &
+                      sdata=sdata, D1_in=parTemp(ixBeta%D1)%dvar2, D2_in=parTemp(ixBeta%D2)%dvar2, D3_in=parTemp(ixBeta%D3)%dvar2, c_in=parTemp(ixBeta%c)%dvar2, phi_in=parTemp(ixBeta%phi)%dvar2, &
                       gammaPar=gammaPar, Dsmax_out=xPar ,tfopt=tfid )
         case(ixBeta%bbl)
-          call bubble( err, message, expt_in=parTemp(ixBeta%expt)%varData, gammaPar=gammaPar, bubble_out=xPar, tfopt=tfid )
+          call bubble( err, message, expt_in=parTemp(ixBeta%expt)%dvar2, gammaPar=gammaPar, bubble_out=xPar, tfopt=tfid )
         case(ixBeta%WcrFrac)
-          call WcrFrac( err, message, fc_in=parTemp(ixBeta%fc)%varData, phi_in=parTemp(ixBeta%phi)%varData, gammaPar=gammaPar, WcrFrac_out=xPar, tfopt=tfid )
+          call WcrFrac( err, message, fc_in=parTemp(ixBeta%fc)%dvar2, phi_in=parTemp(ixBeta%phi)%dvar2, gammaPar=gammaPar, WcrFrac_out=xPar, tfopt=tfid )
         case(ixBeta%WpwpFrac)
-          call WpwpFrac( err, message, wp_in=parTemp(ixBeta%wp)%varData, phi_in=parTemp(ixBeta%phi)%varData, gammaPar=gammaPar, WpwpFrac_out=xPar, tfopt=tfid )
+          call WpwpFrac( err, message, wp_in=parTemp(ixBeta%wp)%dvar2, phi_in=parTemp(ixBeta%phi)%dvar2, gammaPar=gammaPar, WpwpFrac_out=xPar, tfopt=tfid )
         case(ixBeta%transp)
-          call transp( err, message, wp_in=parTemp(ixBeta%wp)%varData, phi_in=parTemp(ixBeta%phi)%varData, gammaPar=gammaPar, transp_out=xPar, tfopt=tfid )
+          call transp( err, message, wp_in=parTemp(ixBeta%wp)%dvar2, phi_in=parTemp(ixBeta%phi)%dvar2, gammaPar=gammaPar, transp_out=xPar, tfopt=tfid )
         case(ixBeta%Ws)
-          call Ws( err, message, sdata=sdata, D3_in=parTemp(ixBeta%D3)%varData, phi_in=parTemp(ixBeta%phi)%varData, gammaPar=gammaPar, Ws_out=xPar, tfopt=tfid)
+          call Ws( err, message, sdata=sdata, D3_in=parTemp(ixBeta%D3)%dvar2, phi_in=parTemp(ixBeta%phi)%dvar2, gammaPar=gammaPar, Ws_out=xPar, tfopt=tfid)
         case(ixBeta%twm)
-          call twm( err, message, sdata=sdata, fc_in=parTemp(ixBeta%fc)%varData, wp_in=parTemp(ixBeta%wp)%varData, gammaPar=gammaPar, twm_out=xPar, tfopt=tfid )
+          call twm( err, message, sdata=sdata, fc_in=parTemp(ixBeta%fc)%dvar2, wp_in=parTemp(ixBeta%wp)%dvar2, gammaPar=gammaPar, twm_out=xPar, tfopt=tfid )
         case(ixBeta%fwm)
-          call fwm( err, message, sdata=sdata, phi_in=parTemp(ixBeta%phi)%varData, fc_in=parTemp(ixBeta%fc)%varData, gammaPar=gammaPar, fwm_out=xPar, tfopt=tfid )
+          call fwm( err, message, sdata=sdata, phi_in=parTemp(ixBeta%phi)%dvar2, fc_in=parTemp(ixBeta%fc)%dvar2, gammaPar=gammaPar, fwm_out=xPar, tfopt=tfid )
         case(ixBeta%fsm)
-          call fsm( err, message, fwm_in=parTemp(ixBeta%fwm)%varData, phi_in=parTemp(ixBeta%phi)%varData, wp_in=parTemp(ixBeta%wp)%varData, gammaPar=gammaPar, fsm_out=xPar, tfopt=tfid )
+          call fsm( err, message, fwm_in=parTemp(ixBeta%fwm)%dvar2, phi_in=parTemp(ixBeta%phi)%dvar2, wp_in=parTemp(ixBeta%wp)%dvar2, gammaPar=gammaPar, fsm_out=xPar, tfopt=tfid )
         case(ixBeta%fpm)
-          call fpm( err, message, fwm_in=parTemp(ixBeta%fwm)%varData, fsm_in=parTemp(ixBeta%fsm)%varData, gammaPar=gammaPar, fpm_out=xPar, tfopt=tfid )
+          call fpm( err, message, fwm_in=parTemp(ixBeta%fwm)%dvar2, fsm_in=parTemp(ixBeta%fsm)%dvar2, gammaPar=gammaPar, fpm_out=xPar, tfopt=tfid )
         case(ixBeta%zk)
-          call zk( err, message, phi_in=parTemp(ixBeta%phi)%varData, fc_in=parTemp(ixBeta%fc)%varData, gammaPar=gammaPar, zk_out=xPar, tfopt=tfid )
+          call zk( err, message, phi_in=parTemp(ixBeta%phi)%dvar2, fc_in=parTemp(ixBeta%fc)%dvar2, gammaPar=gammaPar, zk_out=xPar, tfopt=tfid )
         case(ixBeta%zsk)
-          call zsk( err, message, phi_in=parTemp(ixBeta%phi)%varData, fc_in=parTemp(ixBeta%fc)%varData, wp_in=parTemp(ixBeta%wp)%varData, gammaPar=gammaPar, zsk_out=xPar, tfopt=tfid )
+          call zsk( err, message, phi_in=parTemp(ixBeta%phi)%dvar2, fc_in=parTemp(ixBeta%fc)%dvar2, wp_in=parTemp(ixBeta%wp)%dvar2, gammaPar=gammaPar, zsk_out=xPar, tfopt=tfid )
         case(ixBeta%zpk)
-          call zpk( err, message, sdata=sdata, ks_in=parTemp(ixBeta%ks)%varData, myu_in=parTemp(ixBeta%myu)%varData, gammaPar=gammaPar, zpk_out=xPar, tfopt=tfid )
+          call zpk( err, message, sdata=sdata, ks_in=parTemp(ixBeta%ks)%dvar2, myu_in=parTemp(ixBeta%myu)%dvar2, gammaPar=gammaPar, zpk_out=xPar, tfopt=tfid )
         case(ixBeta%pfree)
-          call pfree( err, message, phi_in=parTemp(ixBeta%phi)%varData, wp_in=parTemp(ixBeta%wp)%varData, gammaPar=gammaPar, pfree_out=xPar, tfopt=tfid )
+          call pfree( err, message, phi_in=parTemp(ixBeta%phi)%dvar2, wp_in=parTemp(ixBeta%wp)%dvar2, gammaPar=gammaPar, pfree_out=xPar, tfopt=tfid )
         case(ixBeta%zperc)
-          call zperc( err, message, twm_in=parTemp(ixBeta%twm)%varData, fsm_in=parTemp(ixBeta%fsm)%varData, zsk_in=parTemp(ixBeta%zsk)%varData, fpm_in=parTemp(ixBeta%fpm)%varData, zpk_in=parTemp(ixBeta%zsk)%varData, gammaPar=gammaPar, zperc_out=xPar, tfopt=tfid )
+          call zperc( err, message, twm_in=parTemp(ixBeta%twm)%dvar2, fsm_in=parTemp(ixBeta%fsm)%dvar2, zsk_in=parTemp(ixBeta%zsk)%dvar2, fpm_in=parTemp(ixBeta%fpm)%dvar2, zpk_in=parTemp(ixBeta%zsk)%dvar2, gammaPar=gammaPar, zperc_out=xPar, tfopt=tfid )
         case(ixBeta%rexp)
-          call rexp( err, message, wp_in=parTemp(ixBeta%wp)%varData, gammaPar=gammaPar, rexp_out=xPar, tfopt=tfid )
+          call rexp( err, message, wp_in=parTemp(ixBeta%wp)%dvar2, gammaPar=gammaPar, rexp_out=xPar, tfopt=tfid )
         case(ixBeta%lai)
           call lai( err, message, vdata=vdata, gammaPar=gammaPar, lai_out=xPar, tfopt=tfid )
         case(ixBeta%cht)
-          call cht( err, message, vdata=vdata, gammaPar=gammaPar, cht_out=xPar, tfopt=tfid )
+          call cht( err, message, vdata=vdata, gammaPar=gammaPar, cht_out=xPar1, tfopt=tfid )
         case(ixBeta%chb)
-          call chb( err, message, cht_in=parTemp(ixBeta%cht)%varData, gammaPar=gammaPar, chb_out=xPar, tfopt=tfid )
+          call chb( err, message, cht_in=parTemp(ixBeta%cht)%dvar1, gammaPar=gammaPar, chb_out=xPar1, tfopt=tfid )
       end select ! end of parameter case
       end associate second
     endif
   end do ! end of parameter loop
   end associate first
+
   ! extract beta parameters in 'inParList' list
   do iParm=1,size(soilBetaCalName)
-    idBeta=get_ixBeta(trim(soilBetaCalName(iParm)))
-    parSxySz(iParm)%varData=parTemp(idBeta)%varData
+    idxBeta=get_ixBeta(trim(soilBetaCalName(iParm)))
+    nDims = size(betaMeta(idxBeta)%parDim)
+    if (nDims==1) then
+      parSxySz(iParm)%dvar1=parTemp(idxBeta)%dvar1
+    else if (nDims==2) then
+      parSxySz(iParm)%dvar2=parTemp(idxBeta)%dvar2
+    end if
   enddo
   do iParm=1,size(vegBetaCalName)
-    idBeta=get_ixBeta(trim(vegBetaCalName(iParm)))
-    parVxy(iParm)%varData=parTemp(idBeta)%varData
+    idxBeta=get_ixBeta(trim(vegBetaCalName(iParm)))
+    nDims = size(betaMeta(idxBeta)%parDim)
+    if (nDims==1) then
+      parVxy(iParm)%dvar1=parTemp(idxBeta)%dvar1
+    else if (nDims==2) then
+      parVxy(iParm)%dvar2=parTemp(idxBeta)%dvar2
+    end if
   enddo
 
 end subroutine
@@ -229,7 +253,7 @@ subroutine betaDependency( err, message )
     end select
     if ( allocated(ixDepend) )then
       allocate(betaAncilMeta(iParm)%depend(size(ixDepend)),stat=err)
-      if(err/=0)then;message=trim(message)//'error allocating betaAncilMeta%ixDepend for '//trim(betaMeta(iParm)%pname);return;endif
+      if(err/=0)then;message=trim(message)//'error allocating betaAncilMeta%ixDepend for '//trim(betaMeta(iParm)%parName);return;endif
       betaAncilMeta(iParm)%depend = ixDepend
       deallocate(ixDepend)
     endif
@@ -849,47 +873,6 @@ subroutine expt( err, message, ixDepend, b_in, gammaPar, expt_out, tfopt )
   endif
 end subroutine
 
-! ************
-! computing init_moist parameter
-! *********************************************************************
-subroutine initMoist( err, message, ixDepend, sdata, phi_in, gammaPar, initMoist_out, tfopt )
-  implicit none
-  ! input
-  type(namevar),           optional,intent(in)  :: sdata(:)           ! input(optional): storage of soil data strucuture
-  real(dp),                optional,intent(in)  :: phi_in(:,:)        ! input: porosity [fraction]
-  real(dp),                optional,intent(in)  :: gammaPar(:)        ! input(optional:  gamma parameter array
-  integer(i4b),            optional,intent(in)  :: tfopt              ! input(optional): id for transfer function form
-  ! output
-  integer(i4b),                     intent(out) :: err                ! output: error id
-  character(len=strLen),            intent(out) :: message            ! output: error message
-  integer(i4b),allocatable,optional,intent(out) :: ixDepend(:)        ! output(optional): id of dependent beta parameters
-  real(dp),                optional,intent(out) :: initMoist_out(:,:)
-  ! local
-  integer(i4b)                                  :: tftype             ! option for transfer function form used
-  integer(i4b),parameter                        :: nDepend=1          ! initMoist parameter depends on 1 beta parameters (phi)
-
-  err=0;message="initMoist/"
-  if ( present(ixDepend) ) then ! setup dependency
-    allocate(ixDepend(nDepend),stat=err); if(err/=0)then;message=trim(message)//'error allocating ixDepend';return;endif
-    ixDepend=(/ixBeta%phi/)
-  elseif ( present(sdata) .and. present(phi_in) .and. present(gammaPar) .and. present(initMoist_out) )then ! compute parameters with TF
-    tftype=1_i4b
-    if (present(tfopt)) tftype=tfopt
-    associate(h_in => sdata(ixVarSoilData%hslyrs)%dvar2)
-    select case(tftype)
-      case(1);
-        where ( phi_in /= dmiss )
-          initMoist_out = phi_in*(h_in*1000.0_dp)
-        else where
-          initMoist_out = dmiss
-        end where
-      case default; print*,trim(message)//'OptNotRecognized'; stop
-    end select
-    end associate
-  else
-    err=10;message=trim(message)//'WrongOptionalInputs'; return
-  endif
-end subroutine
 
 ! ***********
 ! bubble parameter
@@ -2078,7 +2061,7 @@ subroutine cht( err, message, ixDepend, vdata, gammaPar, cht_out, tfopt )
   integer(i4b),                     intent(out) :: err              ! output:           error id
   character(len=strLen),            intent(out) :: message          ! output:           error message
   integer(i4b),allocatable,optional,intent(out) :: ixDepend(:)      ! output(optional): id of dependent beta parameters
-  real(dp),                optional,intent(out) :: cht_out(:,:)     ! output(optional): height of canopy top [m]
+  real(dp),                optional,intent(out) :: cht_out(:)       ! output(optional): height of canopy top [m]
   ! local
   integer(i4b)                                  :: tftype           ! option for transfer function form used
   integer(i4b),parameter                        :: nDepend=0        ! lai parameter depends on no beta parameters
@@ -2109,9 +2092,9 @@ subroutine cht( err, message, ixDepend, vdata, gammaPar, cht_out, tfopt )
           chtslope=(cht_temp-cht_min)/(cht_max-cht_min)
           where ( chtslope > 1.0_dp) chtslope=1.0_dp
           where ( chtslope < 0.0_dp) chtslope=0.0_dp
-          cht_out(1,:) = chtslope*(cht_max-cht_min)+cht_min
+          cht_out = chtslope*(cht_max-cht_min)+cht_min
         else where
-          cht_out(1,:) = dmiss
+          cht_out = dmiss
         end where
       case default;print*,trim(message)//'OptNotRecognized';stop
     end select
@@ -2127,14 +2110,14 @@ end subroutine
 subroutine chb( err, message, ixDepend, cht_in, gammaPar, chb_out, tfopt )
   implicit none
   ! input
-  real(dp),                optional,intent(in)  :: cht_in(:,:)      ! input(optional):  canopy top height [m]
+  real(dp),                optional,intent(in)  :: cht_in(:)        ! input(optional):  canopy top height [m]
   real(dp),                optional,intent(in)  :: gammaPar(:)      ! inputoptional):   gamma parameter array
   integer(i4b),            optional,intent(in)  :: tfopt            ! input(optional):  option for transfer function form
   ! output
   integer(i4b),                     intent(out) :: err              ! output:           error id
   character(len=strLen),            intent(out) :: message          ! output:           error message
   integer(i4b),allocatable,optional,intent(out) :: ixDepend(:)      ! output(optional): id of dependent beta parameters
-  real(dp),                optional,intent(out) :: chb_out(:,:)     ! output(optional): height of canopy top [m]
+  real(dp),                optional,intent(out) :: chb_out(:)       ! output(optional): height of canopy top [m]
   ! local
   integer(i4b)                                  :: tftype           ! option for transfer function form used
   integer(i4b),parameter                        :: nDepend=0        ! lai parameter depends on no beta parameters
@@ -2152,22 +2135,24 @@ subroutine chb( err, message, ixDepend, cht_in, gammaPar, chb_out, tfopt )
     tftype=1_i4b
     if ( present(tfopt) ) tftype=tfopt
     associate(g1=>gammaPar(ixGamma%chb1gamma1))
-    n1=size(cht_in,2)
+    n1=size(cht_in)
     allocate(chbslope(n1))
     allocate(chb_temp(n1))
     chbslope=0.0_dp
     chb_temp=0.0_dp
     select case(tftype)
       case(1);
-        where ( cht_in(1,:) /= dmiss )
-          chb_temp = g1*cht_in(1,:)
+        where ( cht_in /= dmiss )
+          chb_temp = g1*cht_in
           chbslope=(chb_temp-chb_min)/(chb_max-chb_min)
           where ( chbslope > 1.0_dp) chbslope=1.0_dp
           where ( chbslope < 0.0_dp) chbslope=0.0_dp
-          chb_out(1,:) = chbslope*(chb_max-chb_min)+chb_min
+          chb_out = chbslope*(chb_max-chb_min)+chb_min
         else where
-          chb_out(1,:) = dmiss
+          chb_out = dmiss
         end where
+print*, g1
+print*, chb_temp
       case default;print*,trim(message)//'OptNotRecognized';stop
     end select
     end associate

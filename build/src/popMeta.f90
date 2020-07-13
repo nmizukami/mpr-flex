@@ -1,4 +1,7 @@
-module popMeta
+MODULE popMeta
+
+use nrtype
+use public_var, only:dmiss, imiss
 
 implicit none
 
@@ -7,14 +10,16 @@ private
 public::paramMaster
 public::popMprMeta
 
-contains
+CONTAINS
 
-subroutine paramMaster(err,message)
-  use nrtype
-  use data_type,  only:gammaPar_meta
-  use data_type,  only:betaPar_meta
-  use var_lookup, only:ixGamma,ixBeta
-  use globalData, only:gammaMeta,betaMeta
+SUBROUTINE paramMaster(err,message)
+
+  use public_var, only:nHru, nLyr
+  use data_type,  only:gammaPar_meta, defDim
+  use obj_type,   only:betaPar_meta
+  use var_lookup, only:ixGamma,ixBeta,ixDim
+  use globalData, only:gammaMeta,betaMeta, dimMeta
+
   implicit none
   !output variable
   integer(i4b),intent(out)      :: err     ! error code
@@ -22,6 +27,11 @@ subroutine paramMaster(err,message)
 
   ! initialize error control
   err=0; message='popMeta/'
+
+  ! structure index             name   desc,          unit, dimension id,   dimension length
+  dimMeta (ixDim%hru ) = defDim('hru', 'model HRU',   '-',  imiss,          nHru)  ! hru vector
+  dimMeta (ixDim%lyr ) = defDim('lyr', 'model layer', '-',  imiss,          nLyr)  ! layer vector
+  dimMeta (ixDim%mon ) = defDim('mon', 'month',       '-',  imiss,          12)     !
 
   ! -----
   !  Public subroutine: Master list of gamma parameters
@@ -64,7 +74,7 @@ subroutine paramMaster(err,message)
   gammaMeta(ixGamma%myu1gamma1)      = gammaPar_meta('myu1gamma1'     ,     3.5_dp ,'-' ,"myu"      ,     1, "soil", .False.)
   gammaMeta(ixGamma%myu1gamma2)      = gammaPar_meta('myu1gamma2'     ,    1.66_dp ,'-' ,"myu"      ,     1, "soil", .False.)
   ! organic soil franction transfer function
-  gammaMeta(ixGamma%sof1gamma1)      = gammaPar_meta('sof1gamma1'     ,     1.72_dp ,'-' ,"sof"      ,     1, "soil", .False.)
+  gammaMeta(ixGamma%sof1gamma1)      = gammaPar_meta('sof1gamma1'     ,     1.72_dp ,'-' ,"sof"     ,     1, "soil", .False.)
   ! total depth multiplier
   gammaMeta(ixGamma%z1gamma1)        = gammaPar_meta('z1gamma1'       ,     1.0_dp ,'-' ,"z"        ,     1, "soil", .False.)
   ! transfer function
@@ -89,73 +99,74 @@ subroutine paramMaster(err,message)
   gammaMeta(ixGamma%zpk1gamma1)      = gammaPar_meta('zpk1gamma1',          1.0_dp ,'-' ,"zpk"      ,     1, "soil", .False.)
   gammaMeta(ixGamma%pfree1gamma1)    = gammaPar_meta('pfree1gamma1',        1.6_dp ,'-' ,"pfree"    ,     1, "soil", .False.)
   gammaMeta(ixGamma%rexp1gamma1)     = gammaPar_meta('rexp1gamma1',        0.03_dp ,'-' ,"rexp"     ,     1, "soil", .False.)
+  ! vegetation transfer function
   gammaMeta(ixGamma%lai1gamma1)      = gammaPar_meta('lai1gamma1',          1.0_dp ,'-' ,"lai"      ,     1,  "veg", .False.)
   gammaMeta(ixGamma%cht1gamma1)      = gammaPar_meta('cht1gamma1',          1.0_dp ,'-' ,"cht"      ,     1,  "veg", .False.)
   gammaMeta(ixGamma%chb1gamma1)      = gammaPar_meta('chb1gamma1',         0.75_dp ,'-' ,"chb"      ,     1,  "veg", .False.)
   ! -----
   !  Master list of beta parameters
   ! -----------------------
-  !                                                name        ,  desc                                                            , units   ,   type   , tftype,  h-scale ,   p-norm ,  v scale ,  p-norm  , perLyr
-  betaMeta(ixBeta%uhshape)         = betaPar_meta('uhshape'    , 'shape parameter in Gamma distribution used for overland routing', '-'     ,   "route", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%uhscale)         = betaPar_meta('uhscale'    , 'scale parameter in Gamma distribution used for overland routing', 's'     ,   "route", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%ks)              = betaPar_meta('ks'         , 'saturated hydraulic conductivity'                               , 'm/s'   ,    "soil", -999,   "pnorm",   -1.0_dp,   "pnorm",   -1.0_dp, .True.)
-  betaMeta(ixBeta%bd)              = betaPar_meta('bd'         , 'bulk density'                                                   , ' '     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%sd)              = betaPar_meta('sd'         , 'soil mineral density'                                           , ' '     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%psis)            = betaPar_meta('psis'       , 'saturation matric potential'                                    , 'kPa'   ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%b)               = betaPar_meta('b'          , 'slope of retention curve in log space'                          , '-'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%phi)             = betaPar_meta('phi'        , 'porosity'                                                       , '-'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%fc)              = betaPar_meta('fc'         , 'field capacity'                                                 , '-'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%wp)              = betaPar_meta('wp'         , 'wilting point'                                                  , '-'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%resid)           = betaPar_meta('resid'      , 'volumetric residual water content'                              , '-'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%transp)          = betaPar_meta('transp'     , 'critical vol. liq. water content at limited transpiration'      , '-'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%myu)             = betaPar_meta('myu'        , 'specific yield'                                                 , '-'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%sof)             = betaPar_meta('sof'        , 'soil organic fraction '                                         , 'g/g'   ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%binfilt)         = betaPar_meta('binfilt'    , 'Variable infiltration curve parameter'                          , '-'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .False.)
-  betaMeta(ixBeta%D1)              = betaPar_meta('D1'         , 'linear reservoir coefficient in Nijssen baseflow eq.'           , '1/s'   ,    "soil", -999,   "pnorm",   -1.0_dp,   "pnorm",   -1.0_dp, .False.)
-  betaMeta(ixBeta%D2)              = betaPar_meta('D2'         , 'non-linear reservoir coefficient in Nijssen baseflow eq.'       , 'wired' ,    "soil", -999,   "pnorm",   -1.0_dp,   "pnorm",   -1.0_dp, .False.)
-  betaMeta(ixBeta%D3)              = betaPar_meta('D3'         , 'soil moisture level where nonliear reservoir effect begins'     , 'm'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .False.)
-  betaMeta(ixBeta%D4)              = betaPar_meta('D4'         , 'Exponent in nonliear part of Nijssen baseflow eq.'              , '-'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .False.)
-  betaMeta(ixBeta%c)               = betaPar_meta('c'          , 'Exponent used in baseflow curve'                                , '-'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .False.)
-  betaMeta(ixBeta%Dsmax)           = betaPar_meta('Dsmax'      , 'Maximum velocity of baseflow'                                   , 'm/s'   ,    "soil", -999,   "pnorm",   -1.0_dp,   "pnorm",   -1.0_dp, .False.)
-  betaMeta(ixBeta%Ds)              = betaPar_meta('Ds'         , 'Fraction of Dsmax where non-linear baseflow begins'             , '-'     ,    "soil", -999,   "pnorm",   -1.0_dp,   "pnorm",   -1.0_dp, .False.)
-  betaMeta(ixBeta%Ws)              = betaPar_meta('Ws'         , 'Fraction of max. soil storage where non-linear baseflow occurs' , '-'     ,    "soil", -999,   "pnorm",   -1.0_dp,   "pnorm",   -1.0_dp, .False.)
-  betaMeta(ixBeta%expt)            = betaPar_meta('expt'       , 'exponent in Campbell eqn for hydraulic conductivity'            , '-'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%bbl)             = betaPar_meta('bbl'        , 'bubbling pressure'                                              , 'm'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%z)               = betaPar_meta('z'          , 'total soil depth'                                               , 'm'     ,    "soil", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%WcrFrac)         = betaPar_meta('WcrFrac'    , 'Fractional soil moisture content at the critical point'         , '-'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%WpwpFrac)        = betaPar_meta('WpwpFrac'   , 'Fractional soil moisture content at the wilting point'          , '-'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%twm)             = betaPar_meta('twm'        , 'tension water maximum storage'                                  , 'mm'    ,    "soil", -999,   "pnorm",    1.0_dp,   "asum",  -999.0_dp, .True.)
-  betaMeta(ixBeta%fwm)             = betaPar_meta('fwm'        , 'free water maximum storage'                                     , 'mm'    ,    "soil", -999,   "pnorm",    1.0_dp,   "asum",  -999.0_dp, .True.)
-  betaMeta(ixBeta%fsm)             = betaPar_meta('fsm'        , 'free water supplementary maximum storage'                       , 'mm'    ,    "soil", -999,   "pnorm",    1.0_dp,   "asum",  -999.0_dp, .True.)
-  betaMeta(ixBeta%fpm)             = betaPar_meta('fpm'        , 'free water primary maximum storage'                             , 'mm'    ,    "soil", -999,   "pnorm",    1.0_dp,   "asum",  -999.0_dp, .True.)
-  betaMeta(ixBeta%zk)              = betaPar_meta('zk'         , 'free water flow rate'                                           , '1/d'   ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%zsk)             = betaPar_meta('zsk'        , 'supplementary flow rate'                                        , '1/d'   ,    "soil", -999,   "pnorm",   -1.0_dp,   "pnorm",   -1.0_dp, .True.)
-  betaMeta(ixBeta%zpk)             = betaPar_meta('zpk'        , 'primary flow rate'                                              , '1/d'   ,    "soil", -999,   "pnorm",   -1.0_dp,   "pnorm",   -1.0_dp, .True.)
-  betaMeta(ixBeta%pfree)           = betaPar_meta('pfree'      , 'percolation going to lower free water storage'                  , '-'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%zperc)           = betaPar_meta('zperc'      , 'maximum percolation rate'                                       , '1/d'   ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%rexp)            = betaPar_meta('rexp'       , 'percolation equation exponent'                                  , '-'     ,    "soil", -999,   "pnorm",    1.0_dp,   "pnorm",    1.0_dp, .True.)
-  betaMeta(ixBeta%rmin)            = betaPar_meta('rmin'       , 'Minimum stomatal resistance'                                    , 's/m'   ,     "veg", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%lai)             = betaPar_meta('lai'        , 'monthly LAI'                                                    , 'm2/m2' ,     "veg", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%cht)             = betaPar_meta('cht'        , 'Height of canopy top'                                           , 'm'     ,     "veg", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%chb)             = betaPar_meta('chb'        , 'Height of canopy bottom'                                        , 'm'     ,     "veg", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%scf)             = betaPar_meta('scf'        , 'frozen precipitation multiplier'                                , '-'     ,    "snow", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%mfmax)           = betaPar_meta('mfmax'      , 'max. melt factor during season'                                 , 'mm/C/d',    "snow", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%mfmin)           = betaPar_meta('mfmin'      , 'min. melt factor during season'                                 , 'mm/C/d',    "snow", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%uadj)            = betaPar_meta('uadj'       , 'mean wind function during rain-on-snow'                         , 'mm/mb ',    "snow", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%si)              = betaPar_meta('si'         , 'water equivalent above which 100% cover always exists'          , 'mm'    ,    "snow", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%pxtemp)          = betaPar_meta('pxtemp'     , 'snow-rain transition temperature'                               , 'K'     ,    "snow", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%nmf)             = betaPar_meta('nmf'        , 'maximum negetive melt factor'                                   , 'mm/C/d',    "snow", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%tipm)            = betaPar_meta('tipm'       , 'Antecedent snow temperature index parameter'                    , '-'     ,    "snow", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%plwhc)           = betaPar_meta('plwhc'      , 'Percent of liquid water capacity'                               , '-'     ,    "snow", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
-  betaMeta(ixBeta%daygm)           = betaPar_meta('daygm'      , 'Daily melt at snow‐soil interface'                              , 'mm/d'  ,    "snow", -999,   "pnorm",    1.0_dp,      "na", -999.0_dp, .False.)
+  !                                   name         ,  desc                                                            , units   , type   , tftype, scaling          ,       scaleParam, dimension
+  call betaMeta(ixBeta%uhshape) %init('uhshape'    , 'shape parameter in Gamma distribution used for overland routing', '-'     , "route", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%uhscale) %init('uhscale'    , 'scale parameter in Gamma distribution used for overland routing', 's'     , "route", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%ks)      %init('ks'         , 'saturated hydraulic conductivity'                               , 'm/s'   ,  "soil", -999,   ["pnorm", "pnorm"], [-1.0_dp,-1.0_dp], [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%bd)      %init('bd'         , 'bulk density'                                                   , ' '     ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%sd)      %init('sd'         , 'soil mineral density'                                           , ' '     ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%psis)    %init('psis'       , 'saturation matric potential'                                    , 'kPa'   ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%b)       %init('b'          , 'slope of retention curve in log space'                          , '-'     ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%phi)     %init('phi'        , 'porosity'                                                       , '-'     ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%fc)      %init('fc'         , 'field capacity'                                                 , '-'     ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%wp)      %init('wp'         , 'wilting point'                                                  , '-'     ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%resid)   %init('resid'      , 'volumetric residual water content'                              , '-'     ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%transp)  %init('transp'     , 'critical vol. liq. water content at limited transpiration'      , '-'     ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%myu)     %init('myu'        , 'specific yield'                                                 , '-'     ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%sof)     %init('sof'        , 'soil organic fraction '                                         , 'g/g'   ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%binfilt) %init('binfilt'    , 'Variable infiltration curve parameter'                          , '-'     ,  "soil", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%D1)      %init('D1'         , 'linear reservoir coefficient in Nijssen baseflow eq.'           , '1/s'   ,  "soil", -999,   ["pnorm"],          [-1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%D2)      %init('D2'         , 'non-linear reservoir coefficient in Nijssen baseflow eq.'       , 'wired' ,  "soil", -999,   ["pnorm"],          [-1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%D3)      %init('D3'         , 'soil moisture level where nonliear reservoir effect begins'     , 'm'     ,  "soil", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%D4)      %init('D4'         , 'Exponent in nonliear part of Nijssen baseflow eq.'              , '-'     ,  "soil", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%c)       %init('c'          , 'Exponent used in baseflow curve'                                , '-'     ,  "soil", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%Dsmax)   %init('Dsmax'      , 'Maximum velocity of baseflow'                                   , 'm/s'   ,  "soil", -999,   ["pnorm"],          [-1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%Ds)      %init('Ds'         , 'Fraction of Dsmax where non-linear baseflow begins'             , '-'     ,  "soil", -999,   ["pnorm"],          [-1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%Ws)      %init('Ws'         , 'Fraction of max. soil storage where non-linear baseflow occurs' , '-'     ,  "soil", -999,   ["pnorm"],          [-1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%expt)    %init('expt'       , 'exponent in Campbell eqn for hydraulic conductivity'            , '-'     ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%bbl)     %init('bbl'        , 'bubbling pressure'                                              , 'm'     ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%WcrFrac) %init('WcrFrac'    , 'Fractional soil moisture content at the critical point'         , '-'     ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%WpwpFrac)%init('WpwpFrac'   , 'Fractional soil moisture content at the wilting point'          , '-'     ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%z)       %init('z'          , 'total soil depth'                                               , 'm'     ,  "soil", -999,   ["pnorm", "na   "], [ 1.0_dp, dmiss],  [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%twm)     %init('twm'        , 'tension water maximum storage'                                  , 'mm'    ,  "soil", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%fwm)     %init('fwm'        , 'free water maximum storage'                                     , 'mm'    ,  "soil", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%fsm)     %init('fsm'        , 'free water supplementary maximum storage'                       , 'mm'    ,  "soil", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%fpm)     %init('fpm'        , 'free water primary maximum storage'                             , 'mm'    ,  "soil", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%zk)      %init('zk'         , 'free water flow rate'                                           , '1/d'   ,  "soil", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%zsk)     %init('zsk'        , 'supplementary flow rate'                                        , '1/d'   ,  "soil", -999,   ["pnorm"],          [-1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%zpk)     %init('zpk'        , 'primary flow rate'                                              , '1/d'   ,  "soil", -999,   ["pnorm"],          [-1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%pfree)   %init('pfree'      , 'percolation going to lower free water storage'                  , '-'     ,  "soil", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%zperc)   %init('zperc'      , 'maximum percolation rate'                                       , '1/d'   ,  "soil", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%rexp)    %init('rexp'       , 'percolation equation exponent'                                  , '-'     ,  "soil", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%lai)     %init('lai'        , 'monthly LAI'                                                    , 'm2/m2' ,   "veg", -999,   ["pnorm","na   "],  [ 1.0_dp, dmiss],  [ixDim%hru, ixDim%mon])
+  call betaMeta(ixBeta%cht)     %init('cht'        , 'Height of canopy top'                                           , 'm'     ,   "veg", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%chb)     %init('chb'        , 'Height of canopy bottom'                                        , 'm'     ,   "veg", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%rmin)    %init('rmin'       , 'Minimum stomatal resistance'                                    , 's/m'   ,   "veg", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%scf)     %init('scf'        , 'frozen precipitation multiplier'                                , '-'     ,  "snow", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%mfmax)   %init('mfmax'      , 'max. melt factor during season'                                 , 'mm/C/d',  "snow", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%mfmin)   %init('mfmin'      , 'min. melt factor during season'                                 , 'mm/C/d',  "snow", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%uadj)    %init('uadj'       , 'mean wind function during rain-on-snow'                         , 'mm/mb ',  "snow", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%si)      %init('si'         , 'water equivalent above which 100% cover always exists'          , 'mm'    ,  "snow", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%pxtemp)  %init('pxtemp'     , 'snow-rain transition temperature'                               , 'K'     ,  "snow", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%nmf)     %init('nmf'        , 'maximum negetive melt factor'                                   , 'mm/C/d',  "snow", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%tipm)    %init('tipm'       , 'Antecedent snow temperature index parameter'                    , '-'     ,  "snow", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%plwhc)   %init('plwhc'      , 'Percent of liquid water capacity'                               , '-'     ,  "snow", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
+  call betaMeta(ixBeta%daygm)   %init('daygm'      , 'Daily melt at snow‐soil interface'                              , 'mm/d'  ,  "snow", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
 
-end subroutine
+END SUBROUTINE
 
 ! -----
 !  Public subroutine: Populate metadata for MPR infor
 ! -----------------------
-subroutine popMprMeta(err,message)
-  use nrtype
+SUBROUTINE popMprMeta(err,message)
+
   use data_type,  only:var_meta
   use var_lookup, only:ixVarMapData
   use var_lookup, only:ixVarSoilData
@@ -219,6 +230,6 @@ subroutine popMprMeta(err,message)
   vprp_meta(ixPrpVeg%c_veg)              = var_meta('c_veg'        ,'specific heat of vegetation'                        ,"J kg-1 K-1"  ,"1D", "double" )
   vprp_meta(ixPrpVeg%maxMassVeg)         = var_meta('maxMassVeg'   ,'maximum mass of vegetation'                         ,"kg m-2"      ,"1D", "double" )
 
-end subroutine
+END SUBROUTINE
 
-end module popMeta
+END MODULE popMeta

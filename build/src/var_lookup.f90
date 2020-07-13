@@ -14,6 +14,15 @@ MODULE var_lookup
  integer(i4b),parameter :: ixVal=1                     ! an example integer
  integer(i4b),parameter :: iLength=storage_size(ixVal) ! size of the example integer
 
+ ! ***********************************************************************************************************
+ ! ** define dimensions
+ ! ***********************************************************************************************************
+ type, public  ::  iLook_dims
+  integer(i4b)     :: hru          = imiss   ! hru
+  integer(i4b)     :: lyr          = imiss   ! soil layer
+  integer(i4b)     :: mon          = imiss   ! month
+ endtype iLook_dims
+
 ! ***********************************************************************************************************
 ! 1.Define indices for gamma parameters
 ! ***********************************************************************************************************
@@ -211,6 +220,7 @@ MODULE var_lookup
 ! ***********************************************************************************************************
 ! define data vectors
 ! ***********************************************************************************************************
+ type(iLook_dims),        public,parameter  :: ixDim         = iLook_dims        (1,2,3)
  type(iLook_gamma),       public,parameter  :: ixGamma       = iLook_gamma       (1,2,3,4,5,6,7,8,9,10,&
                                                                                  11,12,13,14,15,16,17,18,19,20,&
                                                                                  21,22,23,24,25,26,27,28,29,30,&
@@ -235,6 +245,7 @@ MODULE var_lookup
 ! define size of data vectors
 ! ***********************************************************************************************************
 ! Number of vairables defined
+ integer(i4b),parameter,public :: nDim         = storage_size(ixDim)/iLength
  integer(i4b),parameter,public :: nGamma       = storage_size(ixGamma)/iLength
  integer(i4b),parameter,public :: nBeta        = storage_size(ixBeta)/iLength
  integer(i4b),parameter,public :: nVarMapData  = storage_size(ixVarMapData)/iLength

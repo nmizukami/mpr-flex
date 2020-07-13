@@ -78,27 +78,27 @@ subroutine read_inParList(infile, err, message)
   allocate(inParMeta(ixLocal))
   inParMeta=tempCalParMeta(1:ixLocal)
 
-end subroutine
+END SUBROUTINE
 
 ! ************************************************************************************************
 ! Public subroutine: Prepare calibrating parameter metadata from a meta file
 ! ************************************************************************************************
-subroutine get_parm_meta( err, message)
+SUBROUTINE get_parm_meta( err, message)
   ! Process inParMeta along with betaMeta and gammaMeta (popMeta.f90)
   ! Saved data:  calGammaMeta, calBetaName
   use data_type,  only: cpar_meta, scale_meta
-  use globalData, only:inParMeta,      & ! meta for beta parameter listed in 'inParList' nml input
-                       gammaMeta,      & ! meta for all gamma parameters
-                       betaMeta,       & ! meta for all beta parameters
-                       calGammaMeta,   & ! meta for only gamma parameters listed in input
-                       calBetaName,    & ! list of beta parameters calibrated with MPR
-                       calScaleMeta,   & ! meta for beta parameter whose scaling operator(s) is calibrated
-                       nCalGamma,      & ! number of gamma parameters to be computed
-                       nCalScale,      & ! number of scaling parameters to be computed
-                       nSoilBetaModel, & ! number of soil beta parameters to be calibrated via MPR
-                       nVegBetaModel,  & ! number of veg beta parameters to be calibrated via MPR
-                       soilBetaCalName,& ! list of Soil parameters to be estimated via MPR
-                       vegBetaCalName    ! list of vege parameters to be estimated via MPR
+  use globalData, only: inParMeta,      & ! meta for beta parameter listed in 'inParList' nml input
+                        gammaMeta,      & ! meta for all gamma parameters
+                        betaMeta,       & ! meta for all beta parameters
+                        calGammaMeta,   & ! meta for only gamma parameters listed in input
+                        calBetaName,    & ! list of beta parameters calibrated with MPR
+                        calScaleMeta,   & ! meta for beta parameter whose scaling operator(s) is calibrated
+                        nCalGamma,      & ! number of gamma parameters to be computed
+                        nCalScale,      & ! number of scaling parameters to be computed
+                        nSoilBetaModel, & ! number of soil beta parameters to be computed via MPR
+                        nVegBetaModel,  & ! number of veg beta parameters to be computed via MPR
+                        soilBetaCalName,& ! list of Soil parameters to be omputed via MPR
+                        vegBetaCalName    ! list of vege parameters to be omputed via MPR
   use get_ixname, only:get_ixBeta, get_ixGamma
   use var_lookup, only:nBeta,nGamma
   implicit none
@@ -109,36 +109,36 @@ subroutine get_parm_meta( err, message)
   ! local variables
   character(len=strLen)                :: cmessage         ! error message from subroutine
   integer(i4b)                         :: iBeta            ! loop index of lines in inParList nml input
-  integer(i4b)                         :: ivar             ! loop index of master parameter
+  integer(i4b)                         :: idxBeta          ! loop index of master parameter
   integer(i4b)                         :: iPar             ! loop index of master parameter
 
   err=0; message="get_param_meta/"
 
   ! update betaMeta(:)%tftype (transfer function type to be used)
   do iBeta=1,size(inParMeta)
-    ivar=get_ixBeta(inParMeta(iBeta)%betaname)
-    if(ivar<=0)then; err=40; message=trim(message)//"1.variableNotFound[var="//trim(inParMeta(iBeta)%betaname)//"]"; return; endif
-    betaMeta(ivar)%tftype=inParMeta(iBeta)%TF
+    idxBeta=get_ixBeta(inParMeta(iBeta)%betaname)
+    if(idxBeta<=0)then; err=40; message=trim(message)//"1.variableNotFound[var="//trim(inParMeta(iBeta)%betaname)//"]"; return; endif
+    betaMeta(idxBeta)%tftype=inParMeta(iBeta)%TF
   enddo
 
   call get_parMetaSubset( err, cmessage ); if(err/=0)then;message=trim(message)//trim(cmessage); return; endif
   call get_calBetaName  ( err, cmessage ); if(err/=0)then;message=trim(message)//trim(cmessage); return; endif
   call get_calScaleMeta ( err, cmessage ); if(err/=0)then;message=trim(message)//trim(cmessage); return; endif
 
-  contains
+  CONTAINS
 
   ! Private subroutine:
   subroutine get_parMetaSubset( err, message )
    ! Saved data:  calGammaMeta, nCalGamma
     !input
     !output
-    character(len=strLen),intent(out)   :: message           ! error message for current routine
-    integer(i4b),         intent(out)   :: err               ! error code
+    character(len=strLen),intent(out)   :: message          ! error message for current routine
+    integer(i4b),         intent(out)   :: err              ! error code
     !local
-    integer(i4b)                         :: ivar             ! loop index of master parameter
-    integer(i4b)                         :: iPar            ! loop index of lines in "inParList" nml input
-    integer(i4b)                         :: iGamma           ! loop index of all the gamma parameters in master
-    type(cpar_meta),allocatable          :: tempParSubset(:)
+    integer(i4b)                        :: ivar             ! loop index of master parameter
+    integer(i4b)                        :: iPar             ! loop index of lines in "inParList" nml input
+    integer(i4b)                        :: iGamma           ! loop index of all the gamma parameters in master
+    type(cpar_meta),allocatable         :: tempParSubset(:)
 
     err=0; message="get_parMetaSubset/"
 
@@ -177,13 +177,13 @@ subroutine get_parm_meta( err, message)
     integer(i4b),         intent(out)    :: err                    ! error code
     !local
     integer(i4b)                         :: iPar                   ! loop index of parameter
-    integer(i4b)                         :: ivar                   ! index in master parameter
+    integer(i4b)                         :: idxBeta                ! index in beta parameter
     integer(i4b)                         :: iSoil                  ! counter for soil beta parameters to be computed with MPR
     integer(i4b)                         :: iVeg                   ! counter for vege beta parameters to be computed with MPR
     character(len=strLen),allocatable    :: tempSoilBetaInGamma(:) !
     character(len=strLen),allocatable    :: tempVegBetaInGamma(:)  !
-    character(len=strLen),allocatable    :: res(:)                 !
-    integer(i4b)                         :: counter                 ! counter
+    character(len=strLen),allocatable    :: res(:)                 ! beta parameter name array
+    integer(i4b)                         :: counter                ! counter
 
     err=0; message="get_calBetaName/"
 
@@ -191,11 +191,11 @@ subroutine get_parm_meta( err, message)
 
     counter = 0
     do iPar=1,size(inParMeta)
-      ivar = get_ixBeta(inParMeta(iPar)%betaname)
-      if(ivar<=0)then; err=40; message=trim(message)//"BetaNotFoundInMasterMeta[var="//trim(inParMeta(iPar)%betaname)//"]"; return; endif
+      idxBeta = get_ixBeta(inParMeta(iPar)%betaname)
+      if(idxBeta<=0)then; err=40; message=trim(message)//"BetaNotFoundInMasterMeta[var="//trim(inParMeta(iPar)%betaname)//"]"; return; endif
       if ( trim(inParMeta(iPar)%betaname) == 'z' )  cycle
       counter=counter+1
-      res(counter)=betaMeta(ivar)%pname
+      res(counter)=betaMeta(idxBeta)%parName
     end do
 
     ! Count number of soil and Vege parameters to be computed with MPR excluding h and z parameters
@@ -206,10 +206,11 @@ subroutine get_parm_meta( err, message)
 
       allocate(calBetaName(counter))
       calBetaName=res(1:counter)
+
       do iPar=1,size(calBetaName)
-        ivar=get_ixBeta(calBetaName(iPar))
-        if (betaMeta(ivar)%ptype=='soil') nSoilBetaModel = nSoilBetaModel+1
-        if (betaMeta(ivar)%ptype=='veg')  nVegBetaModel  = nVegBetaModel +1
+        idxBeta=get_ixBeta(calBetaName(iPar))
+        if (betaMeta(idxBeta)%parType=='soil') nSoilBetaModel = nSoilBetaModel+1
+        if (betaMeta(idxBeta)%parType=='veg')  nVegBetaModel  = nVegBetaModel +1
       enddo
 
       iSoil=0;iVeg=0
@@ -218,10 +219,10 @@ subroutine get_parm_meta( err, message)
       allocate(tempVegBetaInGamma(nBeta),stat=err)
 
       do iPar=1,size(calBetaName)
-        ivar = get_ixBeta(calBetaName(iPar))
-        if(ivar<=0)then; err=40; message=trim(message)//"2.variableNotFound[var="//trim(calBetaName(iPar))//"]"; return; endif
-        if (betaMeta(ivar)%ptype=='soil')then; iSoil=iSoil+1; tempSoilBetaInGamma(iSoil) = betaMeta(ivar)%pname; endif
-        if (betaMeta(ivar)%ptype=='veg') then; iVeg=iVeg+1;   tempVegBetaInGamma(iVeg)   = betaMeta(ivar)%pname; endif
+        idxBeta = get_ixBeta(calBetaName(iPar))
+        if(idxBeta<=0)then; err=40; message=trim(message)//"2.variableNotFound[var="//trim(calBetaName(iPar))//"]"; return; endif
+        if (betaMeta(idxBeta)%parType=='soil')then; iSoil=iSoil+1; tempSoilBetaInGamma(iSoil) = betaMeta(idxBeta)%parName; endif
+        if (betaMeta(idxBeta)%parType=='veg') then; iVeg=iVeg+1;   tempVegBetaInGamma(iVeg)   = betaMeta(idxBeta)%parName; endif
       enddo
 
       allocate(soilBetaCalName(nSoilBetaModel))
@@ -246,44 +247,36 @@ subroutine get_parm_meta( err, message)
     character(len=strLen),intent(out)   :: message               ! error message for current routine
     integer(i4b),         intent(out)   :: err                   ! error code
     !local
-    type(scale_meta),     allocatable   :: tempBetaCalScale(:)   !
+    integer(i4b)                        :: ix                    ! loop index
+    type(scale_meta),     allocatable   :: tempBetaCalScale(:)   ! temporal holder for scale_meta data
 
     err=0; message="get_scaleInBeta/"
 
-    allocate(tempBetaCalScale(size(inParMeta)),stat=err);if(err/=0)then;message=trim(message)//'error allocating tempBetaCalScale';return;endif
+    allocate(tempBetaCalScale(size(inParMeta)),stat=err)
+    if(err/=0)then;message=trim(message)//'error allocating tempBetaCalScale';return;endif
 
+    nCalScale = 0
     do iPar=1,size(inParMeta)!if beta parameter is estimated with MPR or even not calibrated, calibrate scaling parameter
+      associate( scaler => betaMeta(get_ixBeta(inParMeta(iPar)%betaname))%parScale,   &
+                 pnorm  => betaMeta(get_ixBeta(inParMeta(iPar)%betaname))%parPnorm)
 
-      associate( hups      => betaMeta(get_ixBeta(inParMeta(iPar)%betaname))%hups,   &
-                 vups      => betaMeta(get_ixBeta(inParMeta(iPar)%betaname))%vups,   &
-                 hpower    => betaMeta(get_ixBeta(inParMeta(iPar)%betaname))%hpnorm, &
-                 vpower    => betaMeta(get_ixBeta(inParMeta(iPar)%betaname))%vpnorm)
+      allocate(tempBetaCalScale(iPar)%pdefault(size(scaler)), tempBetaCalScale(iPar)%mask(size(scaler)), stat=err)
+      if(err/=0)then;message=trim(message)//'error allocating tempBetaCalScale(iPar)%pdefault';return;endif
 
       tempBetaCalScale(iPar)%betaname    = inParMeta(iPar)%betaname
-      tempBetaCalScale(iPar)%pdefault(1) = hpower
-      tempBetaCalScale(iPar)%pdefault(2) = vpower
-      tempBetaCalScale(iPar)%mask(1)     = .true.
-      tempBetaCalScale(iPar)%mask(2)     = .true.
-
-      ! Check beta meta data for scaling and if value is -999 or na, turns off calibration
-      if (hpower==-999.0_dp .or. hups=='na') then
-        print*,'Switch horizontal upscale calibration to False for',inParMeta(iPar)%betaname
-        tempBetaCalScale(iPar)%mask(1)=.False.
-      endif
-
-      if (vpower==-999.0_dp .or. vups=='na') then
-        print*,'Switch vertical upscale calibration to False for',inParMeta(iPar)%betaname
-        tempBetaCalScale(iPar)%mask(2)=.False.
-      endif
+      do ix = 1, size(pnorm)
+        nCalScale = nCalScale + 1
+        tempBetaCalScale(iPar)%pdefault(ix) = pnorm(ix)
+        tempBetaCalScale(iPar)%mask(ix)     = .true.
+      end do
 
       end associate
-
     enddo
 
-    allocate(calScaleMeta(size(inParMeta)),stat=err);if(err/=0)then;message=trim(message)//'error allocating calScaleMeta';return;endif
+    allocate(calScaleMeta(size(inParMeta)),stat=err)
+    if(err/=0)then;message=trim(message)//'error allocating calScaleMeta';return;endif
     calScaleMeta=tempBetaCalScale(1:size(inParMeta))
 
-    nCalScale = size(inParMeta)*2
 
   end subroutine
 
@@ -292,7 +285,7 @@ end subroutine
 ! ************************************************************************************************
 ! Public subroutine: convert parameter data structure to simple arrays
 ! ************************************************************************************************
-subroutine param_setup( err, message )
+SUBROUTINE param_setup( err, message )
   use globalData,  only:parArray, parMask, calGammaMeta, nCalGamma, nCalScale, calScaleMeta
   implicit none
   !output variables
@@ -302,7 +295,7 @@ subroutine param_setup( err, message )
   integer(i4b)                  :: nCalParSum             ! number of total parameters (gamma and scaling parameters) involved
   integer(i4b)                  :: iPar                   ! loop indices
   integer(i4b)                  :: idx                    ! count of calibrating parameter including per layer parameter
-  integer(i4b)                  :: ixHV                   ! count of calibrating parameter including per layer parameter
+  integer(i4b)                  :: ixScale                ! index of beta parameter dimensions
 
   ! initialize error control
   err=0; message='param_setput/'
@@ -319,19 +312,20 @@ subroutine param_setup( err, message )
   enddo
 
   do iPar=1,size(calScaleMeta)
-    do ixHV=1,2
+    do ixScale=1,size(calScaleMeta(iPar)%mask)
       idx=idx+1
-      parArray(idx,1) = calScaleMeta(iPar)%pdefault(ixHV)        ! default value of pnorm value
-      parMask (idx)   = calScaleMeta(iPar)%mask(ixHV)
+      parArray(idx,1) = calScaleMeta(iPar)%pdefault(ixScale)        ! default value of pnorm value
+      parMask (idx)   = calScaleMeta(iPar)%mask(ixScale)
     enddo
   enddo
 
-end subroutine
+END SUBROUTINE
 
 !*********************************************************
 ! Public subroutine: print out calibrating parameter data
 !*********************************************************
-subroutine print_config()
+SUBROUTINE print_config()
+
   use globaldata,  only: inParMeta,      &
                          betaMeta,       &
                          calGammaMeta,    &
@@ -344,7 +338,7 @@ subroutine print_config()
                          nBetaNeed
   implicit none
 
-  integer(i4b) :: i,j   ! loop index for writing
+  integer(i4b) :: i,j,cc  ! loop index for writing
 
   write(*,*) '!-----------------------------------------------------------'
   write(*,*) '!    MPR-flex - configurations of parameter estimations     '
@@ -366,13 +360,13 @@ subroutine print_config()
     write(*,'(A,1X,A)') new_line(' '),'! List of gamma parameters to be used'
     write(*,*) '!-----------------------------------------------------------'
     do i=1,size(calGammaMeta)
-      write(*,*) ( trim(adjustl(calGammaMeta(i)%pname)) )
+      write(*,*) ( trim(adjustl(calGammaMeta(i)%pName)) )
     end do
 
     write(*,'(A,1X,A)') new_line(' '),'! All beta parameters computed with MPR including dependent beta parameters'
     write(*,*) '!-----------------------------------------------------------'
     do i=1,nBetaNeed
-      write(*,*) ( trim(adjustl(betaMeta(calBetaOrderIdx(i))%pname)) )
+      write(*,*) ( trim(adjustl(betaMeta(calBetaOrderIdx(i))%parName)) )
     end do
 
   else
@@ -385,18 +379,21 @@ subroutine print_config()
   write(*,*) '!-----------------------------------------------------------'
   write(*,*) 'Parameter Name        (initial)value    cal.flag   Note'
   do i=1,nCalGamma
-    write(*,200) calGammaMeta(i)%pname(1:20), parArray(i,1), parMask(i)
+    write(*,200) calGammaMeta(i)%pName(1:20), parArray(i,1), parMask(i)
     200 format(1X,A,1X,ES17.10,1X,L9)
   enddo
+  cc = 1
   do i=1,size(calScaleMeta)
-     write(*,300) calScaleMeta(i)%betaname(1:20), parArray(nCalGamma+2*i-1,1), parMask(nCalGamma+2*i-1), 'Horizontal scaling parameter'
-     write(*,300) calScaleMeta(i)%betaname(1:20), parArray(nCalGamma+2*i  ,1), parMask(nCalGamma+2*i),   'Vertical scaling parameter'
-     300 format(1X,A,1X,ES17.10,1X,L9,1X,A30)
+    do j=1,size(calScaleMeta(i)%pdefault)
+      write(*,300) calScaleMeta(i)%betaname, parArray(nCalGamma+cc,1), parMask(nCalGamma+cc-1), 'scaling parameter-',j
+      300 format(1X,A20,1X,ES17.10,1X,L9,1X,A18,I1)
+      cc = cc + 1
+    end do
   end do
   print*,"!-----------------------------------------------------------"
   print*,"!-----------------------------------------------------------"
 
-end subroutine
+END SUBROUTINE
 
 !**********************************
 ! Not Used---  Public subroutine: check if h parameters exist in gamma parameter
@@ -436,4 +433,4 @@ subroutine check_gammaH( err, message)
 
 end subroutine
 
-end module process_meta
+END MODULE process_meta

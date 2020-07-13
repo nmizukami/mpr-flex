@@ -2,14 +2,18 @@ module globalData
 
  use nrtype
  use public_var
- use data_type,  only: var_meta, gammaPar_meta, betaPar_meta, cpar_meta, beta_meta, scale_meta, input_meta
+ use data_type,  only: var_meta, gammaPar_meta, cpar_meta, beta_meta, scale_meta, input_meta
+ use data_type,  only: defDim
+ use obj_type,   only: betaPar_meta
  use var_lookup, only: nBeta, nGamma
+ use var_lookup, only: nDim
  use var_lookup, only: nVarSoilData, nVarTopoData, nVarVegData, nVarClimData, nVarMapData, nPrpVeg
 
 implicit none
 
 private
 
+type(defDim),         save,            public  :: dimMeta(nDim)             ! meta data for diemension
 ! master meta data including all available parameters
 type(gammaPar_meta),  save,            public  :: gammaMeta(nGamma)         ! meta data for all the available gamma parameters
 type(betaPar_meta),   save,            public  :: betaMeta(nBeta)           ! meta data for all the available beta parameters
