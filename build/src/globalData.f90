@@ -18,6 +18,7 @@ type(defDim),         save,            public  :: dimMeta(nDim)             ! me
 type(gammaPar_meta),  save,            public  :: gammaMeta(nGamma)         ! meta data for all the available gamma parameters
 type(betaPar_meta),   save,            public  :: betaMeta(nBeta)           ! meta data for all the available beta parameters
 type(beta_meta),      save,            public  :: betaAncilMeta(nBeta)      ! meta data for parameter dependency for all the beta parameters
+
 ! Based on a list of beta parameters to be estimated from "inParList" nml input
 type(cpar_meta),      save,allocatable,public  :: calGammaMeta(:)           ! subset of gamma parameters that are used to compute a set of beta parametes.
 type(input_meta),     save,allocatable,public  :: inParMeta(:)              ! meta data for speficification of beta parameteters in "inParList" nml input
@@ -28,6 +29,7 @@ character(len=strLen),save,allocatable,public  :: soilBetaCalName(:)        ! su
 character(len=strLen),save,allocatable,public  :: vegBetaCalName(:)         ! subset of "calBetaName" including only vegetation parameters
 real(dp),             save,allocatable,public  :: parArray(:,:)             ! calibrating parameter array - input for optimization routine
 logical(lgc),         save,allocatable,public  :: parMask(:)                ! calibrating parameter mask vector - input for optimization routine
+
 ! Number of parameters
 integer(i4b),         save,            public  :: nCalGamma                 ! number of gamma parameters to be used give a set of beta parameters
 integer(i4b),         save,            public  :: nCalScale                 ! number of scaling parameters to be calibrated
@@ -35,12 +37,13 @@ integer(i4b),         save,            public  :: nBetaNeed                 ! nu
 integer(i4b),         save,            public  :: nSoilBetaModel            ! number of soil parameters to be estimated with MPR
 integer(i4b),         save,            public  :: nVegBetaModel             ! number of vegetation parameters to be estimated with MPR
 integer(i4b),         save,            public  :: nSnowBetaModel            ! number of snow parameters to be estimated with MPR
+
 ! meta data for input data
 type(var_meta),       save,            public  :: map_meta  (nVarMapData)   ! mapping data
 type(var_meta),       save,            public  :: sdata_meta(nVarSoilData)  ! soil data
 type(var_meta),       save,            public  :: tdata_meta(nVarTopoData)  ! topographic data
 type(var_meta),       save,            public  :: vdata_meta(nVarVegData)   ! vegetation data
 type(var_meta),       save,            public  :: cdata_meta(nVarClimData)  ! climate data
-type(var_meta),       save,            public  :: vprp_meta (nPrpVeg)       ! mapping data
+type(var_meta),       save,            public  :: vprp_meta (nPrpVeg)       ! vegetation property data
 
 end module globalData

@@ -2,6 +2,7 @@ module process_meta
 
   use nrtype
   use public_var
+  use nr_utility_module, only: int2str
 
   implicit none
 
@@ -11,6 +12,7 @@ module process_meta
   public::get_parm_meta
   public::param_setup
   public::print_config
+  public::restartIO
 
 contains
 
@@ -155,7 +157,6 @@ SUBROUTINE get_parm_meta( err, message)
           tempParSubset(nCalGamma)%val      = gammaMeta(iGamma)%val
           tempParSubset(nCalGamma)%beta     = gammaMeta(iGamma)%beta
           tempParSubset(nCalGamma)%tftype   = gammaMeta(iGamma)%tftype
-          tempParSubset(nCalGamma)%ptype    = gammaMeta(iGamma)%ptype
           tempParSubset(nCalGamma)%flag     = .True.
         endif
       end do
@@ -232,9 +233,7 @@ SUBROUTINE get_parm_meta( err, message)
       vegBetaCalName=tempVegBetaInGamma(1:nVegBetaModel)
 
     else
-
-      print*, 'No gamma parameters included in the list'
-
+      err=40; message=trim(message)//"No Beta parameter detected."; return
     endif
 
   end subroutine
@@ -283,19 +282,102 @@ SUBROUTINE get_parm_meta( err, message)
 end subroutine
 
 ! ************************************************************************************************
+! Public subroutine: parameter restart I/O
+! ************************************************************************************************
+SUBROUTINE restartIO( restartFile )
+  use globalData,    only: calScaleMeta, calGammaMeta, nCalGamma
+  implicit none
+  character(len=strLen), intent(in)    :: restartFile
+  real(dp)                             :: temp_param
+  character(len=strLen)                :: temp_pname
+  logical(lgc)                         :: isExistFile ! logical to check if the file exist or not
+  logical(lgc)                         :: isFound     ! logical to check if matching parameter is found
+  integer(i4b)                         :: iPar        ! loop index for parameter
+  integer(i4b)                         :: ixpos
+  integer(i4b)                         :: ixLyr
+  integer(i4b)                         :: ixDim
+  integer(i4b)                         :: ios = 0
+  character(len=strLen)                :: cdummy      ! dummy character vaiable
+
+  inquire(file=trim(restartFile), exist=isExistFile)
+  if ( isExistFile ) then !  if state file exists, read it and update params
+
+    write(*,'(2a)') new_line('a'), 'Read restart file'
+
+    open(unit=70,file=trim(adjustl(restartFile)), action='read', status = 'unknown')
+
+    ixLyr = 0
+
+    do while (ios == 0)
+
+      read(70,*,iostat=ios) temp_pname, temp_param, cdummy
+      if (ios /= 0) exit
+
+      isFound=.false.
+
+      ! search gamma
+      do iPar=1,nCalGamma
+        if (trim(temp_pname) == trim(calGammaMeta(iPar)%pname)) then
+          calGammaMeta(iPar)%val = temp_param
+          isFound=.true.
+          exit
+        end if
+      end do
+      if (isFound) cycle
+
+      ! search hfrac
+      if (trim(temp_pname(1:5)) == 'hfrac') then
+        ixLyr=ixLyr+1
+        hfrac(ixLyr) = temp_param
+        isFound=.true.
+      end if
+      if (isFound) cycle
+
+      ! search scaling
+      do iPar=1,size(calScaleMeta)
+        ixpos = index(trim(temp_pname), '-')
+        if (trim(temp_pname(1:ixpos-1)) == trim(calScaleMeta(iPar)%betaname)) then
+          read(temp_pname(ixpos+6:),*) ixDim
+          calScaleMeta(iPar)%pdefault(ixDim) = temp_param
+          isFound=.true.
+          exit
+        end if
+      end do
+      if (isFound) cycle
+
+      if (.not.isFound) then
+        write(*,*) 'WARNING: ', trim(temp_pname), ' does not exist in gamma parameters or beta parameters meta data'
+        write(*,*) 'CHECK ', trim(restartFile)
+      end if
+    end do
+
+    close(70)
+
+  endif
+
+END SUBROUTINE
+
+
+! ************************************************************************************************
 ! Public subroutine: convert parameter data structure to simple arrays
 ! ************************************************************************************************
-SUBROUTINE param_setup( err, message )
+SUBROUTINE param_setup( restartFile, err, message )
   use globalData,  only:parArray, parMask, calGammaMeta, nCalGamma, nCalScale, calScaleMeta
   implicit none
+  !input variables
+  character(len=strLen), intent(in)  :: restartFile
   !output variables
-  integer(i4b),     intent(out) :: err                    ! error code
-  character(*),     intent(out) :: message                ! error message
+  integer(i4b),          intent(out) :: err                    ! error code
+  character(*),          intent(out) :: message                ! error message
   ! local variables
-  integer(i4b)                  :: nCalParSum             ! number of total parameters (gamma and scaling parameters) involved
-  integer(i4b)                  :: iPar                   ! loop indices
-  integer(i4b)                  :: idx                    ! count of calibrating parameter including per layer parameter
-  integer(i4b)                  :: ixScale                ! index of beta parameter dimensions
+  character(len=strLen)              :: temp_str               ! temp character vaiable
+  logical(lgc)                       :: isExistFile            ! logical to check if the file exist or not
+  integer(i4b)                       :: nCalParSum             ! number of total parameters (gamma and scaling parameters) involved
+  integer(i4b)                       :: iPar                   ! loop indices
+  integer(i4b)                       :: idx                    ! count of calibrating parameter including per layer parameter
+  integer(i4b)                       :: ixScale                ! index of beta parameter dimensions
+  integer(i4b)                       :: cc                     ! counter for scaling parameter
+  character(len=strLen)              :: cdummy                 ! dummy character vaiable
 
   ! initialize error control
   err=0; message='param_setput/'
@@ -318,6 +400,36 @@ SUBROUTINE param_setup( err, message )
       parMask (idx)   = calScaleMeta(iPar)%mask(ixScale)
     enddo
   enddo
+
+  inquire(file=trim(restartFile), exist=isExistFile)
+  if (.not. isExistFile ) then !  if state file does not exist, write params
+    write(*,'(2a)') new_line('a'), 'Restart file does not exist. Write out default gamma/scaling parameters'
+
+    open(unit=70,file=trim(adjustl(restartFile)), action='write', status = 'unknown')
+
+    do iPar=1,nCalGamma
+      write(70,200) calGammaMeta(iPar)%pname(1:20), parArray(iPar,1), 'Gamma-par'
+      200 format(1X,A,1X,ES17.10,1X,A20)
+    enddo
+
+    do iPar=1,nLyr
+      write (cdummy, '(A5,I1)') 'hfrac', iPar
+      write(70,201) adjustl(cdummy(1:20)), hfrac(iPar), 'layer-frac'
+      201 format(1X,A20,1X,ES17.10,1X,A20)
+    enddo
+
+    cc = 0
+    do iPar=1,size(calScaleMeta)
+      do ixScale=1,size(calScaleMeta(iPar)%mask)
+        cc = cc + 1
+        temp_str = trim(calScaleMeta(iPar)%betaname)//'-scale'//trim(int2str(ixScale))
+        write(70,300) temp_str(1:20), parArray(nCalGamma+cc,1), 'scaling-par'
+        300 format(1X,A,1X,ES17.10,1X,A20)
+      end do
+    end do
+
+    close(70)
+  end if
 
 END SUBROUTINE
 

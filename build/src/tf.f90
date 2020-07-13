@@ -2151,8 +2151,6 @@ subroutine chb( err, message, ixDepend, cht_in, gammaPar, chb_out, tfopt )
         else where
           chb_out = dmiss
         end where
-print*, g1
-print*, chb_temp
       case default;print*,trim(message)//'OptNotRecognized';stop
     end select
     end associate

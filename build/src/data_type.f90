@@ -16,7 +16,6 @@ type,public  :: gammaPar_meta
   character(len=strLen)        :: unt    =''        ! unit
   character(len=strLen)        :: beta   =''        ! name of parent beta parameter - if parameter is beta parameter, use "beta"
   integer(i4b)                 :: tftype =-999_i4b  ! id of transfer function type
-  character(len=strLen)        :: ptype  =''        ! name of parent beta parameter - if parameter is beta parameter, use "beta"
   logical(lgc)                 :: flag   =.False.   ! flag to calibrate or not
 endtype gammaPar_meta
 

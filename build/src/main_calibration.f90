@@ -6,6 +6,7 @@ PROGRAM main_mpr
   use popMeta,         only: paramMaster
   use globaldata,      only: calBetaName, parArray
   use process_meta,    only: read_inParList, get_parm_meta, param_setup, print_config
+  use process_meta,    only: restartIO
   use tf,              only: betaDependency, betaCompOrder
   use mpr_routine,     only: run_mpr
   use read_soildata,   only: check_polyID
@@ -40,14 +41,17 @@ PROGRAM main_mpr
 
   call check_polyID(trim(mpr_input_dir)//trim(fname_soil), dname_spoly , ierr, cmessage); call handle_err(ierr, cmessage)
 
+  ! updata gamma/scaling parameter based on restart
+  call restartIO( mpr_param_file )
+
   ! initialize parameter and mask arrays
-  call param_setup( ierr, cmessage ); call handle_err(ierr,cmessage)
+  call param_setup( mpr_param_file, ierr, cmessage ); call handle_err(ierr,cmessage)
 
   ! Print out calibration configuration
   call print_config()
 
   ! main routine starts depending on option
-  call run_mpr( parArray(:,1), mpr_param_file , ierr, cmessage ); call handle_err(ierr,cmessage)
+  call run_mpr( parArray(:,1), ierr, cmessage ); call handle_err(ierr,cmessage)
   stop
 
 CONTAINS

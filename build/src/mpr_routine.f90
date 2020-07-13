@@ -19,7 +19,7 @@ contains
 ! ************************************************************************************************
 ! Public subroutine: run MPR and save estimated parameters in netCDF
 ! ************************************************************************************************
-subroutine run_mpr( calParam, restartFile, err, message )
+subroutine run_mpr( calParam, err, message )
 
   use globalData,    only: calScaleMeta, calGammaMeta, nCalGamma, nSoilBetaModel, nVegBetaModel
   use globalData,    only: soilBetaCalName, vegBetaCalName
@@ -31,12 +31,10 @@ subroutine run_mpr( calParam, restartFile, err, message )
   implicit none
   ! input variables
   real(dp),             intent(in)  :: calParam(:)                   ! parameter in namelist, not necessarily all parameters are calibrated
-  character(len=strLen),intent(in)  :: restartFile                   ! name of restart file including iteration, the most recent parameter values
   ! output variables
   integer(i4b),         intent(out) :: err                           ! error id
   character(len=strLen),intent(out) :: message                       ! error message
   ! local
-  real(dp),             allocatable :: params(:)                     ! parameter vector that is input into mpr
   type(var_d)                       :: pnormCoef(size(calScaleMeta)) ! parameter storage converted from parameter array
   type(var_d),          allocatable :: paramGammaStr(:)              ! calibratin gamma parameter storage extracted from calParStr
   integer(i4b)                      :: idx                           ! counter
@@ -55,17 +53,13 @@ subroutine run_mpr( calParam, restartFile, err, message )
     err=10; message=trim(message)//'there is no gamma pamameters in parameter input file to perform MPR';return
   end if
 
-  allocate(params, source=calParam) ! copy calParameter default
-
-  call restartIO( params, restartFile ) ! check restartFile exist, if it does, update params vector, otherwise wite them in restartFile
-
   ! -----------------------------------------
   ! transform parameter vector to own data types - calParStr and pnormCoef
   idx=1
   allocate(paramGammaStr(nCalGamma) ,stat=err)
   do iPar=1,nCalGamma !beta and gamma parameter values
     allocate(paramGammaStr(iPar)%var(1))
-    paramGammaStr(iPar)%var=params(idx)
+    paramGammaStr(iPar)%var=calParam(idx)
     idx=idx+1
   end do
 
@@ -73,7 +67,7 @@ subroutine run_mpr( calParam, restartFile, err, message )
     idxBeta = get_ixBeta(calScaleMeta(iPar)%betaname)
     nScale = size(betaMeta(idxBeta)%parScale)
     allocate(pnormCoef(iPar)%var(nScale))
-    pnormCoef(iPar)%var(1:nScale)=params(idx:idx+nScale-1)
+    pnormCoef(iPar)%var(1:nScale)=calParam(idx:idx+nScale-1)
     idx=idx+nScale
   end do
 
@@ -100,74 +94,6 @@ subroutine run_mpr( calParam, restartFile, err, message )
   !! Write parameter derived from MPR in netCDF
   call write_nc_beta(trim(mpr_output_dir)//trim(model_param_nc), hruID, hModel, soilParMxyMz, vegParMxy, err, cmessage)
   if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
-
-END SUBROUTINE
-
-! ************************************************************************************************
-! private subroutine: parameter restart I/O
-! ************************************************************************************************
-SUBROUTINE restartIO( params, restartFile )
-  use globalData,    only: calScaleMeta, calGammaMeta, parArray, nCalGamma
-  implicit none
-  character(len=strLen), intent(in)    :: restartFile
-  real(dp),              intent(inout) :: params(:)
-  logical                              :: isExistFile ! logical to check if the file exist or not
-  integer(i4b)                         :: iPar        ! loop index for parameter
-  integer(i4b)                         :: iScale      ! loop index for scaling operators of parameter
-  integer(i4b)                         :: counter     ! counter
-  character(len=strLen)                :: cdummy      ! dummy character vaiable
-
-  inquire(file=trim(restartFile), exist=isExistFile)
-  if ( isExistFile ) then !  if state file exists, read it and update params
-
-    print*, 'read restart file'
-    open(unit=70,file=trim(adjustl(restartFile)), action='read', status = 'unknown')
-
-    do iPar=1,nCalGamma
-      read(70,*) cdummy, params(iPar), cdummy
-    end do
-
-    do iPar=1,nLyr
-      read(70,*) cdummy, hfrac(iPar), cdummy
-    end do
-
-    counter = 1
-    do iPar=1,size(calScaleMeta)
-      do iScale=1,size(calScaleMeta(iPar)%mask)
-        read(70,*) cdummy, params(nCalGamma+counter), cdummy
-        counter = counter + 1
-      end do
-    end do
-
-    close(70)
-
-  else          !otherwise write out
-
-    print*, 'write restart file'
-    open(unit=70,file=trim(adjustl(restartFile)), action='write', status = 'unknown')
-
-    do iPar=1,nCalGamma
-      write(70,200) calGammaMeta(iPar)%pname(1:20), parArray(iPar,1), 'Gamma-par'
-      200 format(1X,A,1X,ES17.10,1X,A20)
-    enddo
-
-    do iPar=1,nLyr
-      write (cdummy, '(A5,I1)') 'hfrac', iPar
-      write(70,201) adjustl(cdummy(1:20)),iPar, hfrac(iPar), 'layer-frac'
-      201 format(1X,A20,I1,1X,ES17.10,1X,A20)
-    enddo
-
-    counter = 1
-    do iPar=1,size(calScaleMeta)
-      do iScale=1,size(calScaleMeta(iPar)%mask)
-        write(70,300) calScaleMeta(iPar)%betaname(1:20), parArray(nCalGamma+iScale,1), 'scaling-par'
-        300 format(1X,A,1X,ES17.10,1X,A20)
-        counter = counter+1
-      end do
-    end do
-
-    close(70)
-  endif
 
 END SUBROUTINE
 
