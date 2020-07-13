@@ -1,4 +1,5 @@
-module read_config
+MODULE read_config
+
   use nrtype
   use public_var
 
@@ -37,10 +38,10 @@ module read_config
 
   namelist / soil / hfrac
 
-contains
+CONTAINS
 
 ! --------------------------
-subroutine read_nml(nmlfile, err, message)
+SUBROUTINE read_nml(nmlfile, err, message)
 
   implicit none
 
@@ -83,6 +84,6 @@ subroutine read_nml(nmlfile, err, message)
 
   print *, 'Namelist file has been successfully processed'
 
-end subroutine
+END SUBROUTINE
 
-end module read_config
+END MODULE read_config
