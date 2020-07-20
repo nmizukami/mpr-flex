@@ -29,8 +29,6 @@ module public_var
   character(len=strLen),public    :: fname_mapping
   character(len=strLen),public    :: dname_overPoly
   character(len=strLen),public    :: dname_hru
-  character(len=strLen),public    :: sclass_table
-  integer(i4b)                    :: nSclass
   character(len=strLen),public    :: vclass_table
   integer(i4b)                    :: nVclass
   character(len=strLen),public    :: dname_spoly

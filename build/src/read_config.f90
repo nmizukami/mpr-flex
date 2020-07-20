@@ -24,7 +24,6 @@ MODULE read_config
                       fname_mapping,          &
                       dname_overPoly,         &
                       dname_hru,              &
-                      sclass_table,           &
                       vclass_table,           &
                       nVclass,                &
                       dname_spoly,            &
