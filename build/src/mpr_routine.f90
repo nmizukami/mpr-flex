@@ -21,8 +21,8 @@ contains
 ! ************************************************************************************************
 subroutine run_mpr( calParam, err, message )
 
-  use globalData,    only: calScaleMeta, calGammaMeta, nCalGamma, nSoilBetaModel, nVegBetaModel
-  use globalData,    only: soilBetaCalName, vegBetaCalName
+  use globalData,    only: calScaleMeta, calGammaMeta, nCalGamma, nSoilBetaModel, nVegBetaModel, nSnowBetaModel
+  use globalData,    only: soilBetaCalName, vegBetaCalName, snowBetaCalName
   use globalData,    only: betaMeta
   use get_ixname,    only: get_ixBeta
   use read_mapdata,  only: read_hru_id
@@ -44,7 +44,8 @@ subroutine run_mpr( calParam, err, message )
   integer(i4b)                      :: hruID(nHru)                   ! Hru ID
   real(dp)                          :: hModel(nLyr,nHru)             ! storage of model layer thickness at model layer x model hru
   type(namevar)                     :: soilParMxyMz(nSoilBetaModel)  ! storage of model soil parameter at model layer x model hru
-  type(namevar)                     :: vegParMxy(nVegBetaModel)      ! storage of model vege parameter at month x model hru
+  type(namevar)                     :: vegParMxy(nVegBetaModel)      ! storage of model vege parameter at model hru (or month x hru)
+  type(namevar)                     :: snowParMxy(nSnowBetaModel)    ! storage of model snow parameter at model hru
   character(len=strLen)             :: cmessage                      ! error message from subroutine
 
   err=0; message='run_mpr/' ! to initialize error control
@@ -86,13 +87,17 @@ subroutine run_mpr( calParam, err, message )
   call allocateModelData( vegBetaCalName, vegParMxy, err, cmessage )
   if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
 
+  ! snow
+  call allocateModelData( snowBetaCalName, snowParMxy, err, cmessage )
+  if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
+
   ! -----------------------------------------
   !perform MPR
-  call mpr(hruID, pnormCoef, paramGammaStr, calGammaMeta, hModel, soilParMxyMz, vegParMxy, err, cmessage) ! to output model layer thickness and model parameter via MPR
+  call mpr(hruID, pnormCoef, paramGammaStr, calGammaMeta, hModel, soilParMxyMz, vegParMxy, snowParMxy, err, cmessage) ! to output model layer thickness and model parameter via MPR
   if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
 
   !! Write parameter derived from MPR in netCDF
-  call write_nc_beta(trim(mpr_output_dir)//trim(model_param_nc), hruID, hModel, soilParMxyMz, vegParMxy, err, cmessage)
+  call write_nc_beta(trim(mpr_output_dir)//trim(model_param_nc), hruID, hModel, soilParMxyMz, vegParMxy, snowParMxy, err, cmessage)
   if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
 
 END SUBROUTINE
@@ -158,11 +163,14 @@ subroutine mpr(hruID,             &     ! input: hruID
                hModel,            &     ! output: Model layer thickness
                parMxyMz,          &     ! output: MPR derived soil parameter
                vegParMxy,         &     ! output: MPR derived veg parameter
+               snowParMxy,        &     ! output: MPR derived snow parameter
                err, message)            ! output: error id and message
 
   use popMeta,              only:popMprMeta
-  use globalData,           only:dimMeta, betaMeta, gammaMeta, soilBetaCalName, vegBetaCalName, calScaleMeta, &
-                                 sdata_meta, vdata_meta, tdata_meta, cdata_meta, map_meta, nSoilBetaModel, nVegBetaModel
+  use globalData,           only:dimMeta, betaMeta, gammaMeta, calScaleMeta, &
+                                 soilBetaCalName, vegBetaCalName, snowBetaCalName, &
+                                 sdata_meta, vdata_meta, tdata_meta, cdata_meta, map_meta, &
+                                 nSoilBetaModel, nVegBetaModel, nSnowBetaModel
   use get_ixname,           only:get_ixGamma, get_ixBeta
   use tf,                   only:comp_model_param              ! Including Soil model parameter transfer function
   use modelLayer,           only:comp_model_depth              ! Including model layr depth computation routine
@@ -192,8 +200,9 @@ subroutine mpr(hruID,             &     ! input: hruID
   type(cpar_meta),      intent(in)   :: gammaParMeta(:)             ! array of calibrating gamma parameter meta data
   ! output
   real(dp),             intent(out)  :: hModel(:,:)                 ! Model layer thickness at model layer x model hru
-  type(namevar),        intent(inout):: parMxyMz(:)                 ! storage of model soil parameter at model layer x model hru
-  type(namevar),        intent(inout):: vegParMxy(:)                ! storage of model vege parameter at model hru
+  type(namevar),        intent(inout):: parMxyMz(:)                 ! storage of model soil parameter at model space
+  type(namevar),        intent(inout):: vegParMxy(:)                ! storage of model vege parameter at model space
+  type(namevar),        intent(inout):: snowParMxy(:)               ! storage of model snow parameter at model space
   integer(i4b),         intent(out)  :: err                         ! error code
   character(len=strLen),intent(out)  :: message                     ! error message
   ! local
@@ -238,13 +247,15 @@ subroutine mpr(hruID,             &     ! input: hruID
   real(dp),        allocatable       :: zModelLocal(:,:)            ! Model layer depth for soil polygon within one hru
   type(namevar)                      :: parSxySz(nSoilBetaModel)    ! storage of model soil parameter for 2D field -soil layer x soil poy
   type(namevar)                      :: parSxyMz(nSoilBetaModel)    ! storage of model soil parameter for 2D field -model layer x soil poy
-  type(namevar)                      :: parVxy(nVegBetaModel)       ! storage of model vege parameter for 1D or 2D field - vege poly (x month)
+  type(namevar)                      :: parVxy(nVegBetaModel)       ! storage of model vege parameter for 1D or 2D field - geophy poly (x month)
+  type(namevar)                      :: parSNWxy(nSnowBetaModel)    ! storage of model snow parameter for 1D or 2D field - geophy poly (x month)
   integer(i4b),    allocatable       :: polySub(:)                  ! list of ID (=index) of soil polygons contributing model hru
   type(mapvar)                       :: mapdata(1)                  ! map data container for the geophysical polygons
   real(dp),        allocatable       :: wgtSub(:)                   ! adjusted Areal weight of soil polygon for all model hrus
   type(poly),      allocatable       :: soil2model_map(:)           ! data structure to hold weight and index of contributing soil layer per model layer and per soil polygon
   type(var_d)                        :: soilParVec                  ! data structure to hold soil parameter vector e.g., all layers for one polygon
   type(var_d)                        :: vegParVec                   ! data structure to hold veg parameter vector e.g., all months for one polygon
+  type(var_d)                        :: snowParVec                  ! data structure to hold snow parameter vector e.g., all months for one polygon
 
   ! initialize error control
   err=0; message='mpr/'
@@ -424,6 +435,31 @@ subroutine mpr(hruID,             &     ! input: hruID
       enddo
     endif
 
+    if (nSnowBetaModel>0)then
+      do iParm=1,nSnowBetaModel
+
+        idxBeta=get_ixBeta(trim(snowBetaCalName(iParm)))
+
+        nDims = size(betaMeta(idxBeta)%parDim)
+        allocate(dimSize(nDims))
+
+        do ixDims = 1,nDims
+          idxDim = betaMeta(idxBeta)%parDim(ixDims)
+          dimSize(ixDims) = dimMeta(idxDim)%dimLength
+        end do
+
+        if (nDims == 1) then
+          allocate(parSNWxy(iParm)%dvar1(nGpolyLocal),stat=err)
+        else if (nDims== 2) then
+          allocate(parSNWxy(iParm)%dvar2(dimSize(2), nGpolyLocal),stat=err)
+        end if
+
+        deallocate(dimSize)
+
+      enddo
+    endif
+
+
   ! (3.1) Extract soil data for current model hru
     call subsetData(sdata, polySub, sdataLocal, 'soil' ,err, cmessage)
     if(err/=0)then; message=trim(message)//cmessage; return; endif
@@ -470,30 +506,28 @@ subroutine mpr(hruID,             &     ! input: hruID
     if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
 
   ! (3.4) Compute model parameters using transfer function
-    ! compute model soil parameters
-    if (nSoilBetaModel>0)then
-      call comp_model_param(parSxySz, parVxy, sdataLocal, tdataLocal, vdataLocal, gammaUpdateMeta, nSlyrs, nGpolyLocal, err, cmessage)
-      if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
+    ! compute model parameters
+    call comp_model_param(parSxySz, parVxy, parSNWxy, sdataLocal, tdataLocal, vdataLocal, cdataLocal, gammaUpdateMeta, nSlyrs, nGpolyLocal, err, cmessage)
+    if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
 
-      if ( iHru == iHruPrint ) then
-        print*,'(2) Print Model parameter at native resolution'
-        if (nSoilBetaModel>0)then
-          write(*,"(' Layer       =',20I9)") (iSLyr, iSlyr=1,nSlyrs)
-          do iParm=1,nSoilBetaModel
-            do iPoly = 1,nGpolyLocal
-              write(*,"(1X,A12,'=',20f9.3)") soilBetaCalName(iParm), (parSxySz(iParm)%dvar2(iSLyr,iPoly), iSlyr=1,nSlyrs)
-            enddo
+    if ( iHru == iHruPrint ) then
+      print*,'(2) Print Model parameter at native resolution'
+      if (nSoilBetaModel>0)then
+        write(*,"(' Layer       =',20I9)") (iSLyr, iSlyr=1,nSlyrs)
+        do iParm=1,nSoilBetaModel
+          do iPoly = 1,nGpolyLocal
+            write(*,"(1X,A12,'=',20f9.3)") soilBetaCalName(iParm), (parSxySz(iParm)%dvar2(iSLyr,iPoly), iSlyr=1,nSlyrs)
           enddo
-        endif
-        if (nVegBetaModel>0)then
-          do iParm=1,nVegBetaModel
-            do iPoly = 1,nGpolyLocal
-              write(*,"(1X,A10,'= ',100f9.3)") vegBetaCalName(iParm), (parVxy(iParm)%dvar2(iMon, iPoly), iMon=1,nMonth)
-            enddo
-          enddo
-        endif
+        enddo
       endif
-    end if
+      if (nVegBetaModel>0)then
+        do iParm=1,nVegBetaModel
+          do iPoly = 1,nGpolyLocal
+            write(*,"(1X,A10,'= ',100f9.3)") vegBetaCalName(iParm), (parVxy(iParm)%dvar2(iMon, iPoly), iMon=1,nMonth)
+          enddo
+        enddo
+      endif
+    endif
 
     ! (4.1.1) Compute Model layer depth
     call comp_model_depth(hModelLocal, zModelLocal, hfrac, sdataLocal, err, cmessage)
@@ -686,6 +720,60 @@ subroutine mpr(hruID,             &     ! input: hruID
         end if
       enddo
       deallocate(vegParVec%var)
+    endif
+
+    if (nSnowBetaModel>0)then
+
+      allocate( snowParVec%var(nGpolyLocal),stat=err)
+      if(err/=0)then; message=trim(message)//'error allocating snowParVec%var'; return; endif
+
+      do iParm = 1,nSnowBetaModel
+
+        idxBeta=get_ixBeta(trim(snowBetaCalName(iParm)))
+        nDims = size(betaMeta(idxBeta)%parDim)
+
+        if (nDims==1) then
+          do iPoly=1,nGpolyLocal
+            snowParVec%var(iPoly) = parSNWxy(iParm)%dvar1(iPoly)
+          end do
+          if ( trim(betaUpdateMeta(idxBeta)%parScale(1))/='na' )then
+            call aggreg(snowParMxy(iParm)%dvar1(iHru),       &
+                        wgtSub(:),                           &
+                        snowParVec%var,                      &
+                        betaUpdateMeta(idxBeta)%parScale(1), &
+                        betaUpdateMeta(idxBeta)%parPnorm(1), &
+                        err,cmessage)
+            if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
+          end if
+          deallocate(parSNWxy(iParm)%dvar1)
+        else if (nDims==2) then
+          do iMon=1,nMonth
+            do iPoly=1,nGpolyLocal
+              snowParVec%var(iPoly) = parSNWxy(iParm)%dvar2(iMon, iPoly)
+            enddo
+
+            if ( trim(betaUpdateMeta(idxBeta)%parScale(1))/='na' )then
+              call aggreg(snowParMxy(iParm)%dvar2(iHru, iMon), &
+                          wgtSub(:),                           &
+                          snowParVec%var,                      &
+                          betaUpdateMeta(idxBeta)%parScale(1), &
+                          betaUpdateMeta(idxBeta)%parPnorm(1), &
+                          err,cmessage)
+              if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
+
+              if ( iHru == iHruPrint ) then
+                print*,'-----------------------------------'
+                print*,'Aggregated snow parameter '
+                write(*,"(1X,A17,'(Month ',I2,') = ',100f9.3)") betaUpdateMeta(idxBeta)%parName, iMon ,snowParMxy(iParm)%dvar2(iHru,iMon)
+              endif
+
+            endif
+
+          end do
+          deallocate(parSNWxy(iParm)%dvar2)
+        end if
+      enddo
+      deallocate(snowParVec%var)
     endif
 
     deallocate(polySub, wgtSub)

@@ -27,6 +27,7 @@ integer(i4b),         save,            public  :: calBetaOrderIdx(nBeta)    ! in
 character(len=strLen),save,allocatable,public  :: calBetaName(:)            ! name of beta parameters to be estimated with MPR based on 'inParList' nml input
 character(len=strLen),save,allocatable,public  :: soilBetaCalName(:)        ! subset of "calBetaName"  including only soil parameters
 character(len=strLen),save,allocatable,public  :: vegBetaCalName(:)         ! subset of "calBetaName" including only vegetation parameters
+character(len=strLen),save,allocatable,public  :: snowBetaCalName(:)        ! subset of "calBetaName" including only snowparameters
 real(dp),             save,allocatable,public  :: parArray(:,:)             ! calibrating parameter array - input for optimization routine
 logical(lgc),         save,allocatable,public  :: parMask(:)                ! calibrating parameter mask vector - input for optimization routine
 

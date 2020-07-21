@@ -73,6 +73,7 @@ contains
      case('bd1gamma1');        get_ixGamma = ixGamma%bd1gamma1         ! gamma parameter-1 for bulk density [kg/m^3]
      case('WcrFrac1gamma1');   get_ixGamma = ixGamma%WcrFrac1gamma1    ! gamma parameter-1 for Fractional soil moisture content at critical point [-]
      case('WpwpFrac1gamma1');  get_ixGamma = ixGamma%WpwpFrac1gamma1   ! gamma parameter-1 for Fractional soil moisture content at wilting point [-]
+     case('bfr1gamma1');       get_ixGamma = ixGamma%bfr1gamma1        ! gamma parameter-1 for nonliear reservoir coefficient with normalized strage
      case('fsm1gamma1');       get_ixGamma = ixGamma%fsm1gamma1        !
      case('zk1gamma1');        get_ixGamma = ixGamma%zk1gamma1         !
      case('zsk1gamma1');       get_ixGamma = ixGamma%zsk1gamma1        !
@@ -83,6 +84,7 @@ contains
      case('lai1gamma1');       get_ixGamma = ixGamma%lai1gamma1        ! gamma parameter-1 for monthly lai (multiplier)
      case('cht1gamma1');       get_ixGamma = ixGamma%cht1gamma1        ! gamma parameter-1 for height of canopy top
      case('chb1gamma1');       get_ixGamma = ixGamma%chb1gamma1        ! gamma parameter-1 for height of canopy bottom
+     case('scf1gamma1');       get_ixGamma = ixGamma%scf1gamma1        ! gamma parameter-1 for soil precipitation correction factor
       ! get to here if cannot find the variable
       case default;             get_ixGamma = imiss
    end select
@@ -133,6 +135,7 @@ contains
      case('z');                get_ixBeta = ixBeta%z                 ! total depth of soil [m]
      case('WcrFrac');          get_ixBeta = ixBeta%WcrFrac           ! Fractional soil moisture content at critical point [-]
      case('WpwpFrac');         get_ixBeta = ixBeta%WpwpFrac          ! Fractional soil moisture content at wilting point [-]
+     case('bfr');              get_ixBeta = ixBeta%bfr               ! nonliear reservoir coefficient with normalized strage [m/s]
      case('twm');              get_ixBeta = ixBeta%twm               ! Tention water content [mm]
      case('fwm');              get_ixBeta = ixBeta%fwm               ! Free water content [mm]
      case('fsm');              get_ixBeta = ixBeta%fsm               ! Supplemental free water content [mm]
@@ -147,7 +150,7 @@ contains
      case('lai');              get_ixBeta = ixBeta%lai               ! monthly lai [m2/m2]
      case('cht');              get_ixBeta = ixBeta%cht               ! height of canopy top [m]
      case('chb');              get_ixBeta = ixBeta%chb               ! height of canopy bottom [m]
-     case('scf');              get_ixBeta = ixBeta%scf               !
+     case('scf');              get_ixBeta = ixBeta%scf               ! soil precipitation correction factor [fraction]
      case('mfmax');            get_ixBeta = ixBeta%mfmax             !
      case('mfmin');            get_ixBeta = ixBeta%mfmin             !
      case('uadj');             get_ixBeta = ixBeta%uadj              !

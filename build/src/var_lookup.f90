@@ -72,6 +72,7 @@ MODULE var_lookup
    integer(i4b)     :: sd1gamma1       = imiss  !
    integer(i4b)     :: WcrFrac1gamma1  = imiss  !
    integer(i4b)     :: WpwpFrac1gamma1 = imiss  !
+   integer(i4b)     :: bfr1gamma1      = imiss  ! gamma1 for baseflow rate coefficient with normalized storage
    integer(i4b)     :: fsm1gamma1      = imiss  !
    integer(i4b)     :: zk1gamma1       = imiss  !
    integer(i4b)     :: zsk1gamma1      = imiss  !
@@ -79,9 +80,10 @@ MODULE var_lookup
    integer(i4b)     :: zpk1gamma1      = imiss  !
    integer(i4b)     :: pfree1gamma1    = imiss  !
    integer(i4b)     :: rexp1gamma1     = imiss  !
-   integer(i4b)     :: lai1gamma1      = imiss  !
-   integer(i4b)     :: cht1gamma1      = imiss  !
-   integer(i4b)     :: chb1gamma1      = imiss  !
+   integer(i4b)     :: lai1gamma1      = imiss  ! gamma1 for lai
+   integer(i4b)     :: cht1gamma1      = imiss  ! gamma1 for top canopy height
+   integer(i4b)     :: chb1gamma1      = imiss  ! gamma1 for bottom canopy height
+   integer(i4b)     :: scf1gamma1      = imiss  ! gamma1 for soil precipitation correction factor
  endtype iLook_gamma
 ! ***********************************************************************************************************
 ! 2.Define indices for beta parameters
@@ -120,6 +122,7 @@ MODULE var_lookup
    integer(i4b)     :: z               = imiss  !
    integer(i4b)     :: WcrFrac         = imiss  !
    integer(i4b)     :: WpwpFrac        = imiss  !
+   integer(i4b)     :: bfr             = imiss  ! baseflow rate coefficient with normalized storage
    integer(i4b)     :: twm             = imiss  !  tention water maximum
    integer(i4b)     :: fwm             = imiss  !
    integer(i4b)     :: fsm             = imiss  !
@@ -134,7 +137,7 @@ MODULE var_lookup
    integer(i4b)     :: lai             = imiss  ! Lai [m2/m2]
    integer(i4b)     :: cht             = imiss  ! top canopy height [m]
    integer(i4b)     :: chb             = imiss  ! bottom canopy height [m]
-   integer(i4b)     :: scf             = imiss  !
+   integer(i4b)     :: scf             = imiss  ! soil precipitation correction factor [fraction]
    integer(i4b)     :: mfmax           = imiss  !
    integer(i4b)     :: mfmin           = imiss  !
    integer(i4b)     :: uadj            = imiss  !
@@ -226,13 +229,13 @@ MODULE var_lookup
                                                                                  21,22,23,24,25,26,27,28,29,30,&
                                                                                  31,32,33,34,35,36,37,38,39,40,&
                                                                                  41,42,43,44,45,46,47,48,49,50,&
-                                                                                 51,52,53,54,55)
+                                                                                 51,52,53,54,55,56,57)
  type(iLook_beta),        public,parameter :: ixBeta         = iLook_beta        (1,2,3,4,5,6,7,8,9,10,&
                                                                                  11,12,13,14,15,16,17,18,19,20,&
                                                                                  21,22,23,24,25,26,27,28,29,30,&
                                                                                  31,32,33,34,35,36,37,38,39,40,&
                                                                                  41,42,43,44,45,46,47,48,49,50,&
-                                                                                 51,52,53,54,55,56,57)
+                                                                                 51,52,53,54,55,56,57,58)
  type(iLook_VarMapData),  public,parameter :: ixVarMapData   = iLook_VarMapData  (1,2,3,4)
  type(iLook_VarSoilData), public,parameter :: ixVarSoilData  = iLook_VarSoilData (1,2,3,4,5,6,7)
  type(iLook_VarVegData),  public,parameter :: ixVarVegData   = iLook_VarVegData  (1,2,3,4)

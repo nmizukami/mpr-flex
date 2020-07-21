@@ -25,24 +25,28 @@ CONTAINS
 ! *********************************************************************************************
 subroutine comp_model_param(parSxySz,          &  ! in/output: soil parameter values for all L0 polygons that are included
                             parVxy,            &  ! in/output: veg parameter values for all L0 polygons that are included
+                            parSNWxy,          &  ! in/output: snow parameter values for all L0 polygons that are included
                             sdata,             &  ! input: soil data
                             tdata,             &  ! input: topo data
                             vdata,             &  ! input: vege data
+                            cdata,             &  ! input: climate data
                             gammaParMasterMeta,&  ! input: gamma parameter meta file - val of calibrating parammeter is adjusted via calibration
                             nSLyr,             &  ! input: number of soil layers
                             nGpoly,            &  ! input: number of geophysical property polygons
                             err,message)
 
-  use globalData, only:betaMeta, calBetaOrderIdx, soilBetaCalName, vegBetaCalName
+  use globalData, only:betaMeta, calBetaOrderIdx, soilBetaCalName, vegBetaCalName, snowBetaCalName
   use get_ixname, only:get_ixBeta
   implicit none
   ! in/out
   type(namevar),        intent(inout) :: parSxySz(:)            ! soil parameter values for ParSxySz(:)%varDat(lyr,poly)
   type(namevar),        intent(inout) :: parVxy(:)              ! veg parameter values for ParVxy(:)%varDat(lyr,poly)
+  type(namevar),        intent(inout) :: parSNWxy(:)            ! snow parameter values for ParVxy(:)%varDat(lyr,poly)
   ! input
   type(namevar),        intent(in)    :: sdata(:)               ! storage of soil data strucuture
   type(namevar),        intent(in)    :: tdata(:)               ! storage of topo data strucuture
   type(namevar),        intent(in)    :: vdata(:)               ! storage of veg data strucuture
+  type(namevar),        intent(in)    :: cdata(:)               ! storage of climate data strucuture
   type(gammaPar_meta),  intent(in)    :: gammaParMasterMeta(:)
   integer(i4b),         intent(in)    :: nSLyr                ! number of soil layer
   integer(i4b),         intent(in)    :: nGpoly               ! number of soil polygons
@@ -80,7 +84,7 @@ subroutine comp_model_param(parSxySz,          &  ! in/output: soil parameter va
       second: associate (xPar => parTemp(ix)%dvar2, &
                          xPar1=> parTemp(ix)%dvar1, &
                          tfid => betaMeta(ix)%tftype)
-      if (tfid==-999_i4b) tfid=1_i4b
+      if (tfid==-999) tfid=1
       select case(ix)
         case(ixBeta%ks)
           call ks( err, message, sdata=sdata, gammaPar=gammaPar, ks_out=xPar, tfopt=tfid )
@@ -130,6 +134,8 @@ subroutine comp_model_param(parSxySz,          &  ! in/output: soil parameter va
           call WcrFrac( err, message, fc_in=parTemp(ixBeta%fc)%dvar2, phi_in=parTemp(ixBeta%phi)%dvar2, gammaPar=gammaPar, WcrFrac_out=xPar, tfopt=tfid )
         case(ixBeta%WpwpFrac)
           call WpwpFrac( err, message, wp_in=parTemp(ixBeta%wp)%dvar2, phi_in=parTemp(ixBeta%phi)%dvar2, gammaPar=gammaPar, WpwpFrac_out=xPar, tfopt=tfid )
+        case(ixBeta%bfr)
+          call bfr( err, message, sdata=sdata, tdata=tdata, ks_in=parTemp(ixBeta%ks)%dvar2, gammaPar=gammaPar, bfr_out=xPar1, tfopt=tfid )
         case(ixBeta%transp)
           call transp( err, message, wp_in=parTemp(ixBeta%wp)%dvar2, phi_in=parTemp(ixBeta%phi)%dvar2, gammaPar=gammaPar, transp_out=xPar, tfopt=tfid )
         case(ixBeta%Ws)
@@ -160,6 +166,8 @@ subroutine comp_model_param(parSxySz,          &  ! in/output: soil parameter va
           call cht( err, message, vdata=vdata, gammaPar=gammaPar, cht_out=xPar1, tfopt=tfid )
         case(ixBeta%chb)
           call chb( err, message, cht_in=parTemp(ixBeta%cht)%dvar1, gammaPar=gammaPar, chb_out=xPar1, tfopt=tfid )
+        case(ixBeta%scf)
+          call scf( err, message, cdata=cdata, gammaPar=gammaPar, scf_out=xPar1, tfopt=tfid )
       end select ! end of parameter case
       end associate second
     endif
@@ -183,6 +191,15 @@ subroutine comp_model_param(parSxySz,          &  ! in/output: soil parameter va
       parVxy(iParm)%dvar1=parTemp(idxBeta)%dvar1
     else if (nDims==2) then
       parVxy(iParm)%dvar2=parTemp(idxBeta)%dvar2
+    end if
+  enddo
+  do iParm=1,size(snowBetaCalName)
+    idxBeta=get_ixBeta(trim(snowBetaCalName(iParm)))
+    nDims = size(betaMeta(idxBeta)%parDim)
+    if (nDims==1) then
+      parSNWxy(iParm)%dvar1=parTemp(idxBeta)%dvar1
+    else if (nDims==2) then
+      parSNWxy(iParm)%dvar2=parTemp(idxBeta)%dvar2
     end if
   enddo
 
@@ -231,6 +248,7 @@ subroutine betaDependency( err, message )
       case(ixBeta%bbl);     call bubble  (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%WcrFrac); call WcrFrac (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%WpwpFrac);call WpwpFrac(err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
+      case(ixBeta%bfr);     call bfr     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%twm);     call twm     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%fwm);     call fwm     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%fsm);     call fsm     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
@@ -244,6 +262,7 @@ subroutine betaDependency( err, message )
       case(ixBeta%lai);     call lai     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%cht);     call cht     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%chb);     call chb     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
+      case(ixBeta%scf);     call scf     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%z); allocate(ixDepend(1), stat=err); ixDepend=-999_i4b
       case(ixBeta%h1);allocate(ixDepend(1), stat=err); ixDepend=-999_i4b
       case(ixBeta%h2);allocate(ixDepend(1), stat=err); ixDepend=-999_i4b
@@ -431,6 +450,59 @@ subroutine resid(err, message, ixDepend, wp_in, gammaPar, resid_out, tfopt)
       case default; print*,trim(message)//'OptNotRecognized'; stop
     end select
     end associate
+  else
+    err=10;message=trim(message)//'WrongOptionalInputs'; return
+  endif
+end subroutine
+
+! ***********
+!  nonlinear reservor coefficient parameter - normalized storage [m/s]
+! *********************************************************************
+subroutine bfr( err, message, ixDepend, sdata, tdata, ks_in, gammaPar, bfr_out, tfopt )
+  implicit none
+  ! input
+  type(namevar),            optional,intent(in)   :: sdata(:)         ! input(optional): storage of soil data strucuture
+  type(namevar),            optional,intent(in)   :: tdata(:)         ! input(optional): storage of topo data strucuture
+  real(dp),                 optional,intent(in)   :: ks_in(:,:)       ! input(optional): saturated hydraulic conductivity [m/s]
+  real(dp),                 optional,intent(in)   :: gammaPar(:)      ! input(optional): gamma parameter array
+  integer(i4b),             optional,intent(in)   :: tfopt            ! input(optional): option for transfer function form
+  ! output
+  integer(i4b),                      intent(out)  :: err              ! output: error id
+  character(len=strLen),             intent(out)  :: message          ! output: error message
+  integer(i4b), allocatable,optional,intent(out)  :: ixDepend(:)      ! output(optional): id of dependent beta parameters
+  real(dp),                 optional,intent(out)  :: bfr_out(:)       ! output(optional): computed bfr parameter [m/s]
+  ! local
+  integer(i4b)                                    :: tftype           ! option for transfer function form used
+  integer(i4b),        parameter                  :: nDepend=1        ! bfr parameter depends on beta parameters (ks)
+  integer(i4b)                                    :: ixBottom         ! index of bottom soil layer
+  real(dp), parameter                             :: bfr_min=1.0d-9
+  real(dp), parameter                             :: bfr_max=1.0d-1
+
+  err=0;message="bfr/"
+  if ( present(ixDepend) ) then ! setup dependency
+    allocate(ixDepend(nDepend),stat=err); if(err/=0)then;message=trim(message)//'error allocating ixDepend';return;endif
+    ixDepend=(/ixBeta%ks/)
+  elseif ( present(sdata) .and. present(tdata) .and. present(ks_in) .and. present(gammaPar) .and. present(bfr_out) )then ! compute parameters with TF
+    tftype=1
+    if (present(tfopt) ) tftype=tfopt
+    ! local variable allocation
+    associate(g1       => gammaPar(ixGamma%bfr1gamma1), &
+              slope_in => tdata(ixVarTopoData%slp_mean)%dvar1 )
+    ixBottom = size(ks_in,1) ! [soil layr x hru]
+    ! compute parameters
+    select case(tftype)
+      case(1);
+        where ( slope_in /= dmiss .and. ks_in(ixBottom,:) /= dmiss )
+          bfr_out = g1*ks_in(ixBottom,:)*(slope_in*0.01)
+        else where
+          bfr_out = dmiss
+        end where
+      case default; print*,trim(message)//'OptNotRecognized'; stop
+    end select
+    end associate
+    ! cap value with upper and lower bounds
+    where ( bfr_out > bfr_max ) bfr_out=bfr_max
+    where ( bfr_out < bfr_min ) bfr_out=bfr_min
   else
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
@@ -2064,7 +2136,7 @@ subroutine cht( err, message, ixDepend, vdata, gammaPar, cht_out, tfopt )
   real(dp),                optional,intent(out) :: cht_out(:)       ! output(optional): height of canopy top [m]
   ! local
   integer(i4b)                                  :: tftype           ! option for transfer function form used
-  integer(i4b),parameter                        :: nDepend=0        ! lai parameter depends on no beta parameters
+  integer(i4b),parameter                        :: nDepend=0        ! cht parameter depends on no beta parameters
   real(dp),parameter                            :: cht_min=0.05_dp  ! minimum plausible canopy top height [m]
   real(dp),parameter                            :: cht_max=100.0_dp ! maximum plausible canopy top height [m]
   real(dp),allocatable                          :: cht_temp(:)
@@ -2120,7 +2192,7 @@ subroutine chb( err, message, ixDepend, cht_in, gammaPar, chb_out, tfopt )
   real(dp),                optional,intent(out) :: chb_out(:)       ! output(optional): height of canopy top [m]
   ! local
   integer(i4b)                                  :: tftype           ! option for transfer function form used
-  integer(i4b),parameter                        :: nDepend=0        ! lai parameter depends on no beta parameters
+  integer(i4b),parameter                        :: nDepend=0        ! chb parameter depends on no beta parameters
   real(dp),parameter                            :: chb_min=0.00_dp  ! minimum plausible canopy bottom height [m]
   real(dp),parameter                            :: chb_max=5.0_dp   ! maximum plausible canopy bottom height [m]
   real(dp),allocatable                          :: chb_temp(:)
@@ -2150,6 +2222,55 @@ subroutine chb( err, message, ixDepend, cht_in, gammaPar, chb_out, tfopt )
           chb_out = chbslope*(chb_max-chb_min)+chb_min
         else where
           chb_out = dmiss
+        end where
+      case default;print*,trim(message)//'OptNotRecognized';stop
+    end select
+    end associate
+  else
+    err=10;message=trim(message)//'WrongOptionalInputs'; return
+  endif
+end subroutine
+
+! *********************************************************************
+! solid precipitation correction factor [fraction]
+! *********************************************************************
+subroutine scf( err, message, ixDepend, cdata, gammaPar, scf_out, tfopt )
+  implicit none
+  ! input
+  type(namevar),           optional,intent(in)  :: cdata(:)         ! input(optional):  storage of climate data strucuture
+  real(dp),                optional,intent(in)  :: gammaPar(:)      ! inputoptional):   gamma parameter array
+  integer(i4b),            optional,intent(in)  :: tfopt            ! input(optional):  option for transfer function form
+  ! output
+  integer(i4b),                     intent(out) :: err              ! output:           error id
+  character(len=strLen),            intent(out) :: message          ! output:           error message
+  integer(i4b),allocatable,optional,intent(out) :: ixDepend(:)      ! output(optional): id of dependent beta parameters
+  real(dp),                optional,intent(out) :: scf_out(:)       ! output(optional): snow correction factor [fraction]
+  ! local
+  integer(i4b)                                  :: tftype           ! option for transfer function form used
+  integer(i4b),parameter                        :: nDepend=0        ! lai parameter depends on no beta parameters
+  integer(i4b)                                  :: n1               ! number of 1st dimension
+  integer(i4b)                                  :: n2               ! number of 2nd dimension
+  real(dp),allocatable                          :: wind_mean(:)     ! mean wind speed [m/s]
+
+  err=0; message="scf/"
+  if ( present(ixDepend) ) then ! setup dependency
+    allocate(ixDepend(1),stat=err); if(err/=0)then;message=trim(message)//'error allocating ixDepend';return;endif
+    ixDepend=-999
+  elseif ( present(cdata) .and. present(gammaPar) .and. present(scf_out) )then ! compute parameters with TF
+    tftype=1
+    if ( present(tfopt) ) tftype=tfopt
+    associate(g1=>gammaPar(ixGamma%scf1gamma1),   &
+              wind_in => cdata(ixVarClimData%wind)%dvar2 )
+    n1=size(wind_in,1)
+    n2=size(wind_in,2)
+    allocate(wind_mean(n2))
+    wind_mean = sum(wind_in, dim=1)/n1
+    select case(tftype)
+      case(1);
+        where ( wind_mean /= dmiss )
+          scf_out = 1.0_dp / (1.0_dp - g1*wind_mean)
+        else where
+          scf_out = dmiss
         end where
       case default;print*,trim(message)//'OptNotRecognized';stop
     end select

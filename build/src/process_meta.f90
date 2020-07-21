@@ -99,8 +99,10 @@ SUBROUTINE get_parm_meta( err, message)
                         nCalScale,      & ! number of scaling parameters to be computed
                         nSoilBetaModel, & ! number of soil beta parameters to be computed via MPR
                         nVegBetaModel,  & ! number of veg beta parameters to be computed via MPR
-                        soilBetaCalName,& ! list of Soil parameters to be omputed via MPR
-                        vegBetaCalName    ! list of vege parameters to be omputed via MPR
+                        nSnowBetaModel, & ! number of snow beta parameters to be computed via MPR
+                        soilBetaCalName,& ! list of soil parameters to be omputed via MPR
+                        vegBetaCalName ,& ! list of vege parameters to be omputed via MPR
+                        snowBetaCalName   ! list of snow parameters to be omputed via MPR
   use get_ixname, only:get_ixBeta, get_ixGamma
   use var_lookup, only:nBeta,nGamma
   implicit none
@@ -181,8 +183,10 @@ SUBROUTINE get_parm_meta( err, message)
     integer(i4b)                         :: idxBeta                ! index in beta parameter
     integer(i4b)                         :: iSoil                  ! counter for soil beta parameters to be computed with MPR
     integer(i4b)                         :: iVeg                   ! counter for vege beta parameters to be computed with MPR
+    integer(i4b)                         :: iSnow                  ! counter for vege beta parameters to be computed with MPR
     character(len=strLen),allocatable    :: tempSoilBetaInGamma(:) !
     character(len=strLen),allocatable    :: tempVegBetaInGamma(:)  !
+    character(len=strLen),allocatable    :: tempSnowBetaInGamma(:) !
     character(len=strLen),allocatable    :: res(:)                 ! beta parameter name array
     integer(i4b)                         :: counter                ! counter
 
@@ -202,6 +206,7 @@ SUBROUTINE get_parm_meta( err, message)
     ! Count number of soil and Vege parameters to be computed with MPR excluding h and z parameters
     nSoilBetaModel=0
     nVegBetaModel=0
+    nSnowBetaModel=0
 
     if ( counter > 0 ) then
 
@@ -210,20 +215,21 @@ SUBROUTINE get_parm_meta( err, message)
 
       do iPar=1,size(calBetaName)
         idxBeta=get_ixBeta(calBetaName(iPar))
-        if (betaMeta(idxBeta)%parType=='soil') nSoilBetaModel = nSoilBetaModel+1
-        if (betaMeta(idxBeta)%parType=='veg')  nVegBetaModel  = nVegBetaModel +1
+        if (betaMeta(idxBeta)%parType=='soil') nSoilBetaModel = nSoilBetaModel + 1
+        if (betaMeta(idxBeta)%parType=='veg')  nVegBetaModel  = nVegBetaModel  + 1
+        if (betaMeta(idxBeta)%parType=='snow') nSnowBetaModel = nSnowBetaModel + 1
       enddo
 
-      iSoil=0;iVeg=0
+      iSoil=0;iVeg=0;iSnow=0
 
-      allocate(tempSoilBetaInGamma(nBeta),stat=err)
-      allocate(tempVegBetaInGamma(nBeta),stat=err)
+      allocate(tempSoilBetaInGamma(nBeta), tempVegBetaInGamma(nBeta), tempSnowBetaInGamma(nBeta), stat=err)
 
       do iPar=1,size(calBetaName)
         idxBeta = get_ixBeta(calBetaName(iPar))
         if(idxBeta<=0)then; err=40; message=trim(message)//"2.variableNotFound[var="//trim(calBetaName(iPar))//"]"; return; endif
         if (betaMeta(idxBeta)%parType=='soil')then; iSoil=iSoil+1; tempSoilBetaInGamma(iSoil) = betaMeta(idxBeta)%parName; endif
         if (betaMeta(idxBeta)%parType=='veg') then; iVeg=iVeg+1;   tempVegBetaInGamma(iVeg)   = betaMeta(idxBeta)%parName; endif
+        if (betaMeta(idxBeta)%parType=='snow')then; iSnow=iSnow+1; tempSnowBetaInGamma(iSnow) = betaMeta(idxBeta)%parName; endif
       enddo
 
       allocate(soilBetaCalName(nSoilBetaModel))
@@ -231,6 +237,9 @@ SUBROUTINE get_parm_meta( err, message)
 
       allocate(vegBetaCalName(nVegBetaModel))
       vegBetaCalName=tempVegBetaInGamma(1:nVegBetaModel)
+
+      allocate(snowBetaCalName(nSnowBetaModel))
+      snowBetaCalName=tempSnowBetaInGamma(1:nSnowBetaModel)
 
     else
       err=40; message=trim(message)//"No Beta parameter detected."; return

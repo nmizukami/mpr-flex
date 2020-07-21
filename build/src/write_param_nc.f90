@@ -23,10 +23,12 @@ contains
                            hModel,          & ! input: model layer thickness
                            parMxyMz,        & ! input: parameter data structure
                            vegParMxy,       & ! input: parameter data structure
+                           snowParMxy,      & ! input: parameter data structure
                            ierr, message)     ! output: error control
 
     use globalData,    only: nSoilBetaModel, soilBetaCalName
     use globalData,    only: nVegBetaModel,  vegBetaCalName
+    use globalData,    only: nSnowBetaModel, snowBetaCalName
     use globalData,    only: dimMeta
     use var_lookup,    only: ixDim
 
@@ -34,9 +36,10 @@ contains
     ! input variables
     character(*),   intent(in)            :: fname        ! input: filename
     integer(i4b),   intent(in)            :: hruID(:)     ! Hru ID
-    real(dp),       intent(in)            :: hModel(:,:)  ! input: array of model layer thickness at model layer x model hru
-    type(namevar),  intent(in)            :: parMxyMz(:)  ! input: data structure for model soil parameter at model layer x model hru
-    type(namevar),  intent(in)            :: vegParMxy(:) ! input: data structure for model veg parameter at model layer x model hru
+    real(dp),       intent(in)            :: hModel(:,:)  ! input: array of model layer thickness
+    type(namevar),  intent(in)            :: parMxyMz(:)  ! input: data structure for model soil parameter at model space
+    type(namevar),  intent(in)            :: vegParMxy(:) ! input: data structure for model veg parameter at model space
+    type(namevar),  intent(in)            :: snowParMxy(:)! input: data structure for model snow parameter at model space
     ! output variables
     integer(i4b), intent(out)             :: ierr         ! error code
     character(*), intent(out)             :: message      ! error message
@@ -98,6 +101,11 @@ contains
       if(ierr/=0)then;message=trim(message)//trim(cmessage);return;endif
     end if
 
+    if (nSnowBetaModel>0) then
+      call defNetCDF(ncid, snowBetaCalName, ierr, cmessage)
+      if(ierr/=0)then;message=trim(message)//trim(cmessage);return;endif
+    end if
+
     ! end definitions
     call end_def(ncid, ierr, cmessage)
     if(ierr/=0)then;message=trim(message)//trim(cmessage);return;endif
@@ -126,6 +134,12 @@ contains
     ! Write veg parameters
     if (nVegBetaModel>0) then
       call write_par(fname, vegBetaCalName, vegParMxy, ierr, cmessage)
+      if(ierr/=0)then;message=trim(message)//trim(cmessage);return;endif
+    end if
+
+    ! Write veg parameters
+    if (nSnowBetaModel>0) then
+      call write_par(fname, snowBetaCalName, snowParMxy, ierr, cmessage)
       if(ierr/=0)then;message=trim(message)//trim(cmessage);return;endif
     end if
 
