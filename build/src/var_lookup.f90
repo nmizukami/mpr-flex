@@ -174,12 +174,12 @@ MODULE var_lookup
 ! ***********************************************************************************************************
  type, public  ::  iLook_VarSoilData
   integer(i4b)     :: polyid       = imiss      ! polygon id
-  integer(i4b)     :: hslyrs       = imiss      ! soil layer thickness
-  integer(i4b)     :: sand_pct     = imiss      ! sand fraction in soil polygon and layer
-  integer(i4b)     :: silt_pct     = imiss      ! silt fraction in soil polygon and layer
-  integer(i4b)     :: clay_pct     = imiss      ! clay fraction in soil polygon and layer
-  integer(i4b)     :: bulk_density = imiss      ! bulk density in soil polygon and layer
-  integer(i4b)     :: soc          = imiss      ! soil carbon content in soil polygon and layer
+  integer(i4b)     :: hslyrs       = imiss      ! soil layer thickness [cm]
+  integer(i4b)     :: sand_pct     = imiss      ! sand fraction in soil polygon and layer [%]
+  integer(i4b)     :: silt_pct     = imiss      ! silt fraction in soil polygon and layer [%]
+  integer(i4b)     :: clay_pct     = imiss      ! clay fraction in soil polygon and layer [%]
+  integer(i4b)     :: bulk_density = imiss      ! bulk density in soil polygon and layer [kg/m3]
+  integer(i4b)     :: soc          = imiss      ! soil carbon content in soil polygon and layer [g/kg]
  endtype iLook_VarSoilData
 
 ! ***********************************************************************************************************
@@ -187,9 +187,9 @@ MODULE var_lookup
 ! ***********************************************************************************************************
  type, public  ::  iLook_VarTopoData
   integer(i4b)     :: polyid       = imiss      ! polygon id
-  integer(i4b)     :: ele_mean     = imiss      ! mean elevation over a soil polygon
-  integer(i4b)     :: ele_std      = imiss      ! standard deviation of elevation over a soil polygon
-  integer(i4b)     :: slp_mean     = imiss      ! mean slope over a soil polygon
+  integer(i4b)     :: ele_mean     = imiss      ! mean elevation over a soil polygon [m]
+  integer(i4b)     :: ele_std      = imiss      ! standard deviation of elevation over a soil polygon [m]
+  integer(i4b)     :: slp_mean     = imiss      ! mean slope over a soil polygon [%]
  endtype iLook_VarTopoData
 
 ! ***********************************************************************************************************

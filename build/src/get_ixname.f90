@@ -221,7 +221,8 @@ contains
    case('sand_pct');     get_ixDataSoil = ixVarSoilData%sand_pct      ! sand percent in soil polygon and layer [%]
    case('silt_pct');     get_ixDataSoil = ixVarSoilData%silt_pct      ! silt percent in soil polygon and layer [%]
    case('clay_pct');     get_ixDataSoil = ixVarSoilData%clay_pct      ! clay percent in soil polygon and layer [%]
-   case('bulk_density'); get_ixDataSoil = ixVarSoilData%bulk_density  ! bulk density in soil polygon and layer [%]
+   case('bulk_density'); get_ixDataSoil = ixVarSoilData%bulk_density  ! bulk density in soil polygon and layer [kg/m3]
+   case('soc');          get_ixDataSoil = ixVarSoilData%soc           ! soil carbon content in soil polygon and layer [%]
    ! get to here if cannot find the variable
    case default;     get_ixdataSoil = imiss
   endselect
@@ -241,7 +242,7 @@ contains
      case('polyid');     get_ixDataTopo = ixVarTopoData%polyid     ! polygon ID
      case('ele_mean');   get_ixDataTopo = ixVarTopoData%ele_mean   ! average elev over soil polygon [m]
      case('ele_std');    get_ixDataTopo = ixVarTopoData%ele_std    ! std elev over soil polygon [m]
-     case('slp_mean');   get_ixDataTopo = ixVarTopoData%slp_mean   ! average slope over soil polygon [-]
+     case('slp_mean');   get_ixDataTopo = ixVarTopoData%slp_mean   ! average slope over soil polygon [percent]
      ! get to here if cannot find the variable
      case default;     get_ixDataTopo = imiss
    endselect
