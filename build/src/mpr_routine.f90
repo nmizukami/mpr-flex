@@ -173,11 +173,11 @@ subroutine mpr(hruID,             &     ! input: hruID
                                  nSoilBetaModel, nVegBetaModel, nSnowBetaModel
   use get_ixname,           only:get_ixGamma, get_ixBeta
   use tf,                   only:comp_model_param              ! Including Soil model parameter transfer function
+  use modelLayer,           only:extend_soil_layer             ! add one additional soil layer below the bottom soil layer
   use modelLayer,           only:comp_model_depth              ! Including model layr depth computation routine
   use modelLayer,           only:map_slyr2mlyr                 ! Including model layr computation routine
   use upscaling,            only:aggreg                        ! Including Upscaling operator
   use read_soildata,        only:getSoilData                   ! routine to read soil data into data structures
-  use read_soildata,        only:mod_hslyrs                    ! routine to modify soil layer thickness and updata soil data structure
   use read_vegdata,         only:getVegData                    ! routine to read veg data into data structures
   use read_vegdata,         only:getVegClassLookup             ! routine to read veg calss-property lookupu table
   use read_topodata,        only:getTopoData                   ! routine to read topography data into data structures
@@ -245,6 +245,7 @@ subroutine mpr(hruID,             &     ! input: hruID
   integer(i4b)                       :: iVclass                     ! ID (= index) of vege class
   real(dp),        allocatable       :: hModelLocal(:,:)            ! Model layer thickness for soil polygon within one hru
   real(dp),        allocatable       :: zModelLocal(:,:)            ! Model layer depth for soil polygon within one hru
+  real(dp),        allocatable       :: coef(:,:)                   ! Model layer thickness coefficients for model space
   type(namevar)                      :: parSxySz(nSoilBetaModel)    ! storage of model soil parameter for 2D field -soil layer x soil poy
   type(namevar)                      :: parSxyMz(nSoilBetaModel)    ! storage of model soil parameter for 2D field -model layer x soil poy
   type(namevar)                      :: parVxy(nVegBetaModel)       ! storage of model vege parameter for 1D or 2D field - geophy poly (x month)
@@ -296,8 +297,9 @@ subroutine mpr(hruID,             &     ! input: hruID
                    err, cmessage)
   if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
 
-  call mod_hslyrs(sdata, gammaUpdateMeta(ixGamma%z1gamma1)%val, err,cmessage) ! modify soil layer thickness in sdata data structure
-  if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
+  call extend_soil_layer(sdata, err, cmessage)
+  if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
+  nSlyrs = nSlyrs+1
 
   ! (1.2)  veg class - properties lookup table ...
   ! (1.2.1) Read in veg data netCDF...
@@ -378,6 +380,7 @@ subroutine mpr(hruID,             &     ! input: hruID
     ! Memory allocation
     allocate(hModelLocal(nLyr,nGpolyLocal),stat=err); if(err/=0)then;message=trim(message)//'error allocating hModelLocal'; return;endif
     allocate(zModelLocal(nLyr,nGpolyLocal),stat=err); if(err/=0)then;message=trim(message)//'error allocating zModelLocal'; return;endif
+    allocate(coef(nLyr,nGpolyLocal),       stat=err); if(err/=0)then;message=trim(message)//'error allocating zModelLocal'; return;endif
     allocate(soil2model_map(nGpolyLocal),stat=err);   if(err/=0)then;message=trim(message)//'error allocating soil2model_map';return;endif
     do iPoly=1,nGpolyLocal
       allocate(soil2model_map(iPoly)%layer(nLyr),stat=err); if(err/=0)then;message=trim(message)//'error allocating soil2model_map%layer';return;endif
@@ -386,6 +389,7 @@ subroutine mpr(hruID,             &     ! input: hruID
         allocate(soil2model_map(iPoly)%layer(iMLyr)%ixSubLyr(nSub),stat=err);if(err/=0)then;message=trim(message)//'error allocating lyrmap%layer%ixSubLyr';return;endif
       enddo
     enddo
+    coef = 1.0_dp ! for now
 
     if (nSoilBetaModel>0) then
       do iParm=1,nSoilBetaModel
@@ -398,10 +402,10 @@ subroutine mpr(hruID,             &     ! input: hruID
           dimSize(ixDims) = dimMeta(idxDim)%dimLength
         end do
 
-        if (nDims == 1) then
+        if (nDims==1) then
           allocate(parSxySz(iParm)%dvar1(nGpolyLocal),stat=err); if(err/=0)then;message=trim(message)//'error allocating parSxySz%varData';return;endif
           allocate(parSxyMz(iParm)%dvar1(nGpolyLocal),stat=err); if(err/=0)then;message=trim(message)//'error allocating parSxyMz%varData';return;endif
-        else if (nDims== 2) then
+        else if (nDims==2) then
           allocate(parSxySz(iParm)%dvar2(nSlyrs,    nGpolyLocal),stat=err); if(err/=0)then;message=trim(message)//'error allocating parSxySz%varData';return;endif
           allocate(parSxyMz(iParm)%dvar2(dimSize(2),nGpolyLocal),stat=err); if(err/=0)then;message=trim(message)//'error allocating parSxyMz%varData';return;endif
         end if
@@ -413,9 +417,7 @@ subroutine mpr(hruID,             &     ! input: hruID
 
     if (nVegBetaModel>0)then
       do iParm=1,nVegBetaModel
-
         idxBeta=get_ixBeta(trim(vegBetaCalName(iParm)))
-
         nDims = size(betaMeta(idxBeta)%parDim)
         allocate(dimSize(nDims))
 
@@ -424,9 +426,9 @@ subroutine mpr(hruID,             &     ! input: hruID
           dimSize(ixDims) = dimMeta(idxDim)%dimLength
         end do
 
-        if (nDims == 1) then
+        if (nDims==1) then
           allocate(parVxy(iParm)%dvar1(nGpolyLocal),stat=err)
-        else if (nDims== 2) then
+        else if (nDims==2) then
           allocate(parVxy(iParm)%dvar2(dimSize(2), nGpolyLocal),stat=err)
         end if
 
@@ -437,9 +439,7 @@ subroutine mpr(hruID,             &     ! input: hruID
 
     if (nSnowBetaModel>0)then
       do iParm=1,nSnowBetaModel
-
         idxBeta=get_ixBeta(trim(snowBetaCalName(iParm)))
-
         nDims = size(betaMeta(idxBeta)%parDim)
         allocate(dimSize(nDims))
 
@@ -448,9 +448,9 @@ subroutine mpr(hruID,             &     ! input: hruID
           dimSize(ixDims) = dimMeta(idxDim)%dimLength
         end do
 
-        if (nDims == 1) then
+        if (nDims==1) then
           allocate(parSNWxy(iParm)%dvar1(nGpolyLocal),stat=err)
-        else if (nDims== 2) then
+        else if (nDims==2) then
           allocate(parSNWxy(iParm)%dvar2(dimSize(2), nGpolyLocal),stat=err)
         end if
 
@@ -458,7 +458,6 @@ subroutine mpr(hruID,             &     ! input: hruID
 
       enddo
     endif
-
 
   ! (3.1) Extract soil data for current model hru
     call subsetData(sdata, polySub, sdataLocal, 'soil' ,err, cmessage)
@@ -505,7 +504,19 @@ subroutine mpr(hruID,             &     ! input: hruID
     call subsetData(cdata, polySub, cdataLocal, 'clim' ,err, cmessage)
     if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
 
-  ! (3.4) Compute model parameters using transfer function
+  ! (3.4.1) Compute Model layer depth
+    call comp_model_depth(hModelLocal, zModelLocal, lyr_thickness, coef, sdataLocal, err, cmessage)
+    if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
+
+    if ( iHru == iHruPrint ) then
+      print*, '(3.4.1) Print model depth ---'
+      write(*,"(' Layer       =',20I9)") (iMLyr, iMlyr=1,nlyr)
+      do iPoly = 1,nGpolyLocal
+        write(*,"('z            =',20f9.3)") (zModelLocal(iMLyr,iPoly), iMlyr=1,nLyr)
+      enddo
+    endif
+
+  ! (3.4.2) Compute model parameters using transfer function
     ! compute model parameters
     call comp_model_param(parSxySz, parVxy, parSNWxy, sdataLocal, tdataLocal, vdataLocal, cdataLocal, gammaUpdateMeta, nSlyrs, nGpolyLocal, err, cmessage)
     if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
@@ -527,18 +538,6 @@ subroutine mpr(hruID,             &     ! input: hruID
           enddo
         enddo
       endif
-    endif
-
-    ! (4.1.1) Compute Model layer depth
-    call comp_model_depth(hModelLocal, zModelLocal, hfrac, sdataLocal, err, cmessage)
-    if(err/=0)then;message=trim(message)//trim(cmessage);return;endif
-
-    if ( iHru == iHruPrint ) then
-      print*, '(3.1.1) Print model depth ---'
-      write(*,"(' Layer       =',20I9)") (iMLyr, iMlyr=1,nlyr)
-      do iPoly = 1,nGpolyLocal
-        write(*,"('z            =',20f9.3)") (zModelLocal(iMLyr,iPoly), iMlyr=1,nLyr)
-      enddo
     endif
 
   ! ***********

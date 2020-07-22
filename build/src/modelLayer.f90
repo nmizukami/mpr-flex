@@ -1,13 +1,16 @@
-module modelLayer
-! Compute model soil parameter transfer function
+MODULE modelLayer
+
 USE nrtype                                        ! variable types, etc.
 USE data_type                                     ! Including custum data structure definition
 USE public_var                                    ! Including common constant (physical constant, other e.g., missingVal, etc.)
+USE var_lookup, ONLY:ixVarSoilData,nVarSoilData   ! index of soil data variables and number of variables
+USE globalData, ONLY:sdata_meta
 
 implicit none
 
 private
 
+public::extend_soil_layer
 public::comp_model_depth
 public::map_slyr2mlyr
 
@@ -16,21 +19,81 @@ contains
 ! ***********
 ! public subroutine to compute model layer thickness and bottom depth
 ! *********************************************************************
-  subroutine comp_model_depth(hModel,   &          ! output: model layer thickness [mm]
-                              zModel,   &          ! output: model layer bottom depth [mm]
-                              hfrac,    &          ! input : fraction of total soil layer for each model layer
-                              soildata, &          ! input : soil data
-                              err, message)        ! output: error id and message
+  subroutine extend_soil_layer(sdata, &          ! input : soil data
+                               err, message)     ! output: error id and message
+  implicit none
+  ! inout
+  type(namevar),intent(inout) :: sdata(:)               ! soil data container for local soil polygon
+  ! output
+  integer(i4b), intent(out)   :: err                    ! error code
+  character(*), intent(out)   :: message                ! error message
+  ! local
+  integer(i4b)                :: ivar                   ! loop index of polygon
+  real(dp)                    :: extra_thickness=10._dp ! extra_thickness underneath the bottom soil layer
+  real(dp),     allocatable   :: dvar_temp(:,:)         ! temporal real array
+  integer(i4b), allocatable   :: ivar_temp(:,:)         ! temporal integer array
+  integer(i4b)                :: nSLyrs                 ! number of Soil layer
+  integer(i4b)                :: nPolys                 ! number of soil polygon
 
-  use var_lookup,  only:ixVarSoilData,nVarSoilData ! index of soil data variables and number of variables
+  ! Initialize error control
+  err=0; message=trim(message)//'extend_soil_layer/'
+
+  nSlyrs=size(sdata(ixVarSoilData%hslyrs)%dvar2,1)
+  nPolys=size(sdata(ixVarSoilData%hslyrs)%dvar2,2)
+
+  do iVar=1,size(sdata)
+    if (trim(sdata_meta(iVar)%vardims)=='2D') then
+      if (trim(sdata_meta(iVar)%vartype) == 'integer') then
+        allocate(ivar_temp(nSLyrs,nPolys))
+        ivar_temp(1:nSLyrs,1:nPolys) = sdata(ivar)%ivar2(1:nSLyrs,1:nPolys)
+
+        deallocate(sdata(ivar)%ivar2)
+        allocate(sdata(ivar)%ivar2(nSlyrs+1,nPolys))
+
+        sdata(ivar)%ivar2(1:nSlyrs, 1:nPolys) = ivar_temp(1:nSlyrs, 1:nPolys)
+        sdata(ivar)%ivar2(nSlyrs+1, 1:nPolys) = ivar_temp(nSlyrs, 1:nPolys)
+
+        deallocate(ivar_temp)
+
+      elseif (trim(sdata_meta(iVar)%vartype) == 'double') then
+
+        allocate(dvar_temp(nSLyrs,nPolys))
+        dvar_temp(1:nSLyrs,1:nPolys) = sdata(ivar)%dvar2(1:nSLyrs,1:nPolys)
+
+        deallocate(sdata(ivar)%dvar2)
+        allocate(sdata(ivar)%dvar2(nSlyrs+1,nPolys))
+
+        sdata(ivar)%dvar2(1:nSlyrs, 1:nPolys) = dvar_temp(1:nSlyrs, 1:nPolys)
+        if (trim(sdata_meta(ivar)%varName) == 'hslyrs') then
+          sdata(ivar)%dvar2(nSlyrs+1, 1:nPolys) = extra_thickness
+        else
+          sdata(ivar)%dvar2(nSlyrs+1, 1:nPolys) = dvar_temp(nSlyrs, 1:nPolys)
+        end if
+        deallocate(dvar_temp)
+      end if
+    end if
+  end do
+
+  end subroutine
+
+! ***********
+! public subroutine to compute model layer thickness and bottom depth
+! *********************************************************************
+  subroutine comp_model_depth(hModel,   &          ! output: final model layer thickness [m]
+                              zModel,   &          ! output: final model layer bottom depth [m]
+                              thickness,&          ! input : default thickness for each model layer [m]
+                              coef,     &          ! input : multiplier to adjust default thickness
+                              soilData, &          ! input : soil data
+                              err, message)        ! output: error id and message
 
   implicit none
   ! input
-  real(dp),     intent(in)    :: hfrac(:)          ! fraction of total soil layer for each model layer
+  real(dp),     intent(in)    :: thickness(:)      ! default thickness for each model layer [m]
+  real(dp),     intent(in)    :: coef(:,:)         ! multiplier to adjust default thickness
   type(namevar),intent(in)    :: soilData(:)       ! soil data container for local soil polygon
   ! output
-  real(dp),     intent(out)   :: hModel(:,:)       ! model layer thickness [mm]
-  real(dp),     intent(out)   :: zModel(:,:)       ! depth of model layer bottom [mm]
+  real(dp),     intent(out)   :: hModel(:,:)       ! final model layer thickness [m]
+  real(dp),     intent(out)   :: zModel(:,:)       ! fnial depth of model layer bottom [m]
   integer(i4b), intent(out)   :: err               ! error code
   character(*), intent(out)   :: message           ! error message
   ! local
@@ -38,9 +101,7 @@ contains
   integer(i4b)                :: iLyr              ! loop index of model layer
   integer(i4b)                :: nSLyr             ! number of Soil layer
   integer(i4b)                :: nPoly             ! number of soil polygon
-  integer(i4b)                :: nFrac             ! number of fraction coefficients
-  real(dp)                    :: topZ              ! depth of top of model layers
-  real(dp)                    :: Ztot_in           ! total depth of soil layers
+  real(dp)                    :: depth_soil        ! total depth of soil layers
   logical(lgc),allocatable    :: mask(:,:)
   real(dp),allocatable        :: lyr_packed(:)
   integer(i4b)                :: nElm
@@ -54,37 +115,40 @@ contains
   nPoly=size(hslyrs,2)
 
   ! Make mask to exclude layers with missing soil texture data assuming
-  allocate(mask(nSLyr,nPoly),stat=err); if(err/=0)then;message=trim(message)//'error allocating mask';return;endif
-  mask = ( soilData(ixVarSoilData%sand_pct)%dvar2 > 0 .and. &
-           soilData(ixVarSoilData%clay_pct)%dvar2 > 0 .and. &
-           soilData(ixVarSoilData%silt_pct)%dvar2 > 0)
+  allocate(mask(nSLyr,nPoly),stat=err)
+  if(err/=0)then;message=trim(message)//'error allocating mask';return;endif
+
+  mask = ( soilData(ixVarSoilData%sand_pct)%dvar2 >= 0 .and. &
+           soilData(ixVarSoilData%clay_pct)%dvar2 >= 0 .and. &
+           soilData(ixVarSoilData%silt_pct)%dvar2 >= 0)
 
   do iPoly=1,nPoly
-    allocate(lyr_packed(count(mask(:,iPoly))),stat=err); if(err/=0)then;message=trim(message)//'error allocating lyr_packed';return;endif
-    lyr_packed = pack( hslyrs(:,iPoly), mask(:,iPoly) )
+    allocate(lyr_packed(count(mask(:,iPoly))),stat=err)
+    if(err/=0)then;message=trim(message)//'error allocating lyr_packed';return;endif
+
+    lyr_packed = pack(hslyrs(:,iPoly), mask(:,iPoly))
     nElm = size(lyr_packed)      ! number of valid soil layer
+
     if (nElm > 0) then           ! if actually soil layers exist
-      Ztot_in = sum(lyr_packed)  ! Total depth for soil layer
-      nFrac=size(hfrac)          ! number of layer fraction that is input
-      if (nLyr == 1) then
-        hModel(1,iPoly)=Ztot_in
-        zModel(1,iPoly)=hModel(1,iPoly)
-      else
-        topZ=0.0_dp ! depth of model layer top (1st model layer = 0 m)
-        do iLyr=1,nLyr-1
-          hModel(iLyr,iPoly)=hfrac(iLyr)*(Ztot_in-topZ)
-          zModel(iLyr,iPoly)=topZ+hModel(iLyr,iPoly)
-          topZ=zModel(iLyr,iPoly)          !update depth of layr top
-        enddo
-        hModel(nLyr,iPoly)=Ztot_in-topZ
-        zModel(nLyr,iPoly)=topZ+hModel(nLyr,iPoly)
+      depth_soil = sum(lyr_packed)  ! Total depth for soil layer
+      zModel(:,iPoly) = 0._dp
+      do iLyr=1,nLyr
+        hModel(iLyr,iPoly)=thickness(iLyr)*coef(iLyr,iPoly)
+        zModel(iLyr,iPoly)=zModel(iLyr,iPoly)+hModel(iLyr,iPoly)
+      enddo
+
+      if (zModel(nLyr,iPoly)>=depth_soil) then
+        zModel(:,iPoly) = zModel(:,iPoly)*depth_soil/zModel(nLyr,iPoly)
+        hModel(:,iPoly) = hModel(:,iPoly)*depth_soil/zModel(nLyr,iPoly)
       endif
+
     else ! if there are no real soil layers
       hModel(:,iPoly) = dmiss
       zModel(:,iPoly) = dmiss
     endif
     deallocate(lyr_packed)
-  enddo
+  end do
+
   end associate
 
 end subroutine
@@ -223,4 +287,4 @@ end subroutine
 
  end subroutine
 
-end module modelLayer
+END MODULE modelLayer

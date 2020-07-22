@@ -35,7 +35,7 @@ MODULE read_config
   namelist /space / nHru, &
                     nLyr
 
-  namelist / soil / hfrac
+  namelist / soil / lyr_thickness
 
 CONTAINS
 
@@ -70,14 +70,9 @@ SUBROUTINE read_nml(nmlfile, err, message)
   if (err/=0)then; message=trim(message)//"Error:Read space"; return; endif
 
   ! read "soil" group
-  allocate(hfrac(nLyr))
+  allocate(lyr_thickness(nLyr))
   read(unit=30, NML=soil, iostat=err)
   if (err/=0)then; message=trim(message)//"Error:Read soil"; return; endif
-
-  ! check
-  if (abs(sum(hfrac)-1._dp)>verySmall) then
-    err=10; message=trim(message)//"sum of layer frac is not one"; return
-  endif
 
   close(UNIT=30)
 
