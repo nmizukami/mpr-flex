@@ -72,34 +72,6 @@ endtype var_meta
   endtype defDim
 
 ! *****
-! data structure to hold polygon data only integer type
-! ********************************************
-! ipolydata(:)%var(:)%data(:)
-! 1st level - horizontal
-! 2nd level - variable index
-! 3rd level - data
-type,public :: ivar
-  integer(i4b),allocatable       :: dat(:)
-endtype ivar
-type,public :: ipolydata
-  type(ivar),allocatable         :: var(:)
-endtype ipolydata
-
-! *****
-! data structure to hold polygon data only real type
-! ********************************************
-! ipolydata(:)%var(:)%data(:)
-! 1st level - horizontal
-! 2nd level - variable index
-! 3rd level - data
-type,public :: dvar
-  real(dp),allocatable      :: dat(:)
-endtype dvar
-type,public :: dpolydata
-  type(dvar),allocatable    :: var(:)
-endtype dpolydata
-
-! *****
 ! data structure to hold integer type data (both vector and 2D)
 ! ********************************************
 ! poly(:)%layer(:)%weight(:)
@@ -119,16 +91,7 @@ endtype poly
 ! Other data type (need to clean up)
 ! ********************************************
 ! Define derived types to hold data values in vector (soil properties or model parameters) given their indices
-! use "layer" for 2nd layer name
-! ** double precision type
- type,public :: lyr_d
-   real(dp),allocatable              :: layer(:)
- endtype lyr_d
- ! ** integer type
- type,public :: lyr_i
-   integer(i4b),allocatable          :: layer(:)
- endtype lyr_i
-! use "var" for 2nd layer name
+
 ! ** double precision type
  type, public :: var_d
   real(dp),allocatable               :: var(:)
@@ -137,73 +100,6 @@ endtype poly
  type, public :: var_i
   integer(i4b),allocatable           :: var(:)
  endtype var_i
-! use "dat" for 2nd layer name
-! ** double precision type
- type,public :: dat_d1d
-   real(dp),allocatable              :: dat(:)
- endtype dat_d1d
- ! ** integer type
- type,public :: dat_i1d
-   integer(i4b),allocatable          :: dat(:)
- endtype dat_i1d
-
-! Define derived types to hold data values in 2D array (soil properties or model parameters) given their indices
-! ** double precision type
- type,public :: dat_d2d
-   real(dp),allocatable         :: dat(:,:)
- endtype dat_d2d
- ! ** integer type
- type,public :: dat_i2d
-   integer(i4b),allocatable     :: dat(:,:)
- endtype dat_i2d
-
-! Define derived types to hold data values in vector and 2D array (soil properties or model parameters) given their indices
-! ** double precision type
- type,public :: dat_d12d
-   real(dp),allocatable         :: dat1d(:)
-   real(dp),allocatable         :: dat2d(:,:)
- endtype dat_d12d
- ! ** integer type
- type,public :: dat_i12d
-   integer(i4b),allocatable     :: dat1d(:)
-   integer(i4b),allocatable     :: dat2d(:,:)
- endtype dat_i12d
-
-! more layered data type
-! var_dlength(:)%var(:)%layer(:)
-! ** double precision type
- type,public :: var_dlength
-   type(lyr_d),allocatable     :: var(:)
- endtype var_dlength
-
- ! ** integer type
- type,public :: var_ilength
-   type(lyr_i),allocatable     :: var(:)
- endtype var_ilength
-
-! data type containing a name and 1D vector variable (double precision)
- type namedvar
-  character(len=strLen)        :: varName
-  real(dp),allocatable         :: varData(:)
- endtype namedvar
-
-! data type containing a name and 1D vector variable (integer)
- type nameivar
-   character(len=strLen)       :: varName
-   integer(i4b),allocatable    :: varData(:)
- endtype nameivar
-
-! data type containing a name and 2D vector variable (double precision)
- type namedvar2
-  character(len=strLen)        :: varName
-  real(dp),allocatable         :: varData(:,:)
- endtype namedvar2
-
-! data type containing a name and 2D vector variable (integer)
- type nameivar2
-   character(len=strLen)       :: varName
-   integer(i4b),allocatable    :: varData(:,:)
- endtype nameivar2
 
 ! data type containing a name and vector and 2D array variable for both integer and double precision
  type,public :: namevar
