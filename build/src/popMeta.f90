@@ -103,7 +103,7 @@ SUBROUTINE paramMaster(err,message)
   ! vegetation transfer function
   gammaMeta(ixGamma%lai1gamma1)      = gammaPar_meta('lai1gamma1',          1.0_dp ,'-' ,"lai"      ,     1, .False.)
   gammaMeta(ixGamma%cht1gamma1)      = gammaPar_meta('cht1gamma1',          1.0_dp ,'-' ,"cht"      ,     1, .False.)
-  gammaMeta(ixGamma%chb1gamma1)      = gammaPar_meta('chb1gamma1',         0.75_dp ,'-' ,"chb"      ,     1, .False.)
+  gammaMeta(ixGamma%chb1gamma1)      = gammaPar_meta('chb1gamma1',         0.10_dp ,'-' ,"chb"      ,     1, .False.)
   ! snow transfer function
   gammaMeta(ixGamma%scf1gamma1)      = gammaPar_meta('scf1gamma1',          0.0_dp ,'-' ,"scf"      ,     1, .False.)
   ! -----
