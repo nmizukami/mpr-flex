@@ -3,7 +3,7 @@ module read_soildata
 USE nrtype
 USE netcdf
 USE data_type
-USE public_var                                     ! Including common constant (physical constant, other e.g., missingVal, etc.)
+USE public_var                                    ! Including common constant (physical constant, other e.g., missingVal, etc.)
 USE var_lookup,only:ixVarSoilData,nVarSoilData    ! index of soil polygon variables and number of variables
 
 implicit none
@@ -12,7 +12,6 @@ private
 
 public::check_polyID
 public::getSoilData
-public::mod_hslyrs
 
 contains
 
@@ -92,6 +91,7 @@ contains
   integer(i4b)                    :: idimID_poly    ! dimension ID for HRUs
   integer(i4b)                    :: idimID_slyr    ! dimension ID for stream segments
   integer(i4b)                    :: iVarID         ! variable ID
+  real(dp), parameter             :: cm2m = 0.01_dp ! unit conversion factor: cm to m
   ! initialize error control
   ierr=0; message='getSoilData/'
 
@@ -116,78 +116,53 @@ contains
     ierr = nf90_inq_varid(ncid, trim(sdata_meta(ivar)%varName), iVarID)
     if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr))//'; name='//trim(sdata_meta(ivar)%varName); return; endif
     !sdata(ivar)%varName=trim(sdata_meta(ivar)%varName)
-    select case(sdata_meta(iVar)%vartype)
+    select case(trim(sdata_meta(iVar)%vartype))
       case('integer')
-       select case(sdata_meta(iVar)%vardims)
+       select case(trim(sdata_meta(iVar)%vardims))
          case('2D')
            ! allocate space for the 2D integer array
            allocate(sdata(ivar)%ivar2(nSlyrs,nSpoly),stat=ierr)
            if(ierr/=0)then; message=trim(message)//'problem allocating 2D int space for sdata data structure'; return; endif
            ! get the data
            ierr = nf90_get_var(ncid, iVarID, sdata(ivar)%ivar2)
+           if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr))//'; name='//trim(sdata_meta(ivar)%varName); return; endif
          case('1D')
            ! allocate space for the 1D integer array
            allocate(sdata(ivar)%ivar1(nSpoly),stat=ierr)
            if(ierr/=0)then; message=trim(message)//'problem allocating 1D int space for sdata data structure'; return; endif
            ! get the data
            ierr = nf90_get_var(ncid, iVarID, sdata(ivar)%ivar1)
+           if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr))//'; name='//trim(sdata_meta(ivar)%varName); return; endif
          end select
      case('double')
-       select case(sdata_meta(iVar)%vardims)
+       select case(trim(sdata_meta(iVar)%vardims))
          case('2D')
            ! allocate space for the 2D integer array
            allocate(sdata(ivar)%dvar2(nSlyrs,nSpoly),stat=ierr)
            if(ierr/=0)then; message=trim(message)//'problem allocating 2D real space for sdata data structure'; return; endif
            ! get the data
            ierr = nf90_get_var(ncid, iVarID, sdata(ivar)%dvar2)
+           if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr))//'; name='//trim(sdata_meta(ivar)%varName); return; endif
          case('1D')
            ! allocate space for the 1D integer array
            allocate(sdata(ivar)%dvar1(nSpoly),stat=ierr)
            if(ierr/=0)then; message=trim(message)//'problem allocating 1D real space for sdata data structure'; return; endif
            ! get the data
            ierr = nf90_get_var(ncid, iVarID, sdata(ivar)%dvar1)
+           if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr))//'; name='//trim(sdata_meta(ivar)%varName); return; endif
        end select
    end select
    if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr)); return; endif
 
   end do  ! (looping through variables)
 
+ ! unit conversions
+ ! soil layer thickness cm -> m
+ sdata(ixVarSoilData%hslyrs)%dvar2(:,:) = sdata(ixVarSoilData%hslyrs)%dvar2(:,:)*cm2m
+
   ! close the NetCDF file
   ierr = nf90_close(ncid)
   if(ierr/=0)then; message=trim(message)//trim(nf90_strerror(ierr)); return; endif
-
-  end subroutine
-
- ! *****
- ! Subroutine: soil thickness mod
- ! *********************************************
-  subroutine mod_hslyrs(sdata,        &  ! input/output: data structure of soil data including soil layer thickness [m]
-                        hmult,        &  ! input : scalar multiplier of soil thickness
-                        ierr, message)   ! output: error control
-   implicit none
-   ! input
-   real(dp),intent(in)             :: hmult
-   ! Input/output
-   type(namevar), intent(inout)    :: sdata(:)       ! soil data container
-   ! local
-   real(dp),allocatable            :: soil_h_mod(:)  ! temp holder of modified soil layer thickness
-   integer(i4b)                    :: nSpoly         ! number of soil polygon
-   integer(i4b)                    :: nSlyrs         ! number of soil layer
-   integer(i4b)                    :: iSpoly         ! Loop index of soil polygon
-   integer(i4b), intent(out)       :: ierr           ! error code
-   character(*), intent(out)       :: message        ! error message
-
-   ! initialize error control
-   ierr=0; message='mod_hslyrs/'
-
-   nSpoly=size(sdata(ixVarSoilData%hslyrs)%dvar2,2)
-   nSlyrs=size(sdata(ixVarSoilData%hslyrs)%dvar2,1)
-   allocate(soil_h_mod(nSlyrs),stat=ierr);
-   if(ierr/=0)then; message=trim(message)//'problem with allocating soil_h_mod'; return; endif
-   do iSpoly =1,nSpoly
-     soil_h_mod = hmult*sdata(ixVarSoilData%hslyrs)%dvar2(:,iSpoly)*0.01  ! modified soil layer thickness and convert cm to m
-     sdata(ixVarSoilData%hslyrs)%dvar2(:,iSpoly) = soil_h_mod             ! reassign modified layer thickness in data structure
-   end do
 
   end subroutine
 
