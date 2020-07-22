@@ -56,7 +56,6 @@ contains
      case('myu1gamma1');       get_ixGamma = ixGamma%myu1gamma1        ! gamma parameter-1 for 1st specific yield transfer function (koren et al. 2003)
      case('myu1gamma2');       get_ixGamma = ixGamma%myu1gamma2        ! gamma parameter-2 for 1st specific yield transfer function (koren et al. 2003)
      case('sof1gamma1');       get_ixGamma = ixGamma%sof1gamma1        ! gamma parameter-1 for 1st organic matter content transfer function
-     case('z1gamma1');         get_ixGamma = ixGamma%z1gamma1          ! gamma parameter-1 for total soil column depth or bucket size [m] (multiplier)
      case('h1gamma1');         get_ixGamma = ixGamma%h1gamma1          ! gamma parameter-1 for top layer thickness [m] (fraction of z)
      case('h2gamma1');         get_ixGamma = ixGamma%h2gamma1          ! gamma parameter-1 2nd layer thickness [m] (franction of z)
      case('binfilt1gamma1');   get_ixGamma = ixGamma%binfilt1gamma1    ! gamma parameter-1 for variable infilitration curve parameter
@@ -127,12 +126,7 @@ contains
      case('Ws');               get_ixBeta = ixBeta%Ws                !
      case('expt');             get_ixBeta = ixBeta%expt              ! exponent in Campbell equatin for Kh
      case('bbl');              get_ixBeta = ixBeta%bbl               ! bubbling pressure of soil [cm]
-     case('h1');               get_ixBeta = ixBeta%h1                ! top layer thickness [m]
-     case('h2');               get_ixBeta = ixBeta%h2                ! 2nd layer thickness [m]
-     case('h3');               get_ixBeta = ixBeta%h3                ! 3rd layer thickness [m]
-     case('h4');               get_ixBeta = ixBeta%h4                ! 4th layer thickness [m]
-     case('h5');               get_ixBeta = ixBeta%h5                ! 5th layer thickness [m]
-     case('z');                get_ixBeta = ixBeta%z                 ! total depth of soil [m]
+     case('h');                get_ixBeta = ixBeta%h                 ! layer thickness
      case('WcrFrac');          get_ixBeta = ixBeta%WcrFrac           ! Fractional soil moisture content at critical point [-]
      case('WpwpFrac');         get_ixBeta = ixBeta%WpwpFrac          ! Fractional soil moisture content at wilting point [-]
      case('bfr');              get_ixBeta = ixBeta%bfr               ! nonliear reservoir coefficient with normalized strage [m/s]

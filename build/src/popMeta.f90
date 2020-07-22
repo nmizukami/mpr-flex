@@ -75,8 +75,6 @@ SUBROUTINE paramMaster(err,message)
   gammaMeta(ixGamma%myu1gamma2)      = gammaPar_meta('myu1gamma2'     ,    1.66_dp ,'-' ,"myu"      ,     1, .False.)
   ! organic soil franction transfer function
   gammaMeta(ixGamma%sof1gamma1)      = gammaPar_meta('sof1gamma1'     ,     1.72_dp ,'-' ,"sof"     ,     1, .False.)
-  ! total depth multiplier
-  gammaMeta(ixGamma%z1gamma1)        = gammaPar_meta('z1gamma1'       ,     1.0_dp ,'-' ,"z"        ,     1, .False.)
   ! transfer function
   gammaMeta(ixGamma%binfilt1gamma1)  = gammaPar_meta('binfilt1gamma1' ,     0.0_dp ,'-' ,"binfilt"  ,     1, .False.)
   gammaMeta(ixGamma%binfilt1gamma2)  = gammaPar_meta('binfilt1gamma2' ,     1.0_dp ,'-' ,"binfilt"  ,     1, .False.)
@@ -138,7 +136,7 @@ SUBROUTINE paramMaster(err,message)
   call betaMeta(ixBeta%WcrFrac) %init('WcrFrac'    , 'Fractional soil moisture content at the critical point'         , '-'     ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
   call betaMeta(ixBeta%WpwpFrac)%init('WpwpFrac'   , 'Fractional soil moisture content at the wilting point'          , '-'     ,  "soil", -999,   ["pnorm", "pnorm"], [ 1.0_dp, 1.0_dp], [ixDim%hru, ixDim%lyr])
   call betaMeta(ixBeta%bfr)     %init('bfr'        , 'baseflow rate coefficient of normalized storage'                , 'm/s'   ,  "soil", -999,   ["pnorm"],          [-1.0_dp],         [ixDim%hru])
-  call betaMeta(ixBeta%z)       %init('z'          , 'total model depth'                                              , 'm'     ,  "soil", -999,   ["pnorm", "na   "], [ 1.0_dp, dmiss],  [ixDim%hru, ixDim%lyr])
+  call betaMeta(ixBeta%h)       %init('h'          , 'model layer thickness'                                          , 'm'     ,  "soil", -999,   ["pnorm", "na   "], [ 1.0_dp, dmiss],  [ixDim%hru, ixDim%lyr])
   call betaMeta(ixBeta%twm)     %init('twm'        , 'tension water maximum storage'                                  , 'mm'    ,  "soil", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
   call betaMeta(ixBeta%fwm)     %init('fwm'        , 'free water maximum storage'                                     , 'mm'    ,  "soil", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])
   call betaMeta(ixBeta%fsm)     %init('fsm'        , 'free water supplementary maximum storage'                       , 'mm'    ,  "soil", -999,   ["pnorm"],          [ 1.0_dp],         [ixDim%hru])

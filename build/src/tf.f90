@@ -263,12 +263,6 @@ subroutine betaDependency( err, message )
       case(ixBeta%cht);     call cht     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%chb);     call chb     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%scf);     call scf     (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
-      case(ixBeta%z); allocate(ixDepend(1), stat=err); ixDepend=-999_i4b
-      case(ixBeta%h1);allocate(ixDepend(1), stat=err); ixDepend=-999_i4b
-      case(ixBeta%h2);allocate(ixDepend(1), stat=err); ixDepend=-999_i4b
-      case(ixBeta%h3);allocate(ixDepend(1), stat=err); ixDepend=-999_i4b
-      case(ixBeta%h4);allocate(ixDepend(1), stat=err); ixDepend=-999_i4b
-      case(ixBeta%h5);allocate(ixDepend(1), stat=err); ixDepend=-999_i4b
     end select
     if ( allocated(ixDepend) )then
       allocate(betaAncilMeta(iParm)%depend(size(ixDepend)),stat=err)

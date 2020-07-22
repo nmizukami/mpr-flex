@@ -44,10 +44,8 @@ contains
     integer(i4b), intent(out)             :: ierr         ! error code
     character(*), intent(out)             :: message      ! error message
     ! local variables
-    real(dp),                 allocatable :: zModel(:,:)  ! array of model layer depth at model layer x model hru
     character(len=strLen),    allocatable :: betaNames(:) ! parameter name array
     integer(i4b)                          :: ncid         ! netcdf id
-    integer(i4b)                          :: iLyr         ! loop index for model layer
     character(len=strLen)                 :: cmessage     ! error message of downwind routine
 
     ! initialize error control
@@ -77,19 +75,12 @@ contains
     ! -----------------------------------------------------------
     ! Define variables
     if (nSoilBetaModel>0) then
-      ! construct z array
-      allocate(zModel,source=hModel)
-      if (nLyr>1)then
-        do iLyr=2,nLyr
-          zModel(iLyr,:)=zModel(iLyr-1,:)+zModel(iLyr,:)
-        enddo
-      end if
 
       ! construct soil beta parameter name array
       allocate(betaNames(nSoilBetaModel+1),stat=ierr)
       if(ierr/=0)then;message=trim(message)//'error allocating betaNames';return;endif
       betaNames(1:nSoilBetaModel)=soilBetaCalName
-      betaNames(nSoilBetaModel+1)='z'
+      betaNames(nSoilBetaModel+1)='h'
 
       call defNetCDF(ncid, betaNames, ierr, cmessage)
       if(ierr/=0)then;message=trim(message)//trim(cmessage);return;endif
@@ -127,7 +118,7 @@ contains
       if(ierr/=0)then;message=trim(message)//trim(cmessage);return;endif
 
       ! Write soil layers depth
-      call write_nc(fname,'z',zModel,(/1,1/),(/nLyr,nHru/),ierr,cmessage)
+      call write_nc(fname,'h',hModel,(/1,1/),(/nLyr,nHru/),ierr,cmessage)
       if(ierr/=0)then;message=trim(message)//trim(cmessage);return;endif
     end if
 
