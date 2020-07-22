@@ -55,14 +55,14 @@ subroutine read_inParList(infile, err, message)
   end do ! looping through file to find the format code
   read(temp,*)ffmt ! to get format
 
-  ixLocal=0_i4b
+  ixLocal=0
   line:do iline=1,maxLines
     ! read a line of data and exit iif an error code (character read, so only possible error is end of file)
     read(unt,'(a)',iostat=iend)temp; if (iend/=0)exit
     ! check that the line is not a comment
     if (temp(1:1)=='!')cycle
     ! save data into a temporary structure
-    ixLocal = ixLocal+1_i4b
+    ixLocal = ixLocal+1
     read(temp,trim(ffmt),iostat=err) tempCalParMeta(ixLocal)%betaname, dLim(1),&  ! beta parameter name
                                      tempCalParMeta(ixLocal)%TF                     ! Transfer function type
     if (err/=0) then; err=30; message=trim(message)//"errorReadLine"; return; endif
@@ -198,7 +198,6 @@ SUBROUTINE get_parm_meta( err, message)
     do iPar=1,size(inParMeta)
       idxBeta = get_ixBeta(inParMeta(iPar)%betaname)
       if(idxBeta<=0)then; err=40; message=trim(message)//"BetaNotFoundInMasterMeta[var="//trim(inParMeta(iPar)%betaname)//"]"; return; endif
-      if ( trim(inParMeta(iPar)%betaname) == 'z' )  cycle
       counter=counter+1
       res(counter)=betaMeta(idxBeta)%parName
     end do
@@ -334,14 +333,6 @@ SUBROUTINE restartIO( restartFile )
       end do
       if (isFound) cycle
 
-      ! search hfrac
-      if (trim(temp_pname(1:5)) == 'hfrac') then
-        ixLyr=ixLyr+1
-        hfrac(ixLyr) = temp_param
-        isFound=.true.
-      end if
-      if (isFound) cycle
-
       ! search scaling
       do iPar=1,size(calScaleMeta)
         ixpos = index(trim(temp_pname), '-')
@@ -386,7 +377,6 @@ SUBROUTINE param_setup( restartFile, err, message )
   integer(i4b)                       :: idx                    ! count of calibrating parameter including per layer parameter
   integer(i4b)                       :: ixScale                ! index of beta parameter dimensions
   integer(i4b)                       :: cc                     ! counter for scaling parameter
-  character(len=strLen)              :: cdummy                 ! dummy character vaiable
 
   ! initialize error control
   err=0; message='param_setput/'
@@ -419,12 +409,6 @@ SUBROUTINE param_setup( restartFile, err, message )
     do iPar=1,nCalGamma
       write(70,200) calGammaMeta(iPar)%pname(1:20), parArray(iPar,1), 'Gamma-par'
       200 format(1X,A,1X,ES17.10,1X,A20)
-    enddo
-
-    do iPar=1,nLyr
-      write (cdummy, '(A5,I1)') 'hfrac', iPar
-      write(70,201) adjustl(cdummy(1:20)), hfrac(iPar), 'layer-frac'
-      201 format(1X,A20,1X,ES17.10,1X,A20)
     enddo
 
     cc = 0
@@ -460,6 +444,7 @@ SUBROUTINE print_config()
   implicit none
 
   integer(i4b) :: i,j,cc  ! loop index for writing
+  logical(lgc) :: check
 
   write(*,*) '!-----------------------------------------------------------'
   write(*,*) '!    MPR-flex - configurations of parameter estimations     '
@@ -467,16 +452,21 @@ SUBROUTINE print_config()
   write(*,'(A,1X,A)') new_line(' '),'! Beta parameters listed in input'
   write(*,*) '!-----------------------------------------------------------'
   do i=1,size(inParMeta)
-    write(*,*) trim(adjustl(inParMeta(i)%betaname))
+    check=.false.
+    do j=1,size(calBetaName)
+      if (trim(inParMeta(i)%betaname)==trim(calBetaName(j))) then
+         check = .true.
+         exit
+      end if
+    end do
+    if (check) then
+      write(*,*) trim(inParMeta(i)%betaname)
+    else
+      write(*,'(3A)') 'WARNING:', trim(inParMeta(i)%betaname), ' not found in meta_data. see popMeta.f90'
+    end if
   end do
 
   if (size(calBetaName)/=0)then
-
-    write(*,'(A,1X,A)') new_line(' '),'! Beta parameters to be estimated with MPR excluding z'
-    write(*,*) '!-----------------------------------------------------------'
-    do i=1,size(calBetaName)
-      write(*,*) ( trim(adjustl(calBetaName(i))) )
-    end do
 
     write(*,'(A,1X,A)') new_line(' '),'! List of gamma parameters to be used'
     write(*,*) '!-----------------------------------------------------------'
@@ -515,43 +505,5 @@ SUBROUTINE print_config()
   print*,"!-----------------------------------------------------------"
 
 END SUBROUTINE
-
-!**********************************
-! Not Used---  Public subroutine: check if h parameters exist in gamma parameter
-!**********************************
-subroutine check_gammaH( err, message)
-  use globalData,   only: calGammaMeta
-  implicit none
-  !output variables
-  integer(i4b),         intent(out) :: err         ! error code
-  character(*),         intent(out) :: message     ! error message
-  !local variables
-  integer(i4b)                      :: id(20)
-  logical(lgc)                      :: mask(20)
-  logical(lgc),allocatable          :: checkH(:)
-  integer(i4b)                      :: i
-
-  ! initialize error control
-  err=0; message='check_gammaH/'
-
-  allocate(checkH(nLyr-1))
-
-  id=-999
-  if ( allocated(calGammaMeta) )then
-    !check h parameters - now can chcek up to 5 layers
-    do i=1,size(calGammaMeta)
-      if (calGammaMeta(i)%pname=="h1gamma1")then;id(1)=1;cycle;endif
-      if (calGammaMeta(i)%pname=="h2gamma1")then;id(2)=1;cycle;endif
-      if (calGammaMeta(i)%pname=="h3gamma1")then;id(3)=1;cycle;endif
-      if (calGammaMeta(i)%pname=="h4gamma1")then;id(4)=1;cycle;endif
-    enddo
-    mask=(id>0)
-    checkH=mask(1:nLyr-1)
-    if ( any(.not. checkH) )then;err=40;message=trim(message)//"Calibrating gamma parameter require (nLyr-1) hgamma parameters"; return;endif
-  else
-    print*, 'No gamma parameters listed in CalPar->No MPR computation'
-  endif
-
-end subroutine
 
 END MODULE process_meta
