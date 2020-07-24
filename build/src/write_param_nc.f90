@@ -118,7 +118,7 @@ contains
       if(ierr/=0)then;message=trim(message)//trim(cmessage);return;endif
 
       ! Write soil layers depth
-      call write_nc(fname,'h',hModel,(/1,1/),(/nLyr,nHru/),ierr,cmessage)
+      call write_nc(fname,'h',hModel,(/1,1/),(/nHru, nLyr/),ierr,cmessage)
       if(ierr/=0)then;message=trim(message)//trim(cmessage);return;endif
     end if
 
