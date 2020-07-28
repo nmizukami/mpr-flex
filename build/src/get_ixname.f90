@@ -120,7 +120,6 @@ contains
      case('D4');               get_ixBeta = ixBeta%D4                !
      case('D2');               get_ixBeta = ixBeta%D2                !
      case('D3');               get_ixBeta = ixBeta%D3                !
-     case('c');                get_ixBeta = ixBeta%c                 !
      case('Dsmax');            get_ixBeta = ixBeta%Dsmax             !
      case('Ds');               get_ixBeta = ixBeta%Ds                !
      case('Ws');               get_ixBeta = ixBeta%Ws                !

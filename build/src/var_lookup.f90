@@ -110,7 +110,6 @@ MODULE var_lookup
    integer(i4b)     :: Ds              = imiss  !
    integer(i4b)     :: Dsmax           = imiss  !
    integer(i4b)     :: Ws              = imiss  !
-   integer(i4b)     :: c               = imiss  !
    integer(i4b)     :: expt            = imiss  !
    integer(i4b)     :: bbl             = imiss  !
    integer(i4b)     :: h               = imiss  !
@@ -229,7 +228,7 @@ MODULE var_lookup
                                                                                  21,22,23,24,25,26,27,28,29,30,&
                                                                                  31,32,33,34,35,36,37,38,39,40,&
                                                                                  41,42,43,44,45,46,47,48,49,50,&
-                                                                                 51,52,53)
+                                                                                 51,52)
  type(iLook_VarMapData),  public,parameter :: ixVarMapData   = iLook_VarMapData  (1,2,3,4)
  type(iLook_VarSoilData), public,parameter :: ixVarSoilData  = iLook_VarSoilData (1,2,3,4,5,6,7)
  type(iLook_VarVegData),  public,parameter :: ixVarVegData   = iLook_VarVegData  (1,2,3,4)

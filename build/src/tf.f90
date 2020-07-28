@@ -118,15 +118,13 @@ subroutine comp_model_param(parSxySz,          &  ! in/output: soil parameter va
           call D4( err, message, gammaPar=gammaPar, D4_out=xPar, tfopt=tfid )
         case(ixBeta%Ds)
           call Ds( err, message, D1_in=parTemp(ixBeta%D1)%dvar2, D3_in=parTemp(ixBeta%D3)%dvar2, Dsmax_in=parTemp(ixBeta%Dsmax)%dvar2, gammaPar=gammaPar, Ds_out=xPar, tfopt=tfid )
-        case(ixBeta%c)
-          call cexpt( err, message, D4_in=parTemp(ixBeta%D4)%dvar2, gammaPar=gammaPar, cexpt_out=xPar, tfopt=tfid )
         case(ixBeta%sd)
           call sd( err, message, gammaPar=gammaPar, sd_out=xPar, tfopt=tfid )
         case(ixBeta%expt)
           call expt( err, message, b_in=parTemp(ixBeta%b)%dvar2, gammaPar=gammaPar, expt_out=xPar, tfopt=tfid )
         case(ixBeta%Dsmax)
           call Dsmax( err, message, &
-                      sdata=sdata, D1_in=parTemp(ixBeta%D1)%dvar2, D2_in=parTemp(ixBeta%D2)%dvar2, D3_in=parTemp(ixBeta%D3)%dvar2, c_in=parTemp(ixBeta%c)%dvar2, phi_in=parTemp(ixBeta%phi)%dvar2, &
+                      sdata=sdata, D1_in=parTemp(ixBeta%D1)%dvar2, D2_in=parTemp(ixBeta%D2)%dvar2, D3_in=parTemp(ixBeta%D3)%dvar2, D4_in=parTemp(ixBeta%D4)%dvar2, phi_in=parTemp(ixBeta%phi)%dvar2, &
                       gammaPar=gammaPar, Dsmax_out=xPar ,tfopt=tfid )
         case(ixBeta%bbl)
           call bubble( err, message, expt_in=parTemp(ixBeta%expt)%dvar2, gammaPar=gammaPar, bubble_out=xPar, tfopt=tfid )
@@ -243,7 +241,6 @@ subroutine betaDependency( err, message )
       case(ixBeta%Ds);      call Ds      (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%Dsmax);   call Dsmax   (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%Ws);      call Ws      (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
-      case(ixBeta%c);       call cexpt   (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%expt);    call expt    (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%bbl);     call bubble  (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
       case(ixBeta%WcrFrac); call WcrFrac (err, cmessage, ixDepend=ixDepend); if(err/=0)then; message=trim(message)//trim(cmessage); return; endif
@@ -413,7 +410,7 @@ subroutine binfilt(err, message, ixDepend, sdata, tdata, gammaPar, binfilt_out, 
 end subroutine
 
 ! *********************************************************************
-! residual_moist parameter
+! residual_moist parameter unit: fraction
 ! *********************************************************************
 subroutine resid(err, message, ixDepend, wp_in, gammaPar, resid_out, tfopt)
   implicit none
@@ -677,14 +674,14 @@ end subroutine
 ! ***********
 ! Arno baseflow Dsmax parameter
 ! *********************************************************************
-subroutine Dsmax( err, message, ixDepend, sdata, D1_in, D2_in, D3_in, c_in, phi_in, gammaPar, Dsmax_out ,tfopt)
+subroutine Dsmax( err, message, ixDepend, sdata, D1_in, D2_in, D3_in, D4_in, phi_in, gammaPar, Dsmax_out ,tfopt)
   implicit none
   ! input
   type(namevar),            optional,intent(in)  :: sdata(:)          ! input(optional): storage of soil data strucuture
   real(dp),                 optional,intent(in)  :: D1_in(:,:)        ! input(optional): Nijssen baseflow D1 parameter [day^-1]
   real(dp),                 optional,intent(in)  :: D2_in(:,:)        ! input(optional): Nijssen baseflow D2 parameter [day^-1 mm^-(c-1)]
   real(dp),                 optional,intent(in)  :: D3_in(:,:)        ! input(optional): Nijssen baseflow D3 parameter
-  real(dp),                 optional,intent(in)  :: c_in(:,:)         ! input(optional): c parameter [mm]
+  real(dp),                 optional,intent(in)  :: D4_in(:,:)        ! input(optional): Nijssen baseflow D4 parameter
   real(dp),                 optional,intent(in)  :: phi_in(:,:)       ! input(optional): porosity [fraction]
   real(dp),                 optional,intent(in)  :: gammaPar(:)       ! input(optional): gamma parameter array
   integer(i4b),             optional,intent(in)  :: tfopt             ! input(optional): option for transfer function form
@@ -695,22 +692,22 @@ subroutine Dsmax( err, message, ixDepend, sdata, D1_in, D2_in, D3_in, c_in, phi_
   real(dp),                 optional,intent(out) :: Dsmax_out(:,:)    ! output(optional): [mm]
   ! local
   integer(i4b)                                   :: tftype            ! option for transfer function form used
-  integer(i4b),parameter                         :: nDepend=5         ! Dsmax parameter depends on five beta parameters (D1,D2,D3,cexpt,and phi)
+  integer(i4b),parameter                         :: nDepend=5         ! Dsmax parameter depends on five beta parameters (D1,D2,D3,D4,and phi)
   real(dp),    parameter                         :: Dsmax_min=0.1_dp
   real(dp),    parameter                         :: Dsmax_max=30.0_dp
 
   err=0;message="Dsmax/"
   if ( present(ixDepend) ) then ! setup dependency
     allocate(ixDepend(nDepend),stat=err); if(err/=0)then;message=trim(message)//'error allocating ixDepend';return;endif
-    ixDepend=(/ixBeta%D1, ixBeta%D2, ixBeta%D3, ixBeta%c, ixBeta%phi/)
-  elseif ( present(sdata) .and. present(D1_in) .and. present(D2_in) .and. present(D3_in) .and. present(c_in) .and. present(phi_in) .and. present(gammaPar) .and. present(Dsmax_out) )then ! compute parameters with TF
+    ixDepend=(/ixBeta%D1, ixBeta%D2, ixBeta%D3, ixBeta%D4, ixBeta%phi/)
+  elseif ( present(sdata) .and. present(D1_in) .and. present(D2_in) .and. present(D3_in) .and. present(D4_in) .and. present(phi_in) .and. present(gammaPar) .and. present(Dsmax_out) )then ! compute parameters with TF
     tftype=1_i4b
     if (present(tfopt) ) tftype=tfopt
     associate(h_in => sdata(ixVarSoilData%hslyrs)%dvar2 )
     select case(tftype)
       case(1);
         where ( phi_in /= dmiss .and. h_in /= dmiss )
-          Dsmax_out = D2_in*(phi_in*h_in*1000-D3_in)**c_in+D1_in*(phi_in*h_in*1000)
+          Dsmax_out = D2_in*(phi_in*h_in*1000-D3_in)**D4_in+D1_in*(phi_in*h_in*1000)
         else where
           Dsmax_out = dmiss
         end where
@@ -863,41 +860,6 @@ subroutine D4( err, message, ixDepend, gammaPar, D4_out, tfopt )
 end subroutine
 
 ! ***********
-!  c parameter
-! *********************************************************************
-subroutine cexpt( err, message, ixDepend, D4_in, gammaPar, cexpt_out, tfopt )
-  implicit none
-  ! input
-  real(dp),                optional,intent(in)  :: D4_in(:,:)      ! input(optional):
-  real(dp),                optional,intent(in)  :: gammaPar(:)     ! input(optional):  gamma parameter array
-  integer(i4b),            optional,intent(in)  :: tfopt           ! input(optional): id for transfer function form
-  ! output
-  integer(i4b),                     intent(out) :: err             ! output: error id
-  character(len=strLen),            intent(out) :: message         ! output: error message
-  integer(i4b),allocatable,optional,intent(out) :: ixDepend(:)     ! output(optional): id of dependent beta parameters
-  real(dp),                optional,intent(out) :: cexpt_out(:,:)  ! output(optional): cexpt parameter
-  ! local
-  integer(i4b)                                  :: tftype          ! option for transfer function form used
-  integer(i4b),parameter                        :: nDepend=1       ! cexpt parameter depends on 1 beta parameter (D4)
-
-  err=0;message="cexpt/"
-  if ( present(ixDepend) ) then ! setup dependency
-    allocate(ixDepend(nDepend),stat=err); if(err/=0)then;message=trim(message)//'error allocating ixDepend';return;endif
-    ixDepend=(/ixBeta%D4/)
-  elseif ( present(D4_in) .and. present(gammaPar) .and. present(cexpt_out) )then ! compute parameters with TF
-    tftype=1_i4b
-    if (present(tfopt)) tftype=tfopt
-    select case(tftype)
-      case(1);
-        cexpt_out = D4_in
-      case default; print*,trim(message)//'OptNotRecognized'; stop
-    end select
-  else
-    err=10;message=trim(message)//'WrongOptionalInputs'; return
-  endif
-end subroutine
-
-! ***********
 ! computing expt parameter
 ! *********************************************************************
 subroutine expt( err, message, ixDepend, b_in, gammaPar, expt_out, tfopt )
@@ -938,7 +900,6 @@ subroutine expt( err, message, ixDepend, b_in, gammaPar, expt_out, tfopt )
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
 end subroutine
-
 
 ! ***********
 ! bubble parameter
@@ -1104,7 +1065,7 @@ subroutine WpwpFrac( err, message, ixDepend, wp_in, phi_in, gammaPar, WpwpFrac_o
 end subroutine
 
 ! ************
-! Transpiration parameter  unit [-]
+! Transpiration parameter  unit [fraction]
 ! *********************************************************************
 subroutine transp( err, message, ixDepend, wp_in, phi_in, gammaPar, transp_out, tfopt )
   implicit none
@@ -1359,7 +1320,7 @@ end subroutine
 ! *********************************************************************
 ! ZSK parameter (LZSK for top layer)
 ! *********************************************************************
-subroutine zsk( err, message, ixDepend,  phi_in, fc_in, wp_in, gammaPar, zsk_out, tfopt )
+subroutine zsk( err, message, ixDepend, phi_in, fc_in, wp_in, gammaPar, zsk_out, tfopt )
   implicit none
   ! input
   real(dp),                optional,intent(in)  :: phi_in(:,:)   ! input(optional): porosity [fraction]
@@ -1688,7 +1649,6 @@ subroutine bd( err, message, ixDepend, sdata, gammaPar, bd_out, tfopt )
   endif
 end subroutine
 
-
 ! *********************************************************************
 ! pedo-transfer function for soil organic fraction
 ! *********************************************************************
@@ -1813,7 +1773,7 @@ subroutine phi( err, message, ixDepend, sdata, gammaPar, phi_out, tfopt )
 end subroutine
 
 ! *********************************************************************
-! pedo-transfer function for field capacity
+! pedo-transfer function for field capacity unit fraction
 ! *********************************************************************
 subroutine fc( err, message, ixDepend, sdata, phi_in, psis_in, b_in, gammaPar, fc_out, tfopt )
   implicit none
@@ -1867,7 +1827,7 @@ subroutine fc( err, message, ixDepend, sdata, phi_in, psis_in, b_in, gammaPar, f
 end subroutine
 
 ! *********************************************************************
-! pedo-transfer function for wilting point
+! pedo-transfer function for wilting point  unit: fraction
 ! *********************************************************************
 subroutine wp( err, message, ixDepend, phi_in, psis_in, b_in, gammaPar, wp_out, tfopt )
   implicit none
@@ -2034,7 +1994,7 @@ subroutine myu( err, message, ixDepend, phi_in, fc_in, gammaPar, myu_out, tfopt 
     allocate(ixDepend(nDepend),stat=err); if(err/=0)then;message=trim(message)//'error allocating ixDepend';return;endif
     ixDepend=(/ixBeta%fc,ixBeta%phi/)
   elseif ( present(phi_in) .and. present(fc_in) .and. present(gammaPar) .and. present(myu_out) )then ! compute parameters with TF
-    tftype=1_i4b
+    tftype=1
     if (present(tfopt) ) tftype=tfopt
     ! opt 1: Koren et al. 2003
     associate(g1=>gammaPar(ixGamma%myu1gamma1), &
@@ -2053,7 +2013,6 @@ subroutine myu( err, message, ixDepend, phi_in, fc_in, gammaPar, myu_out, tfopt 
     err=10;message=trim(message)//'WrongOptionalInputs'; return
   endif
 end subroutine
-
 
 ! *********************************************************************
 ! Monthly LAI  unit: m2/m2
