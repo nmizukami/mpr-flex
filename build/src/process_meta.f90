@@ -42,7 +42,6 @@ subroutine read_inParList(infile, err, message)
   character(len=1)                     :: dLim(1)           ! column delimiter
   integer(i4b)                         :: iline             ! loop through lines in the file
 
-  ! initialize error handling
   err=0; message="read_inParList/"
   allocate(tempCalParMeta(nBeta))
   call file_open(trim(infile), unt, err, cmessage)
@@ -64,7 +63,7 @@ subroutine read_inParList(infile, err, message)
     ! save data into a temporary structure
     ixLocal = ixLocal+1
     read(temp,trim(ffmt),iostat=err) tempCalParMeta(ixLocal)%betaname, dLim(1),&  ! beta parameter name
-                                     tempCalParMeta(ixLocal)%TF                     ! Transfer function type
+                                     tempCalParMeta(ixLocal)%TF                   ! Transfer function type
     if (err/=0) then; err=30; message=trim(message)//"errorReadLine"; return; endif
     ! check that the delimiters are in the correct place
     if(any(dLim /= '|'))then
@@ -73,7 +72,6 @@ subroutine read_inParList(infile, err, message)
     endif
   enddo line
 
-  ! close file unit
   close(unt)
 
   ! save 'inParMeta'
